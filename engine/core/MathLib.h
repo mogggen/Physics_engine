@@ -507,19 +507,19 @@ inline M4 Transpose(M4 matrix)
 /// Inverse a 4-by-4 matrix.
 /// </summary>
 /// <param name="matrix">the matrix to inverse</param>
-inline void Inverse(M4& matrix)
+inline M4 Inverse()
 {
 	//to hold the matrix values
 	float m[16];
 
 	// to hold the Inverse
-	matrix;
+	M4 matrix;
 	char k = 0;
 	for (char i = 0; i < 4; i++)
 	{
 		for (char j = 0; j < 4; j++)
 		{
-			m[k] = matrix[i][j] = matrix[i][j];
+			m[k] = matrix[i][j];
 			k++;
 		}
 	}
@@ -680,13 +680,188 @@ inline void Inverse(M4& matrix)
 	else
 		for (char i = 0; i < 16; i++)
 		{
-			matrix[i / 4][i % 4] = matrix[i / 4][i % 4] / det;
+			matrix[i / 4][i % 4] /= det;
+		}
+	return matrix;
+}
+
+inline void Inverse(M4& matrix)
+{
+	//to hold the matrix values
+	float m[16];
+
+	char k = 0;
+	for (char i = 0; i < 4; i++)
+	{
+		for (char j = 0; j < 4; j++)
+		{
+			m[k] = matrix[i][j];
+			k++;
+		}
+	}
+	float det;
+
+	/*
+	0:0	0:1	0:2	0:3
+	1:0	1:1	1:2	1:3
+	2:0	2:1	2:2	2:3
+	3:0	3:1	3:2	3:3
+
+	0 	1	2	3
+	4	5	6	7
+	8	9	10	11
+	12	13	14	15
+	*/
+
+	//coloum 0/3
+	matrix[0][0] =
+		m[5] * m[10] * m[15] -
+		m[5] * m[11] * m[14] -
+		m[9] * m[6] * m[15] +
+		m[9] * m[7] * m[14] +
+		m[13] * m[6] * m[11] -
+		m[13] * m[7] * m[10];
+
+	matrix[1][0] =
+		-m[4] * m[10] * m[15] +
+		m[4] * m[11] * m[14] +
+		m[8] * m[6] * m[15] -
+		m[8] * m[7] * m[14] -
+		m[12] * m[6] * m[11] +
+		m[12] * m[7] * m[10];
+
+	matrix[2][0] =
+		m[4] * m[9] * m[15] -
+		m[4] * m[11] * m[13] -
+		m[8] * m[5] * m[15] +
+		m[8] * m[7] * m[13] +
+		m[12] * m[5] * m[11] -
+		m[12] * m[7] * m[9];
+
+	matrix[3][0] =
+		-m[4] * m[9] * m[14] +
+		m[4] * m[10] * m[13] +
+		m[8] * m[5] * m[14] -
+		m[8] * m[6] * m[13] -
+		m[12] * m[5] * m[10] +
+		m[12] * m[6] * m[9];
+
+
+	//column 1/3
+	matrix[0][1] =
+		-m[1] * m[10] * m[15] +
+		m[1] * m[11] * m[14] +
+		m[9] * m[2] * m[15] -
+		m[9] * m[3] * m[14] -
+		m[13] * m[2] * m[11] +
+		m[13] * m[3] * m[10];
+
+	matrix[1][1] =
+		m[0] * m[10] * m[15] -
+		m[0] * m[11] * m[14] -
+		m[8] * m[2] * m[15] +
+		m[8] * m[3] * m[14] +
+		m[12] * m[2] * m[11] -
+		m[12] * m[3] * m[10];
+
+	matrix[2][1] =
+		-m[0] * m[9] * m[15] +
+		m[0] * m[11] * m[13] +
+		m[8] * m[1] * m[15] -
+		m[8] * m[3] * m[13] -
+		m[12] * m[1] * m[11] +
+		m[12] * m[3] * m[9];
+
+	matrix[3][1] =
+		m[0] * m[9] * m[14] -
+		m[0] * m[10] * m[13] -
+		m[8] * m[1] * m[14] +
+		m[8] * m[2] * m[13] +
+		m[12] * m[1] * m[10] -
+		m[12] * m[2] * m[9];
+
+
+	//column 2/3
+	matrix[0][2] =
+		m[1] * m[6] * m[15] -
+		m[1] * m[7] * m[14] -
+		m[5] * m[2] * m[15] +
+		m[5] * m[3] * m[14] +
+		m[13] * m[2] * m[7] -
+		m[13] * m[3] * m[6];
+
+	matrix[1][2] =
+		-m[0] * m[6] * m[15] +
+		m[0] * m[7] * m[14] +
+		m[4] * m[2] * m[15] -
+		m[4] * m[3] * m[14] -
+		m[12] * m[2] * m[7] +
+		m[12] * m[3] * m[6];
+
+	matrix[2][2] =
+		m[0] * m[5] * m[15] -
+		m[0] * m[7] * m[13] -
+		m[4] * m[1] * m[15] +
+		m[4] * m[3] * m[13] +
+		m[12] * m[1] * m[7] -
+		m[12] * m[3] * m[5];
+
+	matrix[3][2] =
+		-m[0] * m[5] * m[14] +
+		m[0] * m[6] * m[13] +
+		m[4] * m[1] * m[14] -
+		m[4] * m[2] * m[13] -
+		m[12] * m[1] * m[6] +
+		m[12] * m[2] * m[5];
+
+
+	//column 3/3
+	matrix[0][3] =
+		-m[1] * m[6] * m[11] +
+		m[1] * m[7] * m[10] +
+		m[5] * m[2] * m[11] -
+		m[5] * m[3] * m[10] -
+		m[9] * m[2] * m[7] +
+		m[9] * m[3] * m[6];
+
+	matrix[1][3] =
+		m[0] * m[6] * m[11] -
+		m[0] * m[7] * m[10] -
+		m[4] * m[2] * m[11] +
+		m[4] * m[3] * m[10] +
+		m[8] * m[2] * m[7] -
+		m[8] * m[3] * m[6];
+
+	matrix[2][3] =
+		-m[0] * m[5] * m[11] +
+		m[0] * m[7] * m[9] +
+		m[4] * m[1] * m[11] -
+		m[4] * m[3] * m[9] -
+		m[8] * m[1] * m[7] +
+		m[8] * m[3] * m[5];
+
+	matrix[3][3] =
+		m[0] * m[5] * m[10] -
+		m[0] * m[6] * m[9] -
+		m[4] * m[1] * m[10] +
+		m[4] * m[2] * m[9] +
+		m[8] * m[1] * m[6] -
+		m[8] * m[2] * m[5];
+
+	det = m[0] * matrix[0][0] + m[1] * matrix[1][0] + m[2] * matrix[2][0] + m[3] * matrix[3][0];
+
+	if (det == 0)
+		matrix = M4();
+
+	else
+		for (char i = 0; i < 16; i++)
+		{
+			matrix[i / 4][i % 4] /= det;
 		}
 }
 
-
-//line with direction of dir and rotation around axis by theta radians
-inline M4 Rotation(V4 dir, float θ)
+//Line with direction of line and rotation around axis by theta radians
+inline M4 Rotation(V4 line, float θ)
 {
 	M4 temp;
 		temp[3].w = 1;
@@ -698,17 +873,17 @@ inline M4 Rotation(V4 dir, float θ)
 	// [3] 0 0 0 1
 
 	// [coloumns][rows]
-	temp[0].x = cos(θ) + (1 - cos(θ)) * pow(dir.x, 2); // 0
-	temp[0].y = (1 - cos(θ)) * dir.x * dir.y + dir.z * sin(θ); // 1
-	temp[0].z = (1 - cos(θ)) * dir.x * dir.z - dir.y * sin(θ); // 2
+	temp[0].x = cos(θ) + (1 - cos(θ)) * pow(line.x, 2); // 0
+	temp[0].y = (1 - cos(θ)) * line.x * line.y + line.z * sin(θ); // 1
+	temp[0].z = (1 - cos(θ)) * line.x * line.z - line.y * sin(θ); // 2
 
-	temp[1].x = (1 - cos(θ)) * dir.x * dir.y - dir.z * sin(θ); // 3
-	temp[1].y = cos(θ) + (1 - cos(θ)) * pow(dir.y, 2); // 4
-	temp[1].z = (1 - cos(θ)) * dir.y * dir.z + dir.x * sin(θ); // 5
+	temp[1].x = (1 - cos(θ)) * line.x * line.y - line.z * sin(θ); // 3
+	temp[1].y = cos(θ) + (1 - cos(θ)) * pow(line.y, 2); // 4
+	temp[1].z = (1 - cos(θ)) * line.y * line.z + line.x * sin(θ); // 5
 
-	temp[2].x = (1 - cos(θ)) * dir.x * dir.z + dir.y * sin(θ); // 6
-	temp[2].y = (1 - cos(θ)) * dir.y * dir.z - dir.x * sin(θ); // 7
-	temp[2].z = cos(θ) + (1 - cos(θ)) * pow(dir.z, 2); // 8
+	temp[2].x = (1 - cos(θ)) * line.x * line.z + line.y * sin(θ); // 6
+	temp[2].y = (1 - cos(θ)) * line.y * line.z - line.x * sin(θ); // 7
+	temp[2].z = cos(θ) + (1 - cos(θ)) * pow(line.z, 2); // 8
 
 	return temp;
 }

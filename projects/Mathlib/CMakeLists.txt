@@ -7,7 +7,7 @@ FILE(GLOB example_headers code/*.h)
 FILE(GLOB example_sources code/*.cc)
 FILE(GLOB example_sources code/*.cpp)
 
-SET(files_Mathlib ${example_headers} ${example_sources})
+SET(files_example ${example_headers} ${example_sources})
 SOURCE_GROUP("Mathlib" FILES ${files_example})
 
 ADD_EXECUTABLE(Mathlib ${files_example})

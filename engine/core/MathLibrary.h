@@ -862,7 +862,7 @@ inline void Inverse(M4& matrix)
 inline M4 Rotation(V4 line, float θ)
 {
 	M4 temp;
-		temp[3].w = 1;
+	temp[3].w = 1;
 
 	// v[] x y z w
 	// [0] 0 1 2 0

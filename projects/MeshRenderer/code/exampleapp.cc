@@ -87,39 +87,7 @@ ExampleApp::Open()
 		this->window->Close();
 	});
 
-	GLfloat buf[] =
-	{
-		-0.5f,	-0.5f,	-1,			// pos 0
-		1,		0,		0,		1,	// color 0
-		0,		0.5f,	-1,			// pos 1
-		0,		1,		0,		1,	// color 0
-		0.5f,	-0.5f,	-1,			// pos 2
-		0,		0,		1,		1	// color 0
-	};
-
-	Vertice quad[] =
-	{
-		Vertice
-		{
-			V3(-0.5f, -0.5f, 0),
-			V4(1, 0, 0, 1),
-		},
-		Vertice
-		{
-			V3(0, 0.5f,	0),
-			V4(0, 1, 0, 1),
-		},
-		Vertice
-		{
-			V3(0.5f, -0.5f, 0),
-			V4(0, 0, 1, 1),
-		},
-		Vertice
-		{
-			V3(0.75f, -0.45f, 0),
-			V4(0, 0, 0, 1),
-		},
-	};
+	
 
 	if (this->window->Open())
 	{
@@ -174,8 +142,31 @@ ExampleApp::Open()
 			delete[] buf;
 		}
 
+		Vertice quad[] =
+		{
+			Vertice
+			{
+				V3(-0.5f, -0.5f, 0),
+				V4(1, 0, 0, 1),
+			},
+			Vertice
+			{
+				V3(-0.5, 0.5f,	0),
+				V4(0, 1, 0, 1),
+			},
+			Vertice
+			{
+				V3(0.5f, -0.5f, 0),
+				V4(0, 0, 1, 1),
+			},
+			Vertice
+			{
+				V3(0.5f, 0.5f, 0),
+				V4(0, 0, 0, 1),
+			},
+		};
 		
-		unsigned int indices[6] = {0, 1, 2, 0, 2, 3};
+		unsigned int indices[6] = {0, 1, 2, 1, 2, 3};
 		// setup vbo
 		quadrilateral = new MeshResource(quad, 4, indices, 6);
 		return true;
@@ -211,15 +202,15 @@ void
 ExampleApp::Run()
 {
 
-	V4 line(1, 0, 0);
+	V4 line(1, 1, 1);
 	float angle = 0;
 	char i = 0, j = 0;
 	M4 matrix1;
 	M4 matrix2;
 	while (this->window->IsOpen())
 	{
-		angle += 0.03f;
-		matrix1 = Rotation(line, angle);
+		//angle += 0.03f;
+		matrix1 = Scalar(0.3f);//Rotation(line, angle);
 		glClear(GL_COLOR_BUFFER_BIT);
 		this->window->Update();
 

@@ -6,29 +6,49 @@
 	(C) 2015-2020 Individual contributors, see AUTHORS file
 */
 //------------------------------------------------------------------------------
+#include "core/MathLibrary.h"
 #include "core/app.h"
 #include "render/window.h"
 
 namespace Example
 {
-class ExampleApp : public Core::App
-{
-public:
-	/// constructor
-	ExampleApp();
-	/// destructor
-	~ExampleApp();
+	struct Vertice
+	{
+		V3 pos;
+		V4 rgba;
+	};
 
-	/// open app
-	bool Open();
-	/// run app
-	void Run();
-private:
+	class MeshResource
+	{
+		GLint indices;
+		GLuint vertexBuffer;
+		GLuint indexBuffer;
+	public:
+		MeshResource(Vertice vertices[], int Verticeslength, unsigned int indices[], int indicesLength);
+		void render();
+	};
 
-	GLuint program;
-	GLuint vertexShader;
-	GLuint pixelShader;
-	GLuint triangle;
-	Display::Window* window;
-};
+	
+
+	class ExampleApp : public Core::App
+	{
+	public:
+		/// constructor
+		ExampleApp();
+		/// destructor
+		~ExampleApp();
+
+		/// open app
+		bool Open();
+		/// run app
+		void Run();
+	private:
+
+		GLuint program;
+		GLuint vertexShader;
+		GLuint pixelShader;
+		MeshResource* quadrilateral;
+		GLuint triangle;
+		Display::Window* window;
+	};
 } // namespace Example

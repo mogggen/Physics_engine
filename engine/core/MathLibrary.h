@@ -24,8 +24,8 @@ struct V3
 		float data[3];
 	};
 
-	V3();
-	V3(float x, float y, float z);
+	inline V3();
+	inline V3(float x, float y, float z);
 
 	void operator+=(V3 right);
 	void operator-=(V3 right);
@@ -241,8 +241,8 @@ struct V4
 		float data[4];
 	};
 	
-	V4();
-	V4(float x, float y, float z, float w);
+	inline V4();
+	inline V4(float x, float y, float z, float w);
 
 	void operator+=(V4 right);
 	void operator-=(V4 right);
@@ -430,8 +430,8 @@ struct M4
 	V4 operator[](char index) const;
 	V4& operator[](char index);
 
-	M4();
-	M4(V4 v[4]);
+	inline M4();
+	inline M4(V4 v[4]);
 
 	void Transpose();
 	

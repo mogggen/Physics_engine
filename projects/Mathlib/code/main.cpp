@@ -23,7 +23,7 @@ void Print(M4 m)
 
 int main()
 {
-	Print(Rotation(V4(0, 0, 1), m_pi / 2));
+	Print(Rotation(V4(0, 0, 1), M_PI / 2));
 	
 	return 0;
 }

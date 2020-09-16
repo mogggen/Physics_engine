@@ -1,7 +1,7 @@
 ﻿//#include "config.h"
 #pragma once
 
-#define m_pi 3.141592741f
+#define M_PI 3.141592741f
 
 #pragma region Vector3
 //	Vector operations: +, -, *, length, normalize, dot product, cross product

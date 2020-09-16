@@ -164,11 +164,51 @@ ExampleApp::Open()
 				V3(0.5f, 0.5f, 0),
 				V4(0, 0, 0, 1),
 			},
+
+			Vertice
+			{
+				V3(-0.5f, -0.5f, 1),
+				V4(1, 0, 0, 1),
+			},
+			Vertice
+			{
+				V3(-0.5, 0.5f,	1),
+				V4(0, 1, 0, 1),
+			},
+			Vertice
+			{
+				V3(0.5f, -0.5f, 1),
+				V4(0, 0, 1, 1),
+			},
+			Vertice
+			{
+				V3(0.5f, 0.5f, 1),
+				V4(0, 0, 0, 1),
+			},
 		};
 		
-		unsigned int indices[6] = {0, 1, 2, 1, 2, 3};
+		unsigned int indices[36] =
+		{0, 1, 2,	//front
+		1, 2, 3,
+		
+		4, 5, 6,	//back
+		5, 6, 7,
+
+		0, 1, 4,	//left
+		1, 4, 5,
+
+		6, 7, 2,	//right
+		7, 2, 3,
+
+		1, 3, 5,	//top
+		3, 5, 7,
+
+		0, 2, 4,	//bottom
+		2, 4, 6,
+		};
+
 		// setup vbo
-		quadrilateral = new MeshResource(quad, 4, indices, 6);
+		quadrilateral = new MeshResource(quad, 8, indices, 36);
 		return true;
 	}
 	return false;
@@ -178,7 +218,17 @@ ExampleApp::Open()
 /**
 */
 
-M4 Translate(float x, float y, float z, float s = 1)
+M4 Translate(V3 pos)
+{
+	M4 temp;
+	temp[0] = V4(1, 0, 0, pos[0]);
+	temp[1] = V4(0, 1, 0, pos[1]);
+	temp[2] = V4(0, 0, 1, pos[2]);
+	temp[3] = V4(0, 0, 0, 1);
+	return temp;
+}
+
+M4 Translate(float x, float y, float z)
 {
 	M4 temp;
 	temp[0] = V4(1, 0, 0, x);
@@ -198,25 +248,43 @@ M4 Scalar(float s)
 	return temp;
 }
 
+M4 projectiveViewMatrix(float fov, float aspect, float n, float f)
+{
+	float s = 1.0f / (tan(fov / 2) * M_PI / 180.0f);
+	M4 temp;
+	temp[0] = V4(s, 0, 0, 0);
+	temp[1] = V4(0, s, 0, 0);
+	temp[2] = V4(0, 0, -f / (f - n), -1);
+	temp[3] = V4(0, 0, -(f * n) / (f - n), 0);
+	return temp;
+}
+
 void
 ExampleApp::Run()
 {
-
-	V4 line(1, 1, 1);
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
+	//V4 line(1, 1, 1);
 	float angle = 0;
 	char i = 0, j = 0;
 	M4 matrix1;
 	M4 matrix2;
 	while (this->window->IsOpen())
 	{
-		//angle += 0.03f;
-		matrix1 = Scalar(0.3f);//Rotation(line, angle);
-		glClear(GL_COLOR_BUFFER_BIT);
+		angle += 0.006f;
+		matrix1 = //projectiveViewMatrix(M_PI / 3, 4.0f / 3, 0.1f, 100) *
+			Translate(cos(angle), 0, 0) *
+			Rotation(V4(0, 0, 1), M_PI / 6) *
+			Rotation(V4(1, 0, 0), -M_PI / 6) *
+			Rotation(V4(0, 1, 0), angle) *
+			Scalar(0.5f);
+			
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		this->window->Update();
 
 		// do stuff
 		glUseProgram(this->program);
-
+		
 		auto loc = glGetUniformLocation(program, "m4");
 		glUniformMatrix4fv(loc, 1, GL_TRUE, (float*)&matrix1);
 		quadrilateral->render();

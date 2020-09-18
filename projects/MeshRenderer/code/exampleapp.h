@@ -47,7 +47,7 @@ namespace Example
 		GLuint program;
 		GLuint vertexShader;
 		GLuint pixelShader;
-		MeshResource* quadrilateral;
+		MeshResource* cube;
 		GLuint triangle;
 		Display::Window* window;
 	};

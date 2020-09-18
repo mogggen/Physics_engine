@@ -24,6 +24,7 @@ namespace Example
 		GLuint vertexBuffer;
 		GLuint indexBuffer;
 	public:
+		MeshResource* Cube(const V4 size, const V4 color);
 		MeshResource(Vertice vertices[], int Verticeslength, unsigned int indices[], int indicesLength);
 		void render();
 	};

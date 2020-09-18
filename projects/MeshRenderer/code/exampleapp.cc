@@ -77,6 +77,7 @@ ExampleApp::~ExampleApp()
 //------------------------------------------------------------------------------
 /**
 */
+
 bool
 ExampleApp::Open()
 {
@@ -142,73 +143,10 @@ ExampleApp::Open()
 			delete[] buf;
 		}
 
-		Vertice quad[] =
-		{
-			Vertice
-			{
-				V3(-0.5f, -0.5f, 0),
-				V4(1, 0, 0, 1),
-			},
-			Vertice
-			{
-				V3(-0.5, 0.5f,	0),
-				V4(0, 1, 0, 1),
-			},
-			Vertice
-			{
-				V3(0.5f, -0.5f, 0),
-				V4(0, 0, 1, 1),
-			},
-			Vertice
-			{
-				V3(0.5f, 0.5f, 0),
-				V4(0, 0, 0, 1),
-			},
-
-			Vertice
-			{
-				V3(-0.5f, -0.5f, 1),
-				V4(1, 0, 0, 1),
-			},
-			Vertice
-			{
-				V3(-0.5, 0.5f,	1),
-				V4(0, 1, 0, 1),
-			},
-			Vertice
-			{
-				V3(0.5f, -0.5f, 1),
-				V4(0, 0, 1, 1),
-			},
-			Vertice
-			{
-				V3(0.5f, 0.5f, 1),
-				V4(0, 0, 0, 1),
-			},
-		};
 		
-		unsigned int indices[36] =
-		{0, 1, 2,	//front
-		1, 2, 3,
-		
-		4, 5, 6,	//back
-		5, 6, 7,
-
-		0, 1, 4,	//left
-		1, 4, 5,
-
-		6, 7, 2,	//right
-		7, 2, 3,
-
-		1, 3, 5,	//top
-		3, 5, 7,
-
-		0, 2, 4,	//bottom
-		2, 4, 6,
-		};
 
 		// setup vbo
-		quadrilateral = new MeshResource(quad, 8, indices, 36);
+		quadrilateral = quadrilateral->Cube(V4(1, 1, 1, 1), V4(0, 0, 1, 1));
 		return true;
 	}
 	return false;
@@ -217,6 +155,77 @@ ExampleApp::Open()
 //------------------------------------------------------------------------------
 /**
 */
+
+MeshResource* MeshResource::Cube(const V4 size, const V4 color)
+{
+	Vertice vertices[] =
+	{
+		Vertice
+		{
+			V3(-0.5f, -0.5f, -0.5f),
+			V4(1, 0, 0, 1),
+		},
+		Vertice
+		{
+			V3(-0.5, 0.5f,	-0.5f),
+			V4(0, 1, 0, 1),
+		},
+		Vertice
+		{
+			V3(0.5f, -0.5f, -0.5f),
+			V4(0, 0, 1, 1),
+		},
+		Vertice
+		{
+			V3(0.5f, 0.5f, -0.5f),
+			V4(0, 0, 0, 1),
+		},
+
+		Vertice
+		{
+			V3(-0.5f, -0.5f, 0.5f),
+			V4(1, 0, 0, 1),
+		},
+		Vertice
+		{
+			V3(-0.5, 0.5f, 0.5f),
+			V4(0, 1, 0, 1),
+		},
+		Vertice
+		{
+			V3(0.5f, -0.5f, 0.5f),
+			V4(0, 0, 1, 1),
+		},
+		Vertice
+		{
+			V3(0.5f, 0.5f, 0.5f),
+			V4(0, 0, 0, 1),
+		},
+	};
+
+	unsigned int indices[] =
+	{
+	0, 1, 2,	//front
+	1, 2, 3,
+
+	4, 5, 6,	//back
+	5, 6, 7,
+
+	0, 1, 4,	//left
+	1, 4, 5,
+
+	6, 7, 2,	//right
+	7, 2, 3,
+
+	1, 3, 5,	//top
+	3, 5, 7,
+
+	0, 2, 4,	//bottom
+	2, 4, 6,
+	};
+
+	return new MeshResource(vertices, sizeof(vertices) / sizeof(Vertice), indices, sizeof(vertices) / sizeof(unsigned int));
+}
 
 M4 Translate(V3 pos)
 {

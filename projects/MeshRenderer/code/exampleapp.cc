@@ -257,24 +257,14 @@ namespace Example
 
 	M4 projectiveViewMatrix(float fov, float aspect, float n, float f)
 	{
-		// part one
-		M4 temp;
-		temp[0] = V4(1, 0, 0, 0);
-		temp[1] = V4(0, 1, 0, 0);
-		temp[2] = V4(0, 0, 1, 0);
-		temp[3] = V4(0, 0, -1, 0);
-		return temp;
+		float tanThetaOver2 = tan(fov * (360 / M_PI));
 
-		//part two
-		//https://www.youtube.com/watch?v=dul0mui292Q&list=PLW3Zl3wyJwWN-Y68x4KFnirJA4A49NjHV&index=6
-
-		//broken persective
-		float s = 1.0f / tan(fov / 2);
 		M4 temp;
-		temp[0] = V4(s, 0, 0, 0);
-		temp[1] = V4(0, s * aspect, 0, 0);
-		temp[2] = V4(0, 0, -f / (f - n), -1);
-		temp[3] = V4(0, 0, -1, 0);
+		temp[0][0] = 1 / tanThetaOver2;
+		temp[1][1] = aspect * tanThetaOver2;
+		temp[2][2] = (n + f) / (n - f);
+		temp[2][3] = 2 * n * f / (n - f);
+		temp[3][3] = -1;
 		return temp;
 	}
 
@@ -291,8 +281,8 @@ namespace Example
 		while (this->window->IsOpen())
 		{
 			angle += 0.006f;
-			matrix1 = //projectiveViewMatrix(M_PI / 3, 4.0f / 3, 0.1f, 100) *
-				Translate(cos(angle), 0, 0) *
+			matrix1 = //projectiveViewMatrix(60, 4.0f / 3, 0.1f, 100) *
+				Translate(0, 0, 2 * cos(angle) - 1) * // z = 1 for proj
 				Rotation(V4(0, 0, 1), M_PI / 6) *
 				Rotation(V4(1, 0, 0), -M_PI / 6) *
 				Rotation(V4(0, 1, 0), angle) *

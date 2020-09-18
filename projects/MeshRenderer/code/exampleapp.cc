@@ -143,71 +143,6 @@ namespace Example
 				delete[] buf;
 			}
 
-			Vertice quad[] =
-			{
-				Vertice
-				{
-					V3(-0.5f, -0.5f, 0),
-					V4(1, 0, 0, 1),
-				},
-				Vertice
-				{
-					V3(-0.5, 0.5f,	0),
-					V4(0, 1, 0, 1),
-				},
-				Vertice
-				{
-					V3(0.5f, -0.5f, 0),
-					V4(0, 0, 1, 1),
-				},
-				Vertice
-				{
-					V3(0.5f, 0.5f, 0),
-					V4(0, 0, 0, 1),
-				},
-
-				Vertice
-				{
-					V3(-0.5f, -0.5f, 1),
-					V4(1, 0, 0, 1),
-				},
-				Vertice
-				{
-					V3(-0.5, 0.5f,	1),
-					V4(0, 1, 0, 1),
-				},
-				Vertice
-				{
-					V3(0.5f, -0.5f, 1),
-					V4(0, 0, 1, 1),
-				},
-				Vertice
-				{
-					V3(0.5f, 0.5f, 1),
-					V4(0, 0, 0, 1),
-				},
-			};
-
-			unsigned int indices[36] =
-			{ 0, 1, 2,	//front
-			1, 2, 3,
-
-			4, 5, 6,	//back
-			5, 6, 7,
-
-			0, 1, 4,	//left
-			1, 4, 5,
-
-			6, 7, 2,	//right
-			7, 2, 3,
-
-			1, 3, 5,	//top
-			3, 5, 7,
-
-			0, 2, 4,	//bottom
-			2, 4, 6,
-			};
-
 			// setup vbo
 			cube = cube->Cube(V4(1, 1, 1, 1), V4(0, 0, 1, 1));
 			return true;
@@ -322,12 +257,24 @@ namespace Example
 
 	M4 projectiveViewMatrix(float fov, float aspect, float n, float f)
 	{
-		float s = 1.0f / (tan(fov / 2) * M_PI / 180.0f);
+		// part one
+		M4 temp;
+		temp[0] = V4(1, 0, 0, 0);
+		temp[1] = V4(0, 1, 0, 0);
+		temp[2] = V4(0, 0, 1, 0);
+		temp[3] = V4(0, 0, -1, 0);
+		return temp;
+
+		//part two
+		//https://www.youtube.com/watch?v=dul0mui292Q&list=PLW3Zl3wyJwWN-Y68x4KFnirJA4A49NjHV&index=6
+
+		//broken persective
+		float s = 1.0f / tan(fov / 2);
 		M4 temp;
 		temp[0] = V4(s, 0, 0, 0);
-		temp[1] = V4(0, s, 0, 0);
+		temp[1] = V4(0, s * aspect, 0, 0);
 		temp[2] = V4(0, 0, -f / (f - n), -1);
-		temp[3] = V4(0, 0, -(f * n) / (f - n), 0);
+		temp[3] = V4(0, 0, -1, 0);
 		return temp;
 	}
 

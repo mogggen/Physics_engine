@@ -40,7 +40,7 @@ namespace Example
 		glGenBuffers(1, &this->indexBuffer);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->indexBuffer);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indicesLength, indices, GL_STATIC_DRAW);
-		
+
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
@@ -58,250 +58,314 @@ namespace Example
 	}
 
 
-//------------------------------------------------------------------------------
-/**
-*/
-ExampleApp::ExampleApp()
-{
-	// empty
-}
-
-//------------------------------------------------------------------------------
-/**
-*/
-ExampleApp::~ExampleApp()
-{
-	// empty
-}
-
-//------------------------------------------------------------------------------
-/**
-*/
-
-bool
-ExampleApp::Open()
-{
-	App::Open();
-	this->window = new Display::Window;
-	window->SetKeyPressFunction([this](int32, int32, int32, int32)
+	//------------------------------------------------------------------------------
+	/**
+	*/
+	ExampleApp::ExampleApp()
 	{
-		this->window->Close();
-	});
-
-	
-
-	if (this->window->Open())
-	{
-		// set clear color to gray
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-
-		// setup vertex shader
-		this->vertexShader = glCreateShader(GL_VERTEX_SHADER);
-		GLint length = static_cast<GLint>(std::strlen(vs));
-		glShaderSource(this->vertexShader, 1, &vs, &length);
-		glCompileShader(this->vertexShader);
-
-		// get error log
-		GLint shaderLogSize;
-		glGetShaderiv(this->vertexShader, GL_INFO_LOG_LENGTH, &shaderLogSize);
-		if (shaderLogSize > 0)
-		{
-			GLchar* buf = new GLchar[shaderLogSize];
-			glGetShaderInfoLog(this->vertexShader, shaderLogSize, NULL, buf);
-			printf("[SHADER COMPILE ERROR]: %s", buf);
-			delete[] buf;
-		}
-
-		// setup pixel shader
-		this->pixelShader = glCreateShader(GL_FRAGMENT_SHADER);
-		length = static_cast<GLint>(std::strlen(ps));
-		glShaderSource(this->pixelShader, 1, &ps, &length);
-		glCompileShader(this->pixelShader);
-
-		// get error log
-		shaderLogSize;
-		glGetShaderiv(this->pixelShader, GL_INFO_LOG_LENGTH, &shaderLogSize);
-		if (shaderLogSize > 0)
-		{
-			GLchar* buf = new GLchar[shaderLogSize];
-			glGetShaderInfoLog(this->pixelShader, shaderLogSize, NULL, buf);
-			printf("[SHADER COMPILE ERROR]: %s", buf);
-			delete[] buf;
-		}
-
-		// create a program object
-		this->program = glCreateProgram();
-		glAttachShader(this->program, this->vertexShader);
-		glAttachShader(this->program, this->pixelShader);
-		glLinkProgram(this->program);
-		glGetProgramiv(this->program, GL_INFO_LOG_LENGTH, &shaderLogSize);
-		if (shaderLogSize > 0)
-		{
-			GLchar* buf = new GLchar[shaderLogSize];
-			glGetProgramInfoLog(this->program, shaderLogSize, NULL, buf);
-			printf("[PROGRAM LINK ERROR]: %s", buf);
-			delete[] buf;
-		}
-
-		
-
-		// setup vbo
-		quadrilateral = quadrilateral->Cube(V4(1, 1, 1, 1), V4(0, 0, 1, 1));
-		return true;
+		// empty
 	}
-	return false;
-}
 
-//------------------------------------------------------------------------------
-/**
-*/
-
-MeshResource* MeshResource::Cube(const V4 size, const V4 color)
-{
-	Vertice vertices[] =
+	//------------------------------------------------------------------------------
+	/**
+	*/
+	ExampleApp::~ExampleApp()
 	{
-		Vertice
-		{
-			V3(-0.5f, -0.5f, -0.5f),
-			V4(1, 0, 0, 1),
-		},
-		Vertice
-		{
-			V3(-0.5, 0.5f,	-0.5f),
-			V4(0, 1, 0, 1),
-		},
-		Vertice
-		{
-			V3(0.5f, -0.5f, -0.5f),
-			V4(0, 0, 1, 1),
-		},
-		Vertice
-		{
-			V3(0.5f, 0.5f, -0.5f),
-			V4(0, 0, 0, 1),
-		},
+		// empty
+	}
 
-		Vertice
-		{
-			V3(-0.5f, -0.5f, 0.5f),
-			V4(1, 0, 0, 1),
-		},
-		Vertice
-		{
-			V3(-0.5, 0.5f, 0.5f),
-			V4(0, 1, 0, 1),
-		},
-		Vertice
-		{
-			V3(0.5f, -0.5f, 0.5f),
-			V4(0, 0, 1, 1),
-		},
-		Vertice
-		{
-			V3(0.5f, 0.5f, 0.5f),
-			V4(0, 0, 0, 1),
-		},
-	};
+	//------------------------------------------------------------------------------
+	/**
+	*/
 
-	unsigned int indices[] =
+	bool
+		ExampleApp::Open()
 	{
-	0, 1, 2,	//front
-	1, 2, 3,
+		App::Open();
+		this->window = new Display::Window;
+		window->SetKeyPressFunction([this](int32, int32, int32, int32)
+		{
+			this->window->Close();
+		});
 
-	4, 5, 6,	//back
-	5, 6, 7,
 
-	0, 1, 4,	//left
-	1, 4, 5,
 
-	6, 7, 2,	//right
-	7, 2, 3,
+		if (this->window->Open())
+		{
+			// set clear color to gray
+			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
-	1, 3, 5,	//top
-	3, 5, 7,
+			// setup vertex shader
+			this->vertexShader = glCreateShader(GL_VERTEX_SHADER);
+			GLint length = static_cast<GLint>(std::strlen(vs));
+			glShaderSource(this->vertexShader, 1, &vs, &length);
+			glCompileShader(this->vertexShader);
 
-	0, 2, 4,	//bottom
-	2, 4, 6,
-	};
+			// get error log
+			GLint shaderLogSize;
+			glGetShaderiv(this->vertexShader, GL_INFO_LOG_LENGTH, &shaderLogSize);
+			if (shaderLogSize > 0)
+			{
+				GLchar* buf = new GLchar[shaderLogSize];
+				glGetShaderInfoLog(this->vertexShader, shaderLogSize, NULL, buf);
+				printf("[SHADER COMPILE ERROR]: %s", buf);
+				delete[] buf;
+			}
 
-	return new MeshResource(vertices, sizeof(vertices) / sizeof(Vertice), indices, sizeof(vertices) / sizeof(unsigned int));
-}
+			// setup pixel shader
+			this->pixelShader = glCreateShader(GL_FRAGMENT_SHADER);
+			length = static_cast<GLint>(std::strlen(ps));
+			glShaderSource(this->pixelShader, 1, &ps, &length);
+			glCompileShader(this->pixelShader);
 
-M4 Translate(V3 pos)
-{
-	M4 temp;
-	temp[0] = V4(1, 0, 0, pos[0]);
-	temp[1] = V4(0, 1, 0, pos[1]);
-	temp[2] = V4(0, 0, 1, pos[2]);
-	temp[3] = V4(0, 0, 0, 1);
-	return temp;
-}
+			// get error log
+			shaderLogSize;
+			glGetShaderiv(this->pixelShader, GL_INFO_LOG_LENGTH, &shaderLogSize);
+			if (shaderLogSize > 0)
+			{
+				GLchar* buf = new GLchar[shaderLogSize];
+				glGetShaderInfoLog(this->pixelShader, shaderLogSize, NULL, buf);
+				printf("[SHADER COMPILE ERROR]: %s", buf);
+				delete[] buf;
+			}
 
-M4 Translate(float x, float y, float z)
-{
-	M4 temp;
-	temp[0] = V4(1, 0, 0, x);
-	temp[1] = V4(0, 1, 0, y);
-	temp[2] = V4(0, 0, 1, z);
-	temp[3] = V4(0, 0, 0, 1);
-	return temp;
-}
+			// create a program object
+			this->program = glCreateProgram();
+			glAttachShader(this->program, this->vertexShader);
+			glAttachShader(this->program, this->pixelShader);
+			glLinkProgram(this->program);
+			glGetProgramiv(this->program, GL_INFO_LOG_LENGTH, &shaderLogSize);
+			if (shaderLogSize > 0)
+			{
+				GLchar* buf = new GLchar[shaderLogSize];
+				glGetProgramInfoLog(this->program, shaderLogSize, NULL, buf);
+				printf("[PROGRAM LINK ERROR]: %s", buf);
+				delete[] buf;
+			}
 
-M4 Scalar(float s)
-{
-	M4 temp;
-	temp[0] = V4(s, 0, 0, 0);
-	temp[1] = V4(0, s, 0, 0);
-	temp[2] = V4(0, 0, s, 0);
-	temp[3] = V4(0, 0, 0, 1);
-	return temp;
-}
+			Vertice quad[] =
+			{
+				Vertice
+				{
+					V3(-0.5f, -0.5f, 0),
+					V4(1, 0, 0, 1),
+				},
+				Vertice
+				{
+					V3(-0.5, 0.5f,	0),
+					V4(0, 1, 0, 1),
+				},
+				Vertice
+				{
+					V3(0.5f, -0.5f, 0),
+					V4(0, 0, 1, 1),
+				},
+				Vertice
+				{
+					V3(0.5f, 0.5f, 0),
+					V4(0, 0, 0, 1),
+				},
 
-M4 projectiveViewMatrix(float fov, float aspect, float n, float f)
-{
-	float s = 1.0f / (tan(fov / 2) * M_PI / 180.0f);
-	M4 temp;
-	temp[0] = V4(s, 0, 0, 0);
-	temp[1] = V4(0, s, 0, 0);
-	temp[2] = V4(0, 0, -f / (f - n), -1);
-	temp[3] = V4(0, 0, -(f * n) / (f - n), 0);
-	return temp;
-}
+				Vertice
+				{
+					V3(-0.5f, -0.5f, 1),
+					V4(1, 0, 0, 1),
+				},
+				Vertice
+				{
+					V3(-0.5, 0.5f,	1),
+					V4(0, 1, 0, 1),
+				},
+				Vertice
+				{
+					V3(0.5f, -0.5f, 1),
+					V4(0, 0, 1, 1),
+				},
+				Vertice
+				{
+					V3(0.5f, 0.5f, 1),
+					V4(0, 0, 0, 1),
+				},
+			};
 
-void
-ExampleApp::Run()
-{
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LEQUAL);
-	//V4 line(1, 1, 1);
-	float angle = 0;
-	char i = 0, j = 0;
-	M4 matrix1;
-	M4 matrix2;
-	while (this->window->IsOpen())
+			unsigned int indices[36] =
+			{ 0, 1, 2,	//front
+			1, 2, 3,
+
+			4, 5, 6,	//back
+			5, 6, 7,
+
+			0, 1, 4,	//left
+			1, 4, 5,
+
+			6, 7, 2,	//right
+			7, 2, 3,
+
+			1, 3, 5,	//top
+			3, 5, 7,
+
+			0, 2, 4,	//bottom
+			2, 4, 6,
+			};
+
+			// setup vbo
+			cube = cube->Cube(V4(1, 1, 1, 1), V4(0, 0, 1, 1));
+			return true;
+		}
+		return false;
+	}
+
+	//------------------------------------------------------------------------------
+	/**
+	*/
+
+	MeshResource* MeshResource::Cube(const V4 size, const V4 color)
 	{
-		angle += 0.006f;
-		matrix1 = //projectiveViewMatrix(M_PI / 3, 4.0f / 3, 0.1f, 100) *
-			Translate(cos(angle), 0, 0) *
-			Rotation(V4(0, 0, 1), M_PI / 6) *
-			Rotation(V4(1, 0, 0), -M_PI / 6) *
-			Rotation(V4(0, 1, 0), angle) *
-			Scalar(0.5f);
+		Vertice vertices[] =
+		{
+			Vertice
+			{
+				V3(-0.5f, -0.5f, -0.5f),
+				V4(1, 0, 0, 1),
+			},
+			Vertice
+			{
+				V3(-0.5, 0.5f,	-0.5f),
+				V4(0, 1, 0, 1),
+			},
+			Vertice
+			{
+				V3(0.5f, -0.5f, -0.5f),
+				V4(0, 0, 1, 1),
+			},
+			Vertice
+			{
+				V3(0.5f, 0.5f, -0.5f),
+				V4(0, 0, 0, 1),
+			},
+
+			Vertice
+			{
+				V3(-0.5f, -0.5f, 0.5f),
+				V4(1, 0, 0, 1),
+			},
+			Vertice
+			{
+				V3(-0.5, 0.5f, 0.5f),
+				V4(0, 1, 0, 1),
+			},
+			Vertice
+			{
+				V3(0.5f, -0.5f, 0.5f),
+				V4(0, 0, 1, 1),
+			},
+			Vertice
+			{
+				V3(0.5f, 0.5f, 0.5f),
+				V4(0, 0, 0, 1),
+			},
+		};
+
+		unsigned int indices[] =
+		{
+		0, 1, 2,	//front
+		1, 2, 3,
+
+		4, 5, 6,	//back
+		5, 6, 7,
+
+		0, 1, 4,	//left
+		1, 4, 5,
+
+		6, 7, 2,	//right
+		7, 2, 3,
+
+		1, 3, 5,	//top
+		3, 5, 7,
+
+		0, 2, 4,	//bottom
+		2, 4, 6,
+		};
+
+		return new MeshResource(vertices, sizeof(vertices) / sizeof(Vertice), indices, sizeof(vertices) / sizeof(unsigned int));
+	}
+
+	M4 Translate(V3 pos)
+	{
+		M4 temp;
+		temp[0] = V4(1, 0, 0, pos[0]);
+		temp[1] = V4(0, 1, 0, pos[1]);
+		temp[2] = V4(0, 0, 1, pos[2]);
+		temp[3] = V4(0, 0, 0, 1);
+		return temp;
+	}
+
+	M4 Translate(float x, float y, float z)
+	{
+		M4 temp;
+		temp[0] = V4(1, 0, 0, x);
+		temp[1] = V4(0, 1, 0, y);
+		temp[2] = V4(0, 0, 1, z);
+		temp[3] = V4(0, 0, 0, 1);
+		return temp;
+	}
+
+	M4 Scalar(float s)
+	{
+		M4 temp;
+		temp[0] = V4(s, 0, 0, 0);
+		temp[1] = V4(0, s, 0, 0);
+		temp[2] = V4(0, 0, s, 0);
+		temp[3] = V4(0, 0, 0, 1);
+		return temp;
+	}
+
+	M4 projectiveViewMatrix(float fov, float aspect, float n, float f)
+	{
+		float s = 1.0f / (tan(fov / 2) * M_PI / 180.0f);
+		M4 temp;
+		temp[0] = V4(s, 0, 0, 0);
+		temp[1] = V4(0, s, 0, 0);
+		temp[2] = V4(0, 0, -f / (f - n), -1);
+		temp[3] = V4(0, 0, -(f * n) / (f - n), 0);
+		return temp;
+	}
+
+	void
+		ExampleApp::Run()
+	{
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LEQUAL);
+		//V4 line(1, 1, 1);
+		float angle = 0;
+		char i = 0, j = 0;
+		M4 matrix1;
+		M4 matrix2;
+		while (this->window->IsOpen())
+		{
+			angle += 0.006f;
+			matrix1 = //projectiveViewMatrix(M_PI / 3, 4.0f / 3, 0.1f, 100) *
+				Translate(cos(angle), 0, 0) *
+				Rotation(V4(0, 0, 1), M_PI / 6) *
+				Rotation(V4(1, 0, 0), -M_PI / 6) *
+				Rotation(V4(0, 1, 0), angle) *
+				Scalar(0.5f);
+
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			this->window->Update();
+
+			// do stuff
+			glUseProgram(this->program);
+
+			auto loc = glGetUniformLocation(program, "m4");
+			glUniformMatrix4fv(loc, 1, GL_TRUE, (float*)&matrix1);
+			cube->render();
 			
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		this->window->Update();
+			/*glUniformMatrix4fv(loc, 1, GL_TRUE, (float*)&matrix2);
+			quadrilateral->render();*/
 
-		// do stuff
-		glUseProgram(this->program);
-		
-		auto loc = glGetUniformLocation(program, "m4");
-		glUniformMatrix4fv(loc, 1, GL_TRUE, (float*)&matrix1);
-		quadrilateral->render();
-		/*glUniformMatrix4fv(loc, 1, GL_TRUE, (float*)&matrix2);
-		quadrilateral->render();*/
-
-		this->window->SwapBuffers();
+			this->window->SwapBuffers();
+		}
 	}
-}
 
 } // namespace Example

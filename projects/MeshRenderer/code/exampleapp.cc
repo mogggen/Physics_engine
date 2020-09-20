@@ -290,7 +290,7 @@ namespace Example
 			matrix2 = projectiveViewMatrix(70, 640.0f / 480.0f, 0.10f, 10.0f);
 			//Inverse(matrix2);
 			matrix1 = matrix2 *
-				Translate(0, 0, 1) * // z = 1 for proj
+				Translate(sin(angle), 0, -angle) *
 				Rotation(V4(0, 0, 1), M_PI / 6) *
 				Rotation(V4(1, 0, 0), -M_PI / 6) *
 				Rotation(V4(0, 1, 0), angle) *

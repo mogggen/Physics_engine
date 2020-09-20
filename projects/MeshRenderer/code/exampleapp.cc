@@ -144,7 +144,7 @@ namespace Example
 			}
 
 			// setup vbo
-			cube = cube->Cube(V4(1, 1, 1, 1), V4(0, 0, 1, 1));
+			cube = cube->Cube(V4(0.25, 0.125, 2, 1), V4(0, 0, 1, 1));
 			return true;
 		}
 		return false;
@@ -154,50 +154,50 @@ namespace Example
 	/**
 	*/
 
-	MeshResource* MeshResource::Cube(const V4 size, const V4 color)
+	MeshResource* MeshResource::Cube(V4 size, V4 color)
 	{
 		Vertice vertices[] =
 		{
 			Vertice
 			{
-				V3(-0.5f, -0.5f, -0.5f),
-				V4(1, 0, 0, 1),
+				V3(-0.5f * size[0], -0.5f * size[1], -0.5f * size[2]),
+				color
 			},
 			Vertice
 			{
-				V3(-0.5, 0.5f,	-0.5f),
-				V4(0, 1, 0, 1),
+				V3(-0.5 * size[0], 0.5f * size[1], -0.5f * size[2]),
+				color
 			},
 			Vertice
 			{
-				V3(0.5f, -0.5f, -0.5f),
-				V4(0, 0, 1, 1),
+				V3(0.5f * size[0], -0.5f * size[1], -0.5f * size[2]),
+				color
 			},
 			Vertice
 			{
-				V3(0.5f, 0.5f, -0.5f),
-				V4(0, 0, 0, 1),
+				V3(0.5f * size[0], 0.5f * size[1], -0.5f * size[2]),
+				color
 			},
 
 			Vertice
 			{
-				V3(-0.5f, -0.5f, 0.5f),
-				V4(1, 0, 0, 1),
+				V3(-0.5f * size[0], -0.5f * size[1], 0.5f * size[2]),
+				color
 			},
 			Vertice
 			{
-				V3(-0.5, 0.5f, 0.5f),
-				V4(0, 1, 0, 1),
+				V3(-0.5 * size[0], 0.5f * size[1], 0.5f * size[2]),
+				color
 			},
 			Vertice
 			{
-				V3(0.5f, -0.5f, 0.5f),
-				V4(0, 0, 1, 1),
+				V3(0.5f * size[0], -0.5f * size[1], 0.5f * size[2]),
+				color
 			},
 			Vertice
 			{
-				V3(0.5f, 0.5f, 0.5f),
-				V4(0, 0, 0, 1),
+				V3(0.5f * size[0], 0.5f * size[1], 0.5f * size[2]),
+				color
 			},
 		};
 
@@ -282,7 +282,7 @@ namespace Example
 		{
 			angle += 0.006f;
 			matrix1 = //projectiveViewMatrix(60, 4.0f / 3, 0.1f, 100) *
-				Translate(0, 0, 2 * cos(angle) - 1) * // z = 1 for proj
+				Translate(0, 0, 2 * cos(angle)) * // z = 1 for proj
 				Rotation(V4(0, 0, 1), M_PI / 6) *
 				Rotation(V4(1, 0, 0), -M_PI / 6) *
 				Rotation(V4(0, 1, 0), angle) *

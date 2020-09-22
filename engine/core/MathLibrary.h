@@ -885,4 +885,44 @@ inline M4 Rotation(V4 line, float θ)
 
 	return temp;
 }
+
+inline M4 Translate(V4 pos)
+{
+	M4 temp;
+	temp[0] = V4(1, 0, 0, pos[0]);
+	temp[1] = V4(0, 1, 0, pos[1]);
+	temp[2] = V4(0, 0, 1, pos[2]);
+	temp[3] = V4(0, 0, 0, 1);
+	return temp;
+}
+
+inline M4 Scalar(float s)
+{
+	M4 temp;
+	temp[0] = V4(s, 0, 0, 0);
+	temp[1] = V4(0, s, 0, 0);
+	temp[2] = V4(0, 0, s, 0);
+	temp[3] = V4(0, 0, 0, 1);
+	return temp;
+}
+
+/// <param name="fov:">field of view, in degrees</param>
+/// <param name="aspect:">aspectRatio = width / heigth</param>
+/// <param name="n:">nearplane</param>
+/// <param name="f:">farplane</param>
+inline M4 projection(float fov, float aspect, float n, float f)
+{
+	M4 temp;
+	// solution
+	float d = tanf(2 * M_PI - fov * (M_PI / 180) / 2);
+
+	temp[0][0] = d / aspect;
+	temp[1][1] = d;
+	temp[2][2] = (f + n) / (n - f);
+	temp[2][3] = 2 * f * n / (n - f);
+	temp[3][2] = -1;
+
+	return temp;
+}
+
 #pragma endregion

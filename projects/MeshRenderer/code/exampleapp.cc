@@ -11,7 +11,6 @@ const GLchar* vs =
 "layout(location=0) in vec3 pos;\n"
 "layout(location=1) in vec4 color;\n"
 "uniform mat4 m4;\n"
-"uniform vec4 scal;\n"
 "layout(location=0) out vec4 Color;\n"
 "void main()\n"
 "{\n"
@@ -275,55 +274,6 @@ namespace Example
 		return new MeshResource(vertices, sizeof(vertices) / sizeof(Vertice), indices, sizeof(vertices) / sizeof(unsigned int));
 	}
 
-	M4 Translate(V3 pos)
-	{
-		M4 temp;
-		temp[0] = V4(1, 0, 0, pos[0]);
-		temp[1] = V4(0, 1, 0, pos[1]);
-		temp[2] = V4(0, 0, 1, pos[2]);
-		temp[3] = V4(0, 0, 0, 1);
-		return temp;
-	}
-
-	M4 Translate(float x, float y, float z)
-	{
-		M4 temp;
-		temp[0] = V4(1, 0, 0, x);
-		temp[1] = V4(0, 1, 0, y);
-		temp[2] = V4(0, 0, 1, z);
-		temp[3] = V4(0, 0, 0, 1);
-		return temp;
-	}
-
-	M4 Scalar(float s)
-	{
-		M4 temp;
-		temp[0] = V4(s, 0, 0, 0);
-		temp[1] = V4(0, s, 0, 0);
-		temp[2] = V4(0, 0, s, 0);
-		temp[3] = V4(0, 0, 0, 1);
-		return temp;
-	}
-
-	/// <param name="fov:">field of view, in degrees</param>
-	/// <param name="aspect:">aspectRatio = width / heigth</param>
-	/// <param name="n:">nearplane</param>
-	/// <param name="f:">farplane</param>
-	M4 projection(float fov, float aspect, float n, float f)
-	{
-		M4 temp;
-		// solution
-		float d = tanf(2 * M_PI - fov * (M_PI / 180) / 2);
-
-		temp[0][0] = d / aspect;
-		temp[1][1] = d;
-		temp[2][2] = (f + n) / (n - f);
-		temp[2][3] = 2 * f * n / (n - f);
-		temp[3][2] = -1;
-
-		return temp;
-	}
-
 	void
 		ExampleApp::Run()
 	{
@@ -336,12 +286,12 @@ namespace Example
 
 		M4 scene;
 		M4 m;
-		M4 v = cam.LookAt(V4(0, 0, -1), V4(0, 0, 1));
-		M4 p = projection(120, width / height, 0.10f, 100.0f);;
+		M4 v = cam.LookAt(V4(0, 0, 0), V4(0, 1, 0));
+		M4 p = projection(60, width / height, 0.10f, 100.0f);;
 		while (this->window->IsOpen())
 		{
 			angle += 0.006f;
-			m = Translate(0.25f + sinf(angle), 0, -angle) *
+			m = Translate(V4(sinf(angle), 0, -angle)) *
 				Rotation(V4(0, 0, 1), M_PI / 6) *
 				Rotation(V4(1, 0, 0), -M_PI / 6) *
 				Rotation(V4(0, 1, 0), angle) *

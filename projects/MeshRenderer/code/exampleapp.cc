@@ -1,4 +1,4 @@
-//------------------------------------------------------------------------------
+﻿//------------------------------------------------------------------------------
 // exampleapp.cc
 // (C) 2015-2020 Individual contributors, see AUTHORS file
 //------------------------------------------------------------------------------
@@ -70,41 +70,26 @@ namespace Example
 		Destroy();
 	}
 
-	Camera::Camera(V4 pos) : pos(pos)
+	Camera::Camera(float fov, float aspect, float n, float f) :  fov(fov),  aspect(aspect),  n(n),  f(f)
 	{
-
+		pos = V4(0, 0, 0);
+		dir = V4(0, 1, 0);
 	}
 
-	M4 Camera::LookAt(V4 target, V4 up)
+	void Camera::setPos(V4 pos)
 	{
-		V4 zaxis = Normalize(pos - target);
-		V4 xaxis = Normalize(Cross(Normalize(up), zaxis));
-		V4 yaxis = Cross(zaxis, xaxis);
+		this->pos = pos;
+	}
 
-		M4 translation;
-		translation[0][0] = 1;
-		translation[1][1] = 1;
-		translation[2][2] = 1;
-		translation[3][3] = 1;
+	void Camera::setRot(V4 dir, float θ)
+	{
+		this->dir = dir;
+		this->θ = θ;
+	}
 
-		translation[3][0] = -pos.x;
-		translation[3][1] = -pos.y;
-		translation[3][2] = -pos.z;
-		
-		M4 rotation;
-		rotation[0][0] = xaxis.x;
-		rotation[1][0] = xaxis.y;
-		rotation[2][0] = xaxis.z;
-
-		rotation[0][1] = yaxis.x;
-		rotation[1][1] = yaxis.y;
-		rotation[2][1] = yaxis.z;
-
-		rotation[0][2] = zaxis.x;
-		rotation[1][2] = zaxis.y;
-		rotation[2][2] = zaxis.z;
-
-		return rotation * translation;
+	M4 Camera::projectionViewMatrix()
+	{
+		return projection(fov, aspect, n, f) * Translate(pos) * Rotation(dir, θ);
 	}
 
 	//------------------------------------------------------------------------------
@@ -282,12 +267,12 @@ namespace Example
 		float angle = 0;
 		int width, height;
 		window->GetSize(width, height);
-		Camera cam(V4(0, 0, 0));
+		Camera cam(90, width / height, 0.10f, 100.0f);
 
 		M4 scene;
 		M4 m;
-		M4 v = cam.LookAt(V4(0, 0, 0), V4(0, 1, 0));
-		M4 p = projection(60, width / height, 0.10f, 100.0f);;
+		M4 v = cam.projectionViewMatrix();
+		//M4 p = projection(60, width / height, 0.10f, 100.0f);;
 		while (this->window->IsOpen())
 		{
 			angle += 0.006f;
@@ -304,7 +289,7 @@ namespace Example
 			glUseProgram(this->program);
 
 			auto loc = glGetUniformLocation(program, "m4");
-			scene = p * (/*v **/ m);
+			scene = /*p * */(v * m);
 			glUniformMatrix4fv(loc, 1, GL_TRUE, (float*)&scene);
 			cube->render();
 

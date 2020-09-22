@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 //------------------------------------------------------------------------------
 /**
 	Application class used for example application.
@@ -33,10 +33,15 @@ namespace Example
 
 	class Camera
 	{
-		V4 pos;
+		float fov, aspect, n, f;
+		V4 pos, up;
+		V4 dir;
+		float θ;
 	public:
-		Camera(V4 pos);
-		M4 LookAt(V4 target, V4 up);
+		Camera(float fov, float ratio, float n, float f);
+		void setPos(V4 pos);
+		void setRot(V4 dir, float θ);
+		M4 projectionViewMatrix();
 	};
 
 	class ExampleApp : public Core::App

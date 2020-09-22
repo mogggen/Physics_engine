@@ -57,6 +57,56 @@ namespace Example
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 
+	/// <summary>
+	/// Destroy glBuffers
+	/// </summary>
+	void MeshResource::Destroy()
+	{
+		glDeleteBuffers(1, &this->indexBuffer);
+		glDeleteBuffers(1, &this->vertexBuffer);
+	}
+
+	MeshResource::~MeshResource()
+	{
+		Destroy();
+	}
+
+	Camera::Camera(V4 pos) : pos(pos)
+	{
+
+	}
+
+	M4 Camera::LookAt(V4 target, V4 up)
+	{
+		V4 zaxis = Normalize(pos - target);
+		V4 xaxis = Normalize(Cross(Normalize(up), zaxis));
+		V4 yaxis = Cross(zaxis, xaxis);
+
+		M4 translation;
+		translation[0][0] = 1;
+		translation[1][1] = 1;
+		translation[2][2] = 1;
+		translation[3][3] = 1;
+
+		translation[3][0] = -pos.x;
+		translation[3][1] = -pos.y;
+		translation[3][2] = -pos.z;
+		
+		M4 rotation;
+		rotation[0][0] = xaxis.x;
+		rotation[1][0] = xaxis.y;
+		rotation[2][0] = xaxis.z;
+
+		rotation[0][1] = yaxis.x;
+		rotation[1][1] = yaxis.y;
+		rotation[2][1] = yaxis.z;
+
+		rotation[0][2] = zaxis.x;
+		rotation[1][2] = zaxis.y;
+		rotation[2][2] = zaxis.z;
+
+		return rotation * translation;
+	}
 
 	//------------------------------------------------------------------------------
 	/**
@@ -259,7 +309,7 @@ namespace Example
 	/// <param name="aspect:">aspectRatio = width / heigth</param>
 	/// <param name="n:">nearplane</param>
 	/// <param name="f:">farplane</param>
-	M4 projectiveViewMatrix(float fov, float aspect, float n, float f)
+	M4 projection(float fov, float aspect, float n, float f)
 	{
 		M4 temp;
 		// solution
@@ -279,18 +329,19 @@ namespace Example
 	{
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
-		//V4 line(1, 1, 1);
 		float angle = 0;
-		char i = 0, j = 0;
-		M4 matrix1;
-		M4 matrix2;
+		int width, height;
+		window->GetSize(width, height);
+		Camera cam(V4(0, 0, 0));
+
+		M4 scene;
+		M4 m;
+		M4 v = cam.LookAt(V4(0, 0, -1), V4(0, 0, 1));
+		M4 p = projection(120, width / height, 0.10f, 100.0f);;
 		while (this->window->IsOpen())
 		{
 			angle += 0.006f;
-			matrix2 = projectiveViewMatrix(70, 640.0f / 480.0f, 0.10f, 10.0f);
-			//Inverse(matrix2);
-			matrix1 = matrix2 *
-				Translate(sin(angle), 0, -angle) *
+			m = Translate(0.25f + sinf(angle), 0, -angle) *
 				Rotation(V4(0, 0, 1), M_PI / 6) *
 				Rotation(V4(1, 0, 0), -M_PI / 6) *
 				Rotation(V4(0, 1, 0), angle) *
@@ -303,11 +354,9 @@ namespace Example
 			glUseProgram(this->program);
 
 			auto loc = glGetUniformLocation(program, "m4");
-			glUniformMatrix4fv(loc, 1, GL_TRUE, (float*)&matrix1);
+			scene = p * (/*v **/ m);
+			glUniformMatrix4fv(loc, 1, GL_TRUE, (float*)&scene);
 			cube->render();
-			
-			/*glUniformMatrix4fv(loc, 1, GL_TRUE, (float*)&matrix2);
-			quadrilateral->render();*/
 
 			this->window->SwapBuffers();
 		}

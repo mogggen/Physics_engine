@@ -26,10 +26,18 @@ namespace Example
 	public:
 		MeshResource* Cube(const V4 size, const V4 color);
 		MeshResource(Vertice vertices[], int Verticeslength, unsigned int indices[], int indicesLength);
+		~MeshResource();
+		void Destroy();
 		void render();
 	};
 
-	
+	class Camera
+	{
+		V4 pos;
+	public:
+		Camera(V4 pos);
+		M4 LookAt(V4 target, V4 up);
+	};
 
 	class ExampleApp : public Core::App
 	{

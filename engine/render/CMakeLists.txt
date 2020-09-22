@@ -4,7 +4,9 @@
 
 SET(files_render_display
 	window.h
-	window.cc)
+	window.cc
+	stb_image.h
+	stb_image.cc)
 SOURCE_GROUP("display" FILES ${files_render_display})
 
 

@@ -73,7 +73,7 @@ namespace Example
 	Camera::Camera(float fov, float aspect, float n, float f) :  fov(fov),  aspect(aspect),  n(n),  f(f)
 	{
 		pos = V4(0, 0, 0);
-		dir = V4(0, 1, 0);
+		dir = V4(0, 0, 0);
 	}
 
 	void Camera::setPos(V4 pos)
@@ -81,15 +81,15 @@ namespace Example
 		this->pos = pos;
 	}
 
-	void Camera::setRot(V4 dir, float θ)
+	void Camera::setRot(V4 dir, float rad)
 	{
 		this->dir = dir;
-		this->θ = θ;
+		this->rad = rad;
 	}
 
 	M4 Camera::projectionViewMatrix()
 	{
-		return projection(fov, aspect, n, f) * Translate(pos) * Rotation(dir, θ);
+		return projection(fov, aspect, n, f) * Translate(pos) * Rotation(dir, rad);
 	}
 
 	//------------------------------------------------------------------------------
@@ -178,7 +178,7 @@ namespace Example
 			}
 
 			// setup vbo
-			cube = cube->Cube(V4(1, 1, 1, 1), V4(1, 0, 1, 1));
+			cube = cube->Cube(V4(0.01f, 0.01f, 100), V4(1, 0, 1, 1));
 			return true;
 		}
 		return false;
@@ -264,23 +264,21 @@ namespace Example
 	{
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
-		float angle = 0;
+		float step = 0;
 		int width, height;
 		window->GetSize(width, height);
 		Camera cam(90, width / height, 0.10f, 100.0f);
-
+		char i = 0;
 		M4 scene;
-		M4 m;
+		M4 m[52];
 		M4 v = cam.projectionViewMatrix();
-		//M4 p = projection(60, width / height, 0.10f, 100.0f);;
 		while (this->window->IsOpen())
 		{
-			angle += 0.006f;
-			m = Translate(V4(sinf(angle), 0, -angle)) *
-				Rotation(V4(0, 0, 1), M_PI / 6) *
-				Rotation(V4(1, 0, 0), -M_PI / 6) *
-				Rotation(V4(0, 1, 0), angle) *
-				Scalar(0.5f);
+			step += 0.006f;
+			for (i = 0; i < sizeof(m) / sizeof(M4); i++)
+			{
+				m[i] = Translate(V4((8 * i) / 16.0f - 14.f, 1, 0));
+			}
 
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			this->window->Update();
@@ -289,9 +287,28 @@ namespace Example
 			glUseProgram(this->program);
 
 			auto loc = glGetUniformLocation(program, "m4");
-			scene = /*p * */(v * m);
-			glUniformMatrix4fv(loc, 1, GL_TRUE, (float*)&scene);
-			cube->render();
+
+			for (i = 0; i <  sizeof(m) / sizeof(M4); i++)
+			{
+				scene = v * m[i];
+				glUniformMatrix4fv(loc, 1, GL_TRUE, (float*)&scene);
+				cube->render();
+			}
+
+			for (i = 0; i < sizeof(m) / sizeof(M4); i++)
+			{
+				
+				m[i] = Rotation(V4(0, 1, 0), M_PI / 2) * Translate(V4((20 * i) / 16.0f - 60.f - step * 4, 1, 0));
+
+				scene = v * m[i];
+				glUniformMatrix4fv(loc, 1, GL_TRUE, (float*)&scene);
+				cube->render();
+			}
+
+			if (step > 20 / 16.0f)
+			{
+				step -= 20 / 16.0f;
+			}
 
 			this->window->SwapBuffers();
 		}

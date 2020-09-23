@@ -73,7 +73,7 @@ namespace Example
 	Camera::Camera(float fov, float aspect, float n, float f) :  fov(fov),  aspect(aspect),  n(n),  f(f)
 	{
 		pos = V4(0, 0, 0);
-		dir = V4(0, 0, 0);
+		dir = V4(0, 1, 0);
 	}
 
 	void Camera::setPos(V4 pos)
@@ -268,6 +268,7 @@ namespace Example
 		int width, height;
 		window->GetSize(width, height);
 		Camera cam(90, width / height, 0.10f, 100.0f);
+		bool d = true;
 		char i = 0;
 		M4 scene;
 		M4 m[52];
@@ -288,7 +289,7 @@ namespace Example
 
 			auto loc = glGetUniformLocation(program, "m4");
 
-			for (i = 0; i <  sizeof(m) / sizeof(M4); i++)
+			for (i = 0; i < sizeof(m) / sizeof(M4); i++)
 			{
 				scene = v * m[i];
 				glUniformMatrix4fv(loc, 1, GL_TRUE, (float*)&scene);
@@ -297,17 +298,16 @@ namespace Example
 
 			for (i = 0; i < sizeof(m) / sizeof(M4); i++)
 			{
-				
-				m[i] = Rotation(V4(0, 1, 0), M_PI / 2) * Translate(V4((20 * i) / 16.0f - 60.f - step * 4, 1, 0));
+				m[i] = Rotation(V4(0, 1, 0), M_PI / 2) * Translate(V4((20 * i) / 16.0f - 60.f - step * 4 * (d + 1), 1, 0));
 
 				scene = v * m[i];
 				glUniformMatrix4fv(loc, 1, GL_TRUE, (float*)&scene);
 				cube->render();
 			}
 
-			if (step > 20 / 16.0f)
+			if (step > 20 / 16.0f / (d + 1))
 			{
-				step -= 20 / 16.0f;
+				step -= 20 / 16.0f / (d + 1);
 			}
 
 			this->window->SwapBuffers();

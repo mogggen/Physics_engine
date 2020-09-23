@@ -36,7 +36,7 @@ namespace Example
 		float fov, aspect, n, f;
 		V4 pos, up;
 		V4 dir;
-		float rad;
+		float rad = 0.f;
 	public:
 		Camera(float fov, float ratio, float n, float f);
 		void setPos(V4 pos);

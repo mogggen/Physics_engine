@@ -12,10 +12,11 @@
 
 namespace Example
 {
-	struct Vertice
+	struct Vertex
 	{
 		V3 pos;
 		V4 rgba;
+		float texture[2];
 	};
 
 	class MeshResource
@@ -24,8 +25,8 @@ namespace Example
 		GLuint vertexBuffer;
 		GLuint indexBuffer;
 	public:
-		MeshResource* Cube(const V4 size, const V4 color);
-		MeshResource(Vertice vertices[], int Verticeslength, unsigned int indices[], int indicesLength);
+		MeshResource* Cube(const V4 size, const V4 color, float texture[]);
+		MeshResource(Vertex vertices[], int Verticeslength, unsigned int indices[], int indicesLength);
 		~MeshResource();
 		void Destroy();
 		void render();
@@ -42,6 +43,13 @@ namespace Example
 		void setPos(V4 pos);
 		void setRot(V4 dir, float θ);
 		M4 projectionViewMatrix();
+	};
+
+	class TextureResource
+	{
+		GLuint texture;
+	public:
+		void LoadFromFile(const char* filename);
 	};
 
 	class ExampleApp : public Core::App

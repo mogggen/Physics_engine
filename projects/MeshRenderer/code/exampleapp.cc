@@ -3,38 +3,51 @@
 // (C) 2015-2020 Individual contributors, see AUTHORS file
 //------------------------------------------------------------------------------
 #include "config.h"
+#include "stb_image.h"
 #include "exampleapp.h"
 #include <cstring>
 
 const GLchar* vs =
 "#version 430\n"
+
 "layout(location=0) in vec3 pos;\n"
 "layout(location=1) in vec4 color;\n"
+"layout(location=2) in vec2 textures;\n"
+
+"uniform sampler2D textureArray;"
 "uniform mat4 m4;\n"
+
 "layout(location=0) out vec4 Color;\n"
+
 "void main()\n"
 "{\n"
 "	gl_Position = m4 * vec4(pos, 1);\n"
 "	Color = color;\n"
+"	textures = textures;\n"
 "}\n";
 
 const GLchar* ps =
 "#version 430\n"
+
 "layout(location=0) in vec4 color;\n"
+"layout(location=1) in vec2 textures;\n"
+"uniform sampler2D textureArray"
+
 "out vec4 Color;\n"
+
 "void main()\n"
 "{\n"
-"	Color = color;\n"
+"	Color = texture(textureArray, textures);\n"
 "}\n";
 
 using namespace Display;
 namespace Example
 {
-	MeshResource::MeshResource(Vertice vertices[], int Verticeslength, unsigned int indices[], int indicesLength) : indices(indicesLength)
+	MeshResource::MeshResource(Vertex vertices[], int Verticeslength, unsigned int indices[], int indicesLength) : indices(indicesLength)
 	{
 		glGenBuffers(1, &this->vertexBuffer);
 		glBindBuffer(GL_ARRAY_BUFFER, this->vertexBuffer);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(float32) * 7 * Verticeslength, vertices, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(float32) * sizeof(Vertex) * Verticeslength, vertices, GL_STATIC_DRAW);
 
 		glGenBuffers(1, &this->indexBuffer);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->indexBuffer);
@@ -48,12 +61,19 @@ namespace Example
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, this->vertexBuffer);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->indexBuffer);
+
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float32) * 7, NULL);
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(float32) * 7, (GLvoid*)(sizeof(float32) * 3));
+		glEnableVertexAttribArray(2);
+
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float32) * sizeof(Vertex), NULL);
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(float32) * sizeof(Vertex), (GLvoid*)(sizeof(float32) * 3));
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float32) * sizeof(Vertex), (GLvoid*)(sizeof(float32) * 7));
+		
 		glDrawElements(GL_TRIANGLES, indices, GL_UNSIGNED_INT, 0);
+
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 
 	/// <summary>
@@ -92,6 +112,37 @@ namespace Example
 		return projection(fov, aspect, n, f) * Translate(pos) * Rotation(dir, rad);
 	}
 
+	void TextureResource::LoadFromFile(const char* filename)
+	{
+		int width, height, nrChannels;
+		GLuint texture;
+
+		unsigned char* img = stbi_load(filename, &width, &height, &nrChannels, 0);
+		if (img == nullptr)
+		{
+			printf("Image loaded incorrectly");
+			exit(1);
+		}
+
+		glGenTextures(1, &texture);
+		glBindTexture(GL_TEXTURE_2D, texture);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+		if (nrChannels == 3)
+		{
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, img);
+		}
+
+		else if (nrChannels == 3)
+		{
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, img);
+		}
+
+		glBindTexture(GL_TEXTURE_2D, texture);
+	}
+
 	//------------------------------------------------------------------------------
 	/**
 	*/
@@ -122,7 +173,8 @@ namespace Example
 			this->window->Close();
 		});
 
-
+		TextureResource texture;
+		texture.LoadFromFile("filepath");
 
 		if (this->window->Open())
 		{
@@ -153,7 +205,6 @@ namespace Example
 			glCompileShader(this->pixelShader);
 
 			// get error log
-			shaderLogSize;
 			glGetShaderiv(this->pixelShader, GL_INFO_LOG_LENGTH, &shaderLogSize);
 			if (shaderLogSize > 0)
 			{
@@ -178,7 +229,7 @@ namespace Example
 			}
 
 			// setup vbo
-			cube = cube->Cube(V4(0.01f, 0.01f, 100), V4(1, 0, 1, 1));
+			cube = cube->Cube(V4(0.01f, 0.01f, 100), V4(1,1,1), float s, float t);
 			return true;
 		}
 		return false;
@@ -188,50 +239,59 @@ namespace Example
 	/**
 	*/
 
-	MeshResource* MeshResource::Cube(V4 size, V4 color)
+	MeshResource* MeshResource::Cube(V4 size, V4 color, float texture[2])
 	{
-		Vertice vertices[] =
+		Vertex vertices[] =
 		{
-			Vertice
+			Vertex
 			{
 				V3(-0.5f * size[0], -0.5f * size[1], -0.5f * size[2]),
-				color
+				color,
+				texture[0],
+				texture[1],
 			},
-			Vertice
+			Vertex
 			{
 				V3(-0.5 * size[0], 0.5f * size[1], -0.5f * size[2]),
 				color
+				,
 			},
-			Vertice
+			Vertex
 			{
 				V3(0.5f * size[0], -0.5f * size[1], -0.5f * size[2]),
 				color
+				,
 			},
-			Vertice
+			Vertex
 			{
 				V3(0.5f * size[0], 0.5f * size[1], -0.5f * size[2]),
 				color
+				,
 			},
 
-			Vertice
+			Vertex
 			{
 				V3(-0.5f * size[0], -0.5f * size[1], 0.5f * size[2]),
 				color
+				,
 			},
-			Vertice
+			Vertex
 			{
 				V3(-0.5 * size[0], 0.5f * size[1], 0.5f * size[2]),
 				color
+				,
 			},
-			Vertice
+			Vertex
 			{
 				V3(0.5f * size[0], -0.5f * size[1], 0.5f * size[2]),
 				color
+				,
 			},
-			Vertice
+			Vertex
 			{
 				V3(0.5f * size[0], 0.5f * size[1], 0.5f * size[2]),
 				color
+				,
 			},
 		};
 
@@ -256,7 +316,7 @@ namespace Example
 		2, 4, 6,
 		};
 
-		return new MeshResource(vertices, sizeof(vertices) / sizeof(Vertice), indices, sizeof(vertices) / sizeof(unsigned int));
+		return new MeshResource(vertices, sizeof(vertices) / sizeof(Vertex), indices, sizeof(vertices) / sizeof(unsigned int));
 	}
 
 	void
@@ -298,7 +358,7 @@ namespace Example
 
 			for (i = 0; i < sizeof(m) / sizeof(M4); i++)
 			{
-				m[i] = Rotation(V4(0, 1, 0), M_PI / 2) * Translate(V4((20 * i) / 16.0f - 60.f - step * 4 * (d + 1), 1, 0));
+				m[i] = Rotation(V4(0, 1, 0), M_PI / 2) * Translate(V4((20 * i) / 16.0f - 60.f + step * 4 * (d + 1), 1, 0));
 
 				scene = v * m[i];
 				glUniformMatrix4fv(loc, 1, GL_TRUE, (float*)&scene);

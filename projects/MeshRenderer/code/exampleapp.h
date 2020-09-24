@@ -16,7 +16,7 @@ namespace Example
 	{
 		V3 pos;
 		V4 rgba;
-		float texture[2];
+		float texX, texY;
 	};
 
 	class MeshResource
@@ -25,7 +25,7 @@ namespace Example
 		GLuint vertexBuffer;
 		GLuint indexBuffer;
 	public:
-		MeshResource* Cube(const V4 size, const V4 color, float texture[]);
+		MeshResource* Cube(const V4 size, const V4 color);
 		MeshResource(Vertex vertices[], int Verticeslength, unsigned int indices[], int indicesLength);
 		~MeshResource();
 		void Destroy();

@@ -229,7 +229,7 @@ namespace Example
 			}
 
 			// setup vbo
-			cube = cube->Cube(V4(0.01f, 0.01f, 100), V4(1,1,1), float s, float t);
+			cube = cube->Cube(V4(0.01f, 0.01f, 100), V4(1,1,1));
 			return true;
 		}
 		return false;
@@ -239,59 +239,65 @@ namespace Example
 	/**
 	*/
 
-	MeshResource* MeshResource::Cube(V4 size, V4 color, float texture[2])
+	MeshResource* MeshResource::Cube(V4 size, V4 color)
 	{
+		//x,y
+		float bottomLeft[2] = { 0, 0 };
+		float bootomRight[2] = { 1, 0 };
+
+		float topLeft[2] = { 0, 1 };
+		float topRight[2] = { 1, 1 };
+
 		Vertex vertices[] =
 		{
 			Vertex
 			{
 				V3(-0.5f * size[0], -0.5f * size[1], -0.5f * size[2]),
 				color,
-				texture[0],
-				texture[1],
+				topRight,
 			},
 			Vertex
 			{
 				V3(-0.5 * size[0], 0.5f * size[1], -0.5f * size[2]),
-				color
-				,
+				color,
+				topRight,
 			},
 			Vertex
 			{
 				V3(0.5f * size[0], -0.5f * size[1], -0.5f * size[2]),
-				color
-				,
+				color,
+				topRight,
 			},
 			Vertex
 			{
 				V3(0.5f * size[0], 0.5f * size[1], -0.5f * size[2]),
-				color
-				,
+				color,
+				topRight,
 			},
 
 			Vertex
 			{
 				V3(-0.5f * size[0], -0.5f * size[1], 0.5f * size[2]),
-				color
-				,
+				color,
+				topRight,
 			},
 			Vertex
 			{
 				V3(-0.5 * size[0], 0.5f * size[1], 0.5f * size[2]),
-				color
-				,
+				color,
+				topRight,
 			},
 			Vertex
 			{
 				V3(0.5f * size[0], -0.5f * size[1], 0.5f * size[2]),
-				color
-				,
+				color,
+				topRight,
 			},
 			Vertex
 			{
 				V3(0.5f * size[0], 0.5f * size[1], 0.5f * size[2]),
-				color
-				,
+				color,
+				topRight,
 			},
 		};
 

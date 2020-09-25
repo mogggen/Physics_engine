@@ -12,32 +12,35 @@ const GLchar* vs =
 
 "layout(location=0) in vec3 pos;\n"
 "layout(location=1) in vec4 color;\n"
-"layout(location=2) in vec2 textures;\n"
+"layout(location=2) in vec2 texturesIn;\n"
 
-"uniform sampler2D textureArray;"
+"out vec4 Colors;\n"
+"out vec2 texturesOut;\n"
+
 "uniform mat4 m4;\n"
-
-"layout(location=0) out vec4 Color;\n"
+"uniform vec4 colorVector;\n"
+"uniform sampler2D textureArray;\n"
 
 "void main()\n"
 "{\n"
 "	gl_Position = m4 * vec4(pos, 1);\n"
-"	Color = color;\n"
-"	textures = textures;\n"
+"	Colors = color;\n"
+"	texturesOut = texturesIn;\n"
 "}\n";
 
 const GLchar* ps =
 "#version 430\n"
 
-"layout(location=0) in vec4 color;\n"
-"layout(location=1) in vec2 textures;\n"
-"uniform sampler2D textureArray"
+"layout(location=0) in vec4 Colors;\n"
+"layout(location=1) in vec2 texturesOut;\n"
+
+"uniform sampler2D textureArray;\n"
 
 "out vec4 Color;\n"
 
 "void main()\n"
 "{\n"
-"	Color = texture(textureArray, textures);\n"
+"	Color = texture(textureArray, texturesOut) * Colors;\n"
 "}\n";
 
 using namespace Display;
@@ -47,7 +50,7 @@ namespace Example
 	{
 		glGenBuffers(1, &this->vertexBuffer);
 		glBindBuffer(GL_ARRAY_BUFFER, this->vertexBuffer);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(float32) * sizeof(Vertex) * Verticeslength, vertices, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * Verticeslength, vertices, GL_STATIC_DRAW);
 
 		glGenBuffers(1, &this->indexBuffer);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->indexBuffer);
@@ -66,9 +69,9 @@ namespace Example
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);
 
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float32) * sizeof(Vertex), NULL);
-		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(float32) * sizeof(Vertex), (GLvoid*)(sizeof(float32) * 3));
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float32) * sizeof(Vertex), (GLvoid*)(sizeof(float32) * 7));
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), NULL);
+		glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(sizeof(float32) * 3));
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(sizeof(float32) * 7));
 		
 		glDrawElements(GL_TRIANGLES, indices, GL_UNSIGNED_INT, 0);
 
@@ -115,9 +118,8 @@ namespace Example
 	void TextureResource::LoadFromFile(const char* filename)
 	{
 		int width, height, nrChannels;
-		GLuint texture;
 
-		unsigned char* img = stbi_load(filename, &width, &height, &nrChannels, 0);
+		unsigned char* img = stbi_load(filename, &width, &height, &nrChannels, STBI_rgb_alpha);
 		if (img == nullptr)
 		{
 			printf("Image loaded incorrectly");
@@ -135,13 +137,19 @@ namespace Example
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, img);
 		}
 
-		else if (nrChannels == 3)
+		else if (nrChannels == 4)
 		{
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, img);
 		}
 
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
+	void TextureResource::BindTexture()
+	{
 		glBindTexture(GL_TEXTURE_2D, texture);
 	}
+	
 
 	//------------------------------------------------------------------------------
 	/**
@@ -172,9 +180,7 @@ namespace Example
 		{
 			this->window->Close();
 		});
-
-		TextureResource texture;
-		texture.LoadFromFile("filepath");
+		
 
 		if (this->window->Open())
 		{
@@ -229,7 +235,7 @@ namespace Example
 			}
 
 			// setup vbo
-			cube = cube->Cube(V4(0.01f, 0.01f, 100), V4(1,1,1));
+			cube = cube->Cube(V4(1, 1, 1), V4(1, 1, 1));
 			return true;
 		}
 		return false;
@@ -243,61 +249,105 @@ namespace Example
 	{
 		//x,y
 		float bottomLeft[2] = { 0, 0 };
-		float bootomRight[2] = { 1, 0 };
+		float bottomRight[2] = { 1, 0 };
 
 		float topLeft[2] = { 0, 1 };
 		float topRight[2] = { 1, 1 };
 
+		//1	3
+		//0	2
+
 		Vertex vertices[] =
 		{
-			Vertex
-			{
-				V3(-0.5f * size[0], -0.5f * size[1], -0.5f * size[2]),
-				color,
-				topRight,
-			},
-			Vertex
-			{
-				V3(-0.5 * size[0], 0.5f * size[1], -0.5f * size[2]),
-				color,
-				topRight,
-			},
+			//Back 0-3
 			Vertex
 			{
 				V3(0.5f * size[0], -0.5f * size[1], -0.5f * size[2]),
 				color,
-				topRight,
+				bottomLeft[0],
+				bottomLeft[1]
 			},
 			Vertex
 			{
 				V3(0.5f * size[0], 0.5f * size[1], -0.5f * size[2]),
 				color,
-				topRight,
+				topLeft[0],
+				topLeft[1]
+			},
+			Vertex
+			{
+				V3(-0.5f * size[0], -0.5f * size[1], -0.5f * size[2]),
+				color,
+				bottomRight[0],
+				bottomRight[1]
+			},
+			Vertex
+			{
+				V3(-0.5 * size[0], 0.5f * size[1], -0.5f * size[2]),
+				color,
+				topRight[0],
+				topRight[1]
 			},
 
+			//Front 4-7
 			Vertex
 			{
 				V3(-0.5f * size[0], -0.5f * size[1], 0.5f * size[2]),
 				color,
-				topRight,
+				bottomLeft[0],
+				bottomLeft[1]
 			},
 			Vertex
 			{
 				V3(-0.5 * size[0], 0.5f * size[1], 0.5f * size[2]),
 				color,
-				topRight,
+				topLeft[0],
+				topLeft[1]
 			},
 			Vertex
 			{
 				V3(0.5f * size[0], -0.5f * size[1], 0.5f * size[2]),
 				color,
-				topRight,
+				bottomRight[0],
+				bottomRight[1]
 			},
 			Vertex
 			{
 				V3(0.5f * size[0], 0.5f * size[1], 0.5f * size[2]),
 				color,
-				topRight,
+				topRight[0],
+				topRight[1]
+			},
+
+			
+			//Left 8-11
+			Vertex
+			{
+				V3(-0.5f * size[0], -0.5f * size[1], 0.5f * size[2]),
+				color,
+				topRight[0],
+				topRight[1]
+			},
+			Vertex
+			{
+				V3(-0.5 * size[0], 0.5f * size[1], 0.5f * size[2]),
+				color,
+				topRight[0],
+				topRight[1]
+			},
+			Vertex
+			{
+				V3(0.5f * size[0], -0.5f * size[1], 0.5f * size[2]),
+				color,
+				topRight[0],
+				topRight[1]
+			},
+			Vertex
+			{
+				V3(0.5f * size[0], 0.5f * size[1], 0.5f * size[2]),
+				color,
+				topRight[0],
+				topRight[1]
 			},
 		};
 
@@ -333,48 +383,29 @@ namespace Example
 		float step = 0;
 		int width, height;
 		window->GetSize(width, height);
+		TextureResource texture;
+		texture.LoadFromFile("textures/twoTiming.jpg");
 		Camera cam(90, width / height, 0.10f, 100.0f);
 		bool d = true;
 		char i = 0;
 		M4 scene;
-		M4 m[52];
+		M4 m;
 		M4 v = cam.projectionViewMatrix();
 		while (this->window->IsOpen())
 		{
 			step += 0.006f;
-			for (i = 0; i < sizeof(m) / sizeof(M4); i++)
-			{
-				m[i] = Translate(V4((8 * i) / 16.0f - 14.f, 1, 0));
-			}
-
+			m = Translate(V4(0, 0, -5)) * Rotation(V4(0, 1, 0), step);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			this->window->Update();
 
 			// do stuff
 			glUseProgram(this->program);
+			texture.BindTexture();
 
+			scene = v * m;
 			auto loc = glGetUniformLocation(program, "m4");
-
-			for (i = 0; i < sizeof(m) / sizeof(M4); i++)
-			{
-				scene = v * m[i];
-				glUniformMatrix4fv(loc, 1, GL_TRUE, (float*)&scene);
-				cube->render();
-			}
-
-			for (i = 0; i < sizeof(m) / sizeof(M4); i++)
-			{
-				m[i] = Rotation(V4(0, 1, 0), M_PI / 2) * Translate(V4((20 * i) / 16.0f - 60.f + step * 4 * (d + 1), 1, 0));
-
-				scene = v * m[i];
-				glUniformMatrix4fv(loc, 1, GL_TRUE, (float*)&scene);
-				cube->render();
-			}
-
-			if (step > 20 / 16.0f / (d + 1))
-			{
-				step -= 20 / 16.0f / (d + 1);
-			}
+			glUniformMatrix4fv(loc, 1, GL_TRUE, (float*)&scene);
+			cube->render();
 
 			this->window->SwapBuffers();
 		}

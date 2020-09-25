@@ -16,7 +16,7 @@ namespace Example
 	{
 		V3 pos;
 		V4 rgba;
-		float texX, texY;
+		float texel[2];
 	};
 
 	class MeshResource
@@ -49,6 +49,7 @@ namespace Example
 	{
 		GLuint texture;
 	public:
+		void BindTexture();
 		void LoadFromFile(const char* filename);
 	};
 

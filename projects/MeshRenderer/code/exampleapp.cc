@@ -248,14 +248,11 @@ namespace Example
 	MeshResource* MeshResource::Cube(V4 size, V4 color)
 	{
 		//x,y
-		float bottomLeft[2] = { 0, 0 };
-		float bottomRight[2] = { 1, 0 };
+		float leftBottom[2] = { 0, 0 };
+		float rightbottom[2] = { 1, 0 };
 
-		float topLeft[2] = { 0, 1 };
-		float topRight[2] = { 1, 1 };
-
-		//1	3
-		//0	2
+		float leftTop[2] = { 0, 1 };
+		float rightTop[2] = { 1, 1 };
 
 		Vertex vertices[] =
 		{
@@ -264,198 +261,210 @@ namespace Example
 			//xyz
 
 			//000
-			Vertex
+			Vertex //back : 0
 			{
 				V3(-.5f * size[0], -.5f * size[1], -.5f * size[2]),
 				color,
-				bottomRight[0],
-				bottomRight[1]
+				rightbottom[0],
+				rightbottom[1]
 			},
-			Vertex
+			Vertex //left : 1
 			{
 				V3(-.5f * size[0], -.5f * size[1], -.5f * size[2]),
 				color,
-				bottomRight[0],
-				bottomRight[1]
+				leftBottom[0],
+				leftBottom[1]
 			},
-			Vertex
+			Vertex //bottom : 2
 			{
 				V3(-.5f * size[0], -.5f * size[1], -.5f * size[2]),
 				color,
-				bottomRight[0],
-				bottomRight[1]
+				rightbottom[0],
+				rightbottom[1]
 			},
 
 			//100
-			Vertex
+			Vertex //back : 3
 			{
 				V3(.5f * size[0], -.5f * size[1], -.5f * size[2]),
 				color,
-				bottomLeft[0],
-				bottomLeft[1]
+				leftBottom[0],
+				leftBottom[1]
 			},
-			Vertex
+			Vertex //right : 4
 			{
 				V3(.5f * size[0], -.5f * size[1], -.5f * size[2]),
 				color,
-				bottomLeft[0],
-				bottomLeft[1]
+				leftBottom[0],
+				leftBottom[1]
 			},
-			Vertex
+			Vertex //bottom : 5
 			{
 				V3(.5f * size[0], -.5f * size[1], -.5f * size[2]),
 				color,
-				bottomLeft[0],
-				bottomLeft[1]
+				leftBottom[0],
+				leftBottom[1]
 			},
 
 			//010
-			Vertex
+			Vertex //back : 6
 			{
 				V3(-.5 * size[0], .5f * size[1], -.5f * size[2]),
 				color,
-				topRight[0],
-				topRight[1]
+				rightTop[0],
+				rightTop[1]
 			},
-			Vertex
+			Vertex //left : 7
 			{
 				V3(-.5 * size[0], .5f * size[1], -.5f * size[2]),
 				color,
-				topRight[0],
-				topRight[1]
+				rightTop[0],
+				rightTop[1]
 			},
-			Vertex
+			Vertex //top : 8
 			{
 				V3(-.5 * size[0], .5f * size[1], -.5f * size[2]),
 				color,
-				topRight[0],
-				topRight[1]
+				rightTop[0],
+				rightTop[1]
 			},
 
 			//110
-			Vertex
+			Vertex //back : 9
 			{
 				V3(.5f * size[0], .5f * size[1], -.5f * size[2]),
 				color,
-				topLeft[0],
-				topLeft[1]
+				leftTop[0],
+				leftTop[1]
 			},
-			Vertex
+			Vertex //right : 10
 			{
 				V3(.5f * size[0], .5f * size[1], -.5f * size[2]),
 				color,
-				topLeft[0],
-				topLeft[1]
+				leftTop[0],
+				leftTop[1]
 			},
-			Vertex
+			Vertex //top : 11
 			{
 				V3(.5f * size[0], .5f * size[1], -.5f * size[2]),
 				color,
-				topLeft[0],
-				topLeft[1]
+				leftTop[0],
+				leftTop[1]
 			},
 
 			//001
-			Vertex
+			Vertex //left : 12
 			{
 				V3(-.5f * size[0], -.5f * size[1], .5f * size[2]),
 				color,
-				topRight[0],
-				topRight[1]
+				rightTop[0],
+				rightTop[1]
 			},
-			Vertex
+			Vertex //front : 13
 			{
 				V3(-.5f * size[0], -.5f * size[1], .5f * size[2]),
 				color,
-				topRight[0],
-				topRight[1]
+				rightTop[0],
+				rightTop[1]
 			},
-			Vertex
+			Vertex //bottom : 14
 			{
 				V3(-.5f * size[0], -.5f * size[1], .5f * size[2]),
 				color,
-				topRight[0],
-				topRight[1]
+				rightTop[0],
+				rightTop[1]
 			},
 
 			//101
-			Vertex
+			Vertex //right : 15
 			{
 				V3(.5f * size[0], -.5f * size[1], .5f * size[2]),
 				color,
-				topRight[0],
-				topRight[1]
+				rightTop[0],
+				rightTop[1]
 			},
-			Vertex
+			Vertex //front : 16
 			{
 				V3(.5f * size[0], -.5f * size[1], .5f * size[2]),
 				color,
-				topRight[0],
-				topRight[1]
+				rightTop[0],
+				rightTop[1]
 			},
-			Vertex
+			Vertex //bottom : 17
 			{
 				V3(.5f * size[0], -.5f * size[1], .5f * size[2]),
 				color,
-				topRight[0],
-				topRight[1]
+				rightTop[0],
+				rightTop[1]
 			},
 
 			//011
-			Vertex
+			Vertex // left : 18
 			{
 				V3(-.5f * size[0], .5f * size[1], .5f * size[2]),
 				color,
-				topRight[0],
-				topRight[1]
+				rightTop[0],
+				rightTop[1]
 			},
-			Vertex
+			Vertex // front : 19
 			{
 				V3(-.5f * size[0], .5f * size[1], .5f * size[2]),
 				color,
-				topRight[0],
-				topRight[1]
+				rightTop[0],
+				rightTop[1]
 			},
-			Vertex
+			Vertex // top : 20
 			{
 				V3(-.5f * size[0], .5f * size[1], .5f * size[2]),
 				color,
-				topRight[0],
-				topRight[1]
+				rightTop[0],
+				rightTop[1]
 			},
 
 			//111
-			Vertex
+			Vertex // right : 21
 			{
 				V3(.5f * size[0], .5f * size[1], .5f * size[2]),
 				color,
-				topRight[0],
-				topRight[1]
+				rightTop[0],
+				rightTop[1]
 			},
-				Vertex
+			Vertex // front : 22
 			{
 				V3(.5f * size[0], .5f * size[1], .5f * size[2]),
 				color,
-				topRight[0],
-				topRight[1]
+				rightTop[0],
+				rightTop[1]
 			},
-				Vertex
+			Vertex // top : 23
 			{
 				V3(.5f * size[0], .5f * size[1], .5f * size[2]),
 				color,
-				topRight[0],
-				topRight[1]
+				rightTop[0],
+				rightTop[1]
 			},
 		};
 
-		unsigned int indices[24];
-
-		for (char i = 0; i < sizeof(indices) / sizeof(unsigned int); i++)
+		unsigned int indices[]
 		{
-			indices[i] = 0;
-			indices[i + 1] = 0;
-			indices[i + 2]
-		}
+			0, 3, 6,
+			3, 6, 9, //back
+
+			1, 12, 7,
+			7, 12, 18, //left
+
+			4, 15, 10,
+			10, 15, 21, //right
+
+			13, 16, 19,
+			16, 19, 22, //front
+
+			20, 8, 23,
+			8, 23, 11, //top
+
+			2, 5, 14,
+			5, 14, 17, //bottom
+		};
 
 		return new MeshResource(vertices, sizeof(vertices) / sizeof(Vertex), indices, sizeof(indices) / sizeof(unsigned int));
 	}

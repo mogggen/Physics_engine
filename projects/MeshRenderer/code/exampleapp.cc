@@ -259,120 +259,205 @@ namespace Example
 
 		Vertex vertices[] =
 		{
-			//Back 0-3
+			//0 = -.5f
+			//1 = .5f
+			//xyz
+
+			//000
 			Vertex
 			{
-				V3(0.5f * size[0], -0.5f * size[1], -0.5f * size[2]),
-				color,
-				bottomLeft[0],
-				bottomLeft[1]
-			},
-			Vertex
-			{
-				V3(0.5f * size[0], 0.5f * size[1], -0.5f * size[2]),
-				color,
-				topLeft[0],
-				topLeft[1]
-			},
-			Vertex
-			{
-				V3(-0.5f * size[0], -0.5f * size[1], -0.5f * size[2]),
+				V3(-.5f * size[0], -.5f * size[1], -.5f * size[2]),
 				color,
 				bottomRight[0],
 				bottomRight[1]
 			},
 			Vertex
 			{
-				V3(-0.5 * size[0], 0.5f * size[1], -0.5f * size[2]),
-				color,
-				topRight[0],
-				topRight[1]
-			},
-
-			//Front 4-7
-			Vertex
-			{
-				V3(-0.5f * size[0], -0.5f * size[1], 0.5f * size[2]),
-				color,
-				bottomLeft[0],
-				bottomLeft[1]
-			},
-			Vertex
-			{
-				V3(-0.5 * size[0], 0.5f * size[1], 0.5f * size[2]),
-				color,
-				topLeft[0],
-				topLeft[1]
-			},
-			Vertex
-			{
-				V3(0.5f * size[0], -0.5f * size[1], 0.5f * size[2]),
+				V3(-.5f * size[0], -.5f * size[1], -.5f * size[2]),
 				color,
 				bottomRight[0],
 				bottomRight[1]
 			},
 			Vertex
 			{
-				V3(0.5f * size[0], 0.5f * size[1], 0.5f * size[2]),
+				V3(-.5f * size[0], -.5f * size[1], -.5f * size[2]),
+				color,
+				bottomRight[0],
+				bottomRight[1]
+			},
+
+			//100
+			Vertex
+			{
+				V3(.5f * size[0], -.5f * size[1], -.5f * size[2]),
+				color,
+				bottomLeft[0],
+				bottomLeft[1]
+			},
+			Vertex
+			{
+				V3(.5f * size[0], -.5f * size[1], -.5f * size[2]),
+				color,
+				bottomLeft[0],
+				bottomLeft[1]
+			},
+			Vertex
+			{
+				V3(.5f * size[0], -.5f * size[1], -.5f * size[2]),
+				color,
+				bottomLeft[0],
+				bottomLeft[1]
+			},
+
+			//010
+			Vertex
+			{
+				V3(-.5 * size[0], .5f * size[1], -.5f * size[2]),
+				color,
+				topRight[0],
+				topRight[1]
+			},
+			Vertex
+			{
+				V3(-.5 * size[0], .5f * size[1], -.5f * size[2]),
+				color,
+				topRight[0],
+				topRight[1]
+			},
+			Vertex
+			{
+				V3(-.5 * size[0], .5f * size[1], -.5f * size[2]),
 				color,
 				topRight[0],
 				topRight[1]
 			},
 
-			
-			//Left 8-11
+			//110
 			Vertex
 			{
-				V3(-0.5f * size[0], -0.5f * size[1], 0.5f * size[2]),
+				V3(.5f * size[0], .5f * size[1], -.5f * size[2]),
+				color,
+				topLeft[0],
+				topLeft[1]
+			},
+			Vertex
+			{
+				V3(.5f * size[0], .5f * size[1], -.5f * size[2]),
+				color,
+				topLeft[0],
+				topLeft[1]
+			},
+			Vertex
+			{
+				V3(.5f * size[0], .5f * size[1], -.5f * size[2]),
+				color,
+				topLeft[0],
+				topLeft[1]
+			},
+
+			//001
+			Vertex
+			{
+				V3(-.5f * size[0], -.5f * size[1], .5f * size[2]),
 				color,
 				topRight[0],
 				topRight[1]
 			},
 			Vertex
 			{
-				V3(-0.5 * size[0], 0.5f * size[1], 0.5f * size[2]),
+				V3(-.5f * size[0], -.5f * size[1], .5f * size[2]),
 				color,
 				topRight[0],
 				topRight[1]
 			},
 			Vertex
 			{
-				V3(0.5f * size[0], -0.5f * size[1], 0.5f * size[2]),
+				V3(-.5f * size[0], -.5f * size[1], .5f * size[2]),
+				color,
+				topRight[0],
+				topRight[1]
+			},
+
+			//101
+			Vertex
+			{
+				V3(.5f * size[0], -.5f * size[1], .5f * size[2]),
 				color,
 				topRight[0],
 				topRight[1]
 			},
 			Vertex
 			{
-				V3(0.5f * size[0], 0.5f * size[1], 0.5f * size[2]),
+				V3(.5f * size[0], -.5f * size[1], .5f * size[2]),
+				color,
+				topRight[0],
+				topRight[1]
+			},
+			Vertex
+			{
+				V3(.5f * size[0], -.5f * size[1], .5f * size[2]),
+				color,
+				topRight[0],
+				topRight[1]
+			},
+
+			//011
+			Vertex
+			{
+				V3(-.5f * size[0], .5f * size[1], .5f * size[2]),
+				color,
+				topRight[0],
+				topRight[1]
+			},
+			Vertex
+			{
+				V3(-.5f * size[0], .5f * size[1], .5f * size[2]),
+				color,
+				topRight[0],
+				topRight[1]
+			},
+			Vertex
+			{
+				V3(-.5f * size[0], .5f * size[1], .5f * size[2]),
+				color,
+				topRight[0],
+				topRight[1]
+			},
+
+			//111
+			Vertex
+			{
+				V3(.5f * size[0], .5f * size[1], .5f * size[2]),
+				color,
+				topRight[0],
+				topRight[1]
+			},
+				Vertex
+			{
+				V3(.5f * size[0], .5f * size[1], .5f * size[2]),
+				color,
+				topRight[0],
+				topRight[1]
+			},
+				Vertex
+			{
+				V3(.5f * size[0], .5f * size[1], .5f * size[2]),
 				color,
 				topRight[0],
 				topRight[1]
 			},
 		};
 
-		unsigned int indices[] =
+		unsigned int indices[24];
+
+		for (char i = 0; i < sizeof(indices) / sizeof(unsigned int); i++)
 		{
-		0, 1, 2,	//front
-		1, 2, 3,
+			indices[i] = 0;
+			indices[i + 1] = 0;
+			indices[i + 2]
+		}
 
-		4, 5, 6,	//back
-		5, 6, 7,
-
-		0, 1, 4,	//left
-		1, 4, 5,
-
-		6, 7, 2,	//right
-		7, 2, 3,
-
-		1, 3, 5,	//top
-		3, 5, 7,
-
-		0, 2, 4,	//bottom
-		2, 4, 6,
-		};
-
-		return new MeshResource(vertices, sizeof(vertices) / sizeof(Vertex), indices, sizeof(vertices) / sizeof(unsigned int));
+		return new MeshResource(vertices, sizeof(vertices) / sizeof(Vertex), indices, sizeof(indices) / sizeof(unsigned int));
 	}
 
 	void
@@ -384,7 +469,7 @@ namespace Example
 		int width, height;
 		window->GetSize(width, height);
 		TextureResource texture;
-		texture.LoadFromFile("textures/twoTiming.jpg");
+		texture.LoadFromFile("textures/BETTER.jpg");
 		Camera cam(90, width / height, 0.10f, 100.0f);
 		bool d = true;
 		char i = 0;

@@ -245,7 +245,7 @@ namespace Example
 	/**
 	*/
 
-	MeshResource* MeshResource::Cube(V4 size, V4 coLor)
+	MeshResource* MeshResource::Cube(V4 size, V4 color)
 	{
 		V4 top(0, 255, 0); //red
 		V4 back(128, 128, 128); //gray

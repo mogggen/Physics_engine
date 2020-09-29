@@ -861,6 +861,7 @@ inline void Inverse(M4& matrix)
 //Line with direction of line and rotation around axis by theta radians
 inline M4 Rotation(V4 line, float θ)
 {
+	line.Normalize();
 	M4 temp;
 	temp[3].w = 1;
 

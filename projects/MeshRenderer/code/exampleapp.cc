@@ -119,7 +119,7 @@ namespace Example
 	{
 		int width, height, nrChannels;
 
-		unsigned char* img = stbi_load(filename, &width, &height, &nrChannels, STBI_rgb_alpha);
+		unsigned char* img = stbi_load(filename, &width, &height, &nrChannels, STBI_rgb);
 		if (img == nullptr)
 		{
 			printf("Image loaded incorrectly");
@@ -245,203 +245,187 @@ namespace Example
 	/**
 	*/
 
-	MeshResource* MeshResource::Cube(V4 size, V4 color)
+	MeshResource* MeshResource::Cube(V4 size, V4 coLor)
 	{
-		//x,y
-		float leftBottom[2] = { 0, 0 };
-		float rightbottom[2] = { 1, 0 };
-
-		float leftTop[2] = { 0, 1 };
-		float rightTop[2] = { 1, 1 };
+		V4 top(0, 255, 0); //red
+		V4 back(128, 128, 128); //gray
+		V4 left(0, 0, 255); //blue
+		V4 right(255, 0, 0); //red
+		V4 front(255, 165, 0); //orange
+		V4 bottom(64, 224, 208); //turquoise
+		
+		float factor = .01f;
+		top = top * factor;
+		back = back * factor;
+		left = left * factor;
+		right = right * factor;
+		front = front * factor;
+		bottom = bottom * factor;
 
 		Vertex vertices[] =
 		{
-			//0 = -.5f
-			//1 = .5f
-			//xyz
+			//Mesh:	(0,1)	(1,1)	Tex:(0,0)	(1,0)
+			//		(0,0)	(1,0)		(0,1)	(1,1)
 
+			//xyz
 			//000
 			Vertex //back : 0
 			{
 				V3(-.5f * size[0], -.5f * size[1], -.5f * size[2]),
-				color,
-				rightbottom[0],
-				rightbottom[1]
+				back,
+				1, 1
 			},
 			Vertex //left : 1
 			{
 				V3(-.5f * size[0], -.5f * size[1], -.5f * size[2]),
-				color,
-				leftBottom[0],
-				leftBottom[1]
+				left,
+				0, 1
 			},
 			Vertex //bottom : 2
 			{
 				V3(-.5f * size[0], -.5f * size[1], -.5f * size[2]),
-				color,
-				rightbottom[0],
-				rightbottom[1]
+				bottom,
+				1, 0
 			},
 
 			//100
 			Vertex //back : 3
 			{
 				V3(.5f * size[0], -.5f * size[1], -.5f * size[2]),
-				color,
-				leftBottom[0],
-				leftBottom[1]
+				back,
+				0, 1
 			},
 			Vertex //right : 4
 			{
 				V3(.5f * size[0], -.5f * size[1], -.5f * size[2]),
-				color,
-				leftBottom[0],
-				leftBottom[1]
+				right,
+				1, 1
 			},
 			Vertex //bottom : 5
 			{
 				V3(.5f * size[0], -.5f * size[1], -.5f * size[2]),
-				color,
-				leftBottom[0],
-				leftBottom[1]
+				bottom,
+				0, 0
 			},
 
 			//010
 			Vertex //back : 6
 			{
 				V3(-.5 * size[0], .5f * size[1], -.5f * size[2]),
-				color,
-				rightTop[0],
-				rightTop[1]
+				back,
+				1, 0
 			},
 			Vertex //left : 7
 			{
 				V3(-.5 * size[0], .5f * size[1], -.5f * size[2]),
-				color,
-				rightTop[0],
-				rightTop[1]
+				left,
+				0, 0
 			},
 			Vertex //top : 8
 			{
 				V3(-.5 * size[0], .5f * size[1], -.5f * size[2]),
-				color,
-				rightTop[0],
-				rightTop[1]
+				top,
+				0, 0
 			},
 
 			//110
 			Vertex //back : 9
 			{
 				V3(.5f * size[0], .5f * size[1], -.5f * size[2]),
-				color,
-				leftTop[0],
-				leftTop[1]
+				back,
+				0, 0
 			},
 			Vertex //right : 10
 			{
 				V3(.5f * size[0], .5f * size[1], -.5f * size[2]),
-				color,
-				leftTop[0],
-				leftTop[1]
+				right,
+				1, 0
 			},
 			Vertex //top : 11
 			{
 				V3(.5f * size[0], .5f * size[1], -.5f * size[2]),
-				color,
-				leftTop[0],
-				leftTop[1]
+				top,
+				1, 0
 			},
 
 			//001
 			Vertex //left : 12
 			{
 				V3(-.5f * size[0], -.5f * size[1], .5f * size[2]),
-				color,
-				rightTop[0],
-				rightTop[1]
+				left,
+				1, 1
 			},
 			Vertex //front : 13
 			{
 				V3(-.5f * size[0], -.5f * size[1], .5f * size[2]),
-				color,
-				rightTop[0],
-				rightTop[1]
+				front,
+				0, 1
 			},
 			Vertex //bottom : 14
 			{
 				V3(-.5f * size[0], -.5f * size[1], .5f * size[2]),
-				color,
-				rightTop[0],
-				rightTop[1]
+				bottom,
+				1, 1
 			},
 
 			//101
 			Vertex //right : 15
 			{
 				V3(.5f * size[0], -.5f * size[1], .5f * size[2]),
-				color,
-				rightTop[0],
-				rightTop[1]
+				right,
+				0, 1
 			},
 			Vertex //front : 16
 			{
 				V3(.5f * size[0], -.5f * size[1], .5f * size[2]),
-				color,
-				rightTop[0],
-				rightTop[1]
+				front,
+				1, 1
 			},
 			Vertex //bottom : 17
 			{
 				V3(.5f * size[0], -.5f * size[1], .5f * size[2]),
-				color,
-				rightTop[0],
-				rightTop[1]
+				bottom,
+				0, 1
 			},
 
 			//011
 			Vertex // left : 18
 			{
 				V3(-.5f * size[0], .5f * size[1], .5f * size[2]),
-				color,
-				rightTop[0],
-				rightTop[1]
+				left,
+				1, 0
 			},
 			Vertex // front : 19
 			{
 				V3(-.5f * size[0], .5f * size[1], .5f * size[2]),
-				color,
-				rightTop[0],
-				rightTop[1]
+				front,
+				0, 0
 			},
 			Vertex // top : 20
 			{
 				V3(-.5f * size[0], .5f * size[1], .5f * size[2]),
-				color,
-				rightTop[0],
-				rightTop[1]
+				top,
+				0, 1
 			},
 
 			//111
 			Vertex // right : 21
 			{
 				V3(.5f * size[0], .5f * size[1], .5f * size[2]),
-				color,
-				rightTop[0],
-				rightTop[1]
+				right,
+				0, 0
 			},
 			Vertex // front : 22
 			{
 				V3(.5f * size[0], .5f * size[1], .5f * size[2]),
-				color,
-				rightTop[0],
-				rightTop[1]
+				front,
+				1, 0
 			},
 			Vertex // top : 23
 			{
 				V3(.5f * size[0], .5f * size[1], .5f * size[2]),
-				color,
-				rightTop[0],
-				rightTop[1]
+				top,
+				1, 1
 			},
 		};
 
@@ -478,8 +462,8 @@ namespace Example
 		int width, height;
 		window->GetSize(width, height);
 		TextureResource texture;
-		texture.LoadFromFile("textures/BETTER.jpg");
-		Camera cam(90, width / height, 0.10f, 100.0f);
+		texture.LoadFromFile("textures/perfect.jpg");
+		Camera cam(90, (float)width / height, 0.10f, 100.0f);
 		bool d = true;
 		char i = 0;
 		M4 scene;
@@ -488,7 +472,7 @@ namespace Example
 		while (this->window->IsOpen())
 		{
 			step += 0.006f;
-			m = Translate(V4(0, 0, -5)) * Rotation(V4(0, 1, 0), step);
+			m = Translate(V4(0, 0, -5)) * Rotation(V4(1, 1, 0), step);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			this->window->Update();
 

@@ -19,7 +19,6 @@ const GLchar* vs =
 
 "uniform mat4 m4;\n"
 "uniform vec4 colorVector;\n"
-"uniform sampler2D textureArray;\n"
 
 "void main()\n"
 "{\n"
@@ -142,11 +141,14 @@ namespace Example
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, img);
 		}
 
+		glGenerateMipmap(GL_TEXTURE_2D);
+
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
 	void TextureResource::BindTexture()
 	{
+		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, texture);
 	}
 	
@@ -462,7 +464,7 @@ namespace Example
 		int width, height;
 		window->GetSize(width, height);
 		TextureResource texture;
-		texture.LoadFromFile("textures/perfect.jpg");
+		texture.LoadFromFile("textures/BETTER.png");
 		Camera cam(90, (float)width / height, 0.10f, 100.0f);
 		bool d = true;
 		char i = 0;

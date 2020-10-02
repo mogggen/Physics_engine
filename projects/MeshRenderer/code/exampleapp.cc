@@ -250,7 +250,7 @@ namespace Example
 	MeshResource* MeshResource::Cube(V4 size, V4 color)
 	{
 		V4 top(0, 255, 0); //red
-		V4 back(128, 128, 128); //gray
+		V4 back(128, 66, 128); //gray
 		V4 left(0, 0, 255); //blue
 		V4 right(255, 0, 0); //red
 		V4 front(255, 165, 0); //orange
@@ -464,7 +464,7 @@ namespace Example
 		int width, height;
 		window->GetSize(width, height);
 		TextureResource texture;
-		texture.LoadFromFile("textures/BETTER.png");
+		texture.LoadFromFile("textures/perfect.jpg");
 		Camera cam(90, (float)width / height, 0.10f, 100.0f);
 		bool d = true;
 		char i = 0;

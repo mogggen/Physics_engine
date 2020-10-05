@@ -5,9 +5,11 @@
 #include "config.h"
 #include "stb_image.h"
 #include "exampleapp.h"
+#include <iostream>
+#include <fstream>
 #include <cstring>
 
-const GLchar* vs =
+GLchar* vs =
 "#version 430\n"
 
 "layout(location=0) in vec3 pos;\n"
@@ -27,7 +29,7 @@ const GLchar* vs =
 "	texturesOut = texturesIn;\n"
 "}\n";
 
-const GLchar* ps =
+GLchar* ps =
 "#version 430\n"
 
 "layout(location=0) in vec4 Colors;\n"
@@ -152,8 +154,42 @@ namespace Example
 		glBindTexture(GL_TEXTURE_2D, texture);
 	}
 	
+	//filetype: .glsl
+	void ShaderObject::LoadShader(char* vs, char* ps, std::string vsPath, std::string psPath)
+	{
+		std::streampos size;
+
+		//vs
+		std::ifstream pathVS(vsPath, std::ios::in | std::ios::binary | std::ios::ate);
+		if (pathVS.is_open())
+		{
+			size = pathVS.tellg();
+			vs = new char[size + std::streampos(1)];
+			pathVS.seekg(0, std::ios::beg);
+			pathVS.read(vs, size);
+			vs[size] = '\0';
+			pathVS.close();
+		}
+
+		std::ifstream pathPS(psPath, std::ios::in | std::ios::binary | std::ios::ate);
+		if (pathPS.is_open())
+		{
+			size = pathPS.tellg();
+			ps = new char[size + std::streampos(1)];
+			pathPS.seekg(0, std::ios::beg);
+			pathPS.read(ps, size);
+			ps[size] = '\0';
+			pathPS.close();
+		}
+
+		this->vs = vs;
+		this->ps = ps;
+	}
+
 	void ShaderObject::Init(GLuint vertexShader, GLuint pixelShader, GLuint program)
 	{
+		LoadShader(vs, ps, "textures/vs.glsl", "textures/ps.glsl");
+
 		// setup vertex shader
 		vertexShader = glCreateShader(GL_VERTEX_SHADER);
 		GLint length = static_cast<GLint>(std::strlen(vs));

@@ -53,6 +53,12 @@ namespace Example
 		void LoadFromFile(const char* filename);
 	};
 
+	struct ShaderObject
+	{
+		GLuint program;
+		void Init(GLuint vs, GLuint ps, GLuint prog);
+	};
+
 	class ExampleApp : public Core::App
 	{
 	public:
@@ -71,6 +77,7 @@ namespace Example
 		GLuint vertexShader;
 		GLuint pixelShader;
 		MeshResource* cube;
+		ShaderObject* shaderObject;
 		GLuint triangle;
 		Display::Window* window;
 	};

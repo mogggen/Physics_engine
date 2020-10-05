@@ -152,6 +152,56 @@ namespace Example
 		glBindTexture(GL_TEXTURE_2D, texture);
 	}
 	
+	void ShaderObject::Init(GLuint vertexShader, GLuint pixelShader, GLuint program)
+	{
+		// setup vertex shader
+		vertexShader = glCreateShader(GL_VERTEX_SHADER);
+		GLint length = static_cast<GLint>(std::strlen(vs));
+		glShaderSource(vertexShader, 1, &vs, &length);
+		glCompileShader(vertexShader);
+
+		// get error log
+		GLint shaderLogSize;
+ 		glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &shaderLogSize);
+		if (shaderLogSize > 0)
+		{
+			GLchar* buf = new GLchar[shaderLogSize];
+			glGetShaderInfoLog(vertexShader, shaderLogSize, NULL, buf);
+			printf("[SHADER COMPILE ERROR]: %s", buf);
+			delete[] buf;
+		}
+
+		// setup pixel shader
+		pixelShader = glCreateShader(GL_FRAGMENT_SHADER);
+		length = static_cast<GLint>(std::strlen(ps));
+		glShaderSource(pixelShader, 1, &ps, &length);
+		glCompileShader(pixelShader);
+
+		// get error log
+		glGetShaderiv(pixelShader, GL_INFO_LOG_LENGTH, &shaderLogSize);
+		if (shaderLogSize > 0)
+		{
+			GLchar* buf = new GLchar[shaderLogSize];
+			glGetShaderInfoLog(pixelShader, shaderLogSize, NULL, buf);
+			printf("[SHADER COMPILE ERROR]: %s", buf);
+			delete[] buf;
+		}
+
+		// create a program object
+		program = glCreateProgram();
+		glAttachShader(program, vertexShader);
+		glAttachShader(program, pixelShader);
+		glLinkProgram(program);
+		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &shaderLogSize);
+		if (shaderLogSize > 0)
+		{
+			GLchar* buf = new GLchar[shaderLogSize];
+			glGetProgramInfoLog(program, shaderLogSize, NULL, buf);
+			printf("[PROGRAM LINK ERROR]: %s", buf);
+			delete[] buf;
+		}
+		this->program = program;
+	}
 
 	//------------------------------------------------------------------------------
 	/**
@@ -189,52 +239,9 @@ namespace Example
 			// set clear color to gray
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
-			// setup vertex shader
-			this->vertexShader = glCreateShader(GL_VERTEX_SHADER);
-			GLint length = static_cast<GLint>(std::strlen(vs));
-			glShaderSource(this->vertexShader, 1, &vs, &length);
-			glCompileShader(this->vertexShader);
-
-			// get error log
-			GLint shaderLogSize;
-			glGetShaderiv(this->vertexShader, GL_INFO_LOG_LENGTH, &shaderLogSize);
-			if (shaderLogSize > 0)
-			{
-				GLchar* buf = new GLchar[shaderLogSize];
-				glGetShaderInfoLog(this->vertexShader, shaderLogSize, NULL, buf);
-				printf("[SHADER COMPILE ERROR]: %s", buf);
-				delete[] buf;
-			}
-
-			// setup pixel shader
-			this->pixelShader = glCreateShader(GL_FRAGMENT_SHADER);
-			length = static_cast<GLint>(std::strlen(ps));
-			glShaderSource(this->pixelShader, 1, &ps, &length);
-			glCompileShader(this->pixelShader);
-
-			// get error log
-			glGetShaderiv(this->pixelShader, GL_INFO_LOG_LENGTH, &shaderLogSize);
-			if (shaderLogSize > 0)
-			{
-				GLchar* buf = new GLchar[shaderLogSize];
-				glGetShaderInfoLog(this->pixelShader, shaderLogSize, NULL, buf);
-				printf("[SHADER COMPILE ERROR]: %s", buf);
-				delete[] buf;
-			}
-
-			// create a program object
-			this->program = glCreateProgram();
-			glAttachShader(this->program, this->vertexShader);
-			glAttachShader(this->program, this->pixelShader);
-			glLinkProgram(this->program);
-			glGetProgramiv(this->program, GL_INFO_LOG_LENGTH, &shaderLogSize);
-			if (shaderLogSize > 0)
-			{
-				GLchar* buf = new GLchar[shaderLogSize];
-				glGetProgramInfoLog(this->program, shaderLogSize, NULL, buf);
-				printf("[PROGRAM LINK ERROR]: %s", buf);
-				delete[] buf;
-			}
+			//vs and ps defined here
+			shaderResource = new ShaderObject;
+			shaderResource->Init(this->vertexShader, this->pixelShader, this->program);
 
 			// setup vbo
 			cube = cube->Cube(V4(1, 1, 1), V4(1, 1, 1));
@@ -464,7 +471,7 @@ namespace Example
 		int width, height;
 		window->GetSize(width, height);
 		TextureResource texture;
-		texture.LoadFromFile("textures/perfect.jpg");
+		texture.LoadFromFile("textures/CAPTURE.jpg");
 		Camera cam(90, (float)width / height, 0.10f, 100.0f);
 		bool d = true;
 		char i = 0;
@@ -479,11 +486,11 @@ namespace Example
 			this->window->Update();
 
 			// do stuff
-			glUseProgram(this->program);
+			glUseProgram(shaderResource->program);
 			texture.BindTexture();
 
 			scene = v * m;
-			auto loc = glGetUniformLocation(program, "m4");
+			auto loc = glGetUniformLocation(shaderResource->program, "m4");
 			glUniformMatrix4fv(loc, 1, GL_TRUE, (float*)&scene);
 			cube->render();
 

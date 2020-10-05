@@ -240,8 +240,8 @@ namespace Example
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
 			//vs and ps defined here
-			shaderResource = new ShaderObject;
-			shaderResource->Init(this->vertexShader, this->pixelShader, this->program);
+			shaderObject = new ShaderObject;
+			shaderObject->Init(this->vertexShader, this->pixelShader, this->program);
 
 			// setup vbo
 			cube = cube->Cube(V4(1, 1, 1), V4(1, 1, 1));
@@ -471,7 +471,7 @@ namespace Example
 		int width, height;
 		window->GetSize(width, height);
 		TextureResource texture;
-		texture.LoadFromFile("textures/CAPTURE.jpg");
+		texture.LoadFromFile("textures/perfect.jpg");
 		Camera cam(90, (float)width / height, 0.10f, 100.0f);
 		bool d = true;
 		char i = 0;
@@ -486,11 +486,11 @@ namespace Example
 			this->window->Update();
 
 			// do stuff
-			glUseProgram(shaderResource->program);
+			glUseProgram(shaderObject->program);
 			texture.BindTexture();
 
 			scene = v * m;
-			auto loc = glGetUniformLocation(shaderResource->program, "m4");
+			auto loc = glGetUniformLocation(shaderObject->program, "m4");
 			glUniformMatrix4fv(loc, 1, GL_TRUE, (float*)&scene);
 			cube->render();
 

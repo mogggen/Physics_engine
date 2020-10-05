@@ -55,11 +55,11 @@ namespace Example
 
 	struct ShaderObject
 	{
-		char* vs;
-		char* ps;
+		GLchar* vs;
+		GLchar* ps;
 		GLuint program;
-		void Init(GLuint vs, GLuint ps, GLuint prog);
-		void LoadShader(char* vs, char* ps, std::string vsPath, std::string psPath);
+		void getShader(GLuint vs, GLuint ps, GLuint prog);
+		void LoadShader(GLchar* vs, GLchar* ps, std::string vsPath, std::string psPath);
 	};
 
 	class ExampleApp : public Core::App

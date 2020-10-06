@@ -5,44 +5,8 @@
 #include "config.h"
 #include "stb_image.h"
 #include "exampleapp.h"
-#include <iostream>
 #include <fstream>
 #include <cstring>
-
-GLchar* vs =
-"#version 430\n"
-
-"layout(location=0) in vec3 pos;\n"
-"layout(location=1) in vec4 color;\n"
-"layout(location=2) in vec2 texturesIn;\n"
-
-"out vec4 Colors;\n"
-"out vec2 texturesOut;\n"
-
-"uniform mat4 m4;\n"
-"uniform vec4 colorVector;\n"
-
-"void main()\n"
-"{\n"
-"	gl_Position = m4 * vec4(pos, 1);\n"
-"	Colors = color;\n"
-"	texturesOut = texturesIn;\n"
-"}\n";
-
-GLchar* ps =
-"#version 430\n"
-
-"layout(location=0) in vec4 Colors;\n"
-"layout(location=1) in vec2 texturesOut;\n"
-
-"uniform sampler2D textureArray;\n"
-
-"out vec4 Color;\n"
-
-"void main()\n"
-"{\n"
-"	Color = texture(textureArray, texturesOut) * Colors;\n"
-"}\n";
 
 using namespace Display;
 namespace Example
@@ -155,7 +119,7 @@ namespace Example
 	}
 	
 	//filetype: .glsl
-	void ShaderObject::LoadShader(char* vs, char* ps, std::string vsPath, std::string psPath)
+	void ShaderObject::LoadShader(GLchar* vs, GLchar* ps, std::string vsPath, std::string psPath)
 	{
 		std::streampos size;
 
@@ -164,18 +128,19 @@ namespace Example
 		if (pathVS.is_open())
 		{
 			size = pathVS.tellg();
-			vs = new char[size + std::streampos(1)];
+			vs = new GLchar[size + std::streampos(1)];
 			pathVS.seekg(0, std::ios::beg);
 			pathVS.read(vs, size);
 			vs[size] = '\0';
 			pathVS.close();
 		}
 
+		//ps
 		std::ifstream pathPS(psPath, std::ios::in | std::ios::binary | std::ios::ate);
 		if (pathPS.is_open())
 		{
 			size = pathPS.tellg();
-			ps = new char[size + std::streampos(1)];
+			ps = new GLchar[size + std::streampos(1)];
 			pathPS.seekg(0, std::ios::beg);
 			pathPS.read(ps, size);
 			ps[size] = '\0';
@@ -186,7 +151,7 @@ namespace Example
 		this->ps = ps;
 	}
 
-	void ShaderObject::Init(GLuint vertexShader, GLuint pixelShader, GLuint program)
+	void ShaderObject::getShader(GLuint vertexShader, GLuint pixelShader, GLuint program)
 	{
 		LoadShader(vs, ps, "textures/vs.glsl", "textures/ps.glsl");
 
@@ -277,7 +242,7 @@ namespace Example
 
 			//vs and ps defined here
 			shaderObject = new ShaderObject;
-			shaderObject->Init(this->vertexShader, this->pixelShader, this->program);
+			shaderObject->getShader(this->vertexShader, this->pixelShader, this->program);
 
 			// setup vbo
 			cube = cube->Cube(V4(1, 1, 1), V4(1, 1, 1));

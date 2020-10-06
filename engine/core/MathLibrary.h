@@ -887,6 +887,11 @@ inline M4 Rotation(V4 line, float θ)
 	return temp;
 }
 
+/// <summary>
+/// returns the matrix to give the resulting product of a translation along the given vector
+/// </summary>
+/// <param name="pos">all 0s = identity matrix</param>
+/// <returns></returns>
 inline M4 Translate(V4 pos)
 {
 	M4 temp;

@@ -5,6 +5,7 @@
 #include "config.h"
 #include "stb_image.h"
 #include "exampleapp.h"
+#include <iostream>
 #include <fstream>
 #include <cstring>
 
@@ -163,7 +164,7 @@ namespace Example
 
 		// get error log
 		GLint shaderLogSize;
- 		glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &shaderLogSize);
+		glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &shaderLogSize);
 		if (shaderLogSize > 0)
 		{
 			GLchar* buf = new GLchar[shaderLogSize];
@@ -204,6 +205,14 @@ namespace Example
 		this->program = program;
 	}
 
+	GraphicNode::GraphicNode(std::shared_ptr<MeshResource> geometry, std::shared_ptr<TextureResource> texture, std::shared_ptr<ShaderObject> shader, M4 transform) : Geometry(geometry), Texture(texture), Shader(shader), Transform(transform)
+	{
+		for (char i = 0; i < 4; i++)
+		{
+			Transform[i][i] = 1;
+		}
+	}
+
 	//------------------------------------------------------------------------------
 	/**
 	*/
@@ -229,9 +238,27 @@ namespace Example
 	{
 		App::Open();
 		this->window = new Display::Window;
-		window->SetKeyPressFunction([this](int32, int32, int32, int32)
+		window->SetKeyPressFunction([this](int32 keycode, int32 scancode, int32 action, int32 mods)
 		{
-			this->window->Close();
+			//deltatime
+			float v = 0.02f;
+			switch (keycode)
+			{
+			case GLFW_KEY_ESCAPE: window->Close();
+			case GLFW_KEY_W: node->Transform = node->Transform * Translate(V4(0, 0, v)); break;
+			case GLFW_KEY_S: node->Transform = node->Transform * Translate(V4(0, 0, -v)); break;
+			case GLFW_KEY_A: node->Transform = node->Transform * Translate(V4(-v, 0, 0)); break;
+			case GLFW_KEY_D: node->Transform = node->Transform * Translate(V4(v, 0, 0)); break;
+			}
+		});
+
+		window->SetMouseMoveFunction([this](float64 x, float64 y)
+		{
+			int width, height; window->GetSize(width, height);
+			float senseX = 0.002f * (x - width / 2);
+			float senseY = 0.002f * (y - height / 2);
+
+			node->Transform = Rotation(V4(1, 0, 0), senseY) * Rotation(V4(0, 1, 0), senseX);// *node->Transform;
 		});
 		
 
@@ -240,12 +267,20 @@ namespace Example
 			// set clear color to gray
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
-			//vs and ps defined here
-			shaderObject = new ShaderObject;
+			//MeshResource
+			cube = cube->Cube(V4(1, 1, 1), V4(1, 1, 1));
+
+			//TextureResource
+			std::shared_ptr<TextureResource> texture = std::make_shared<TextureResource>();
+
+			//shaderObject
+			shaderObject = std::make_shared<ShaderObject>();
 			shaderObject->getShader(this->vertexShader, this->pixelShader, this->program);
 
-			// setup vbo
-			cube = cube->Cube(V4(1, 1, 1), V4(1, 1, 1));
+			
+			//GraphicNode
+			node = std::make_shared<GraphicNode>(cube, texture, shaderObject, Translate(V4(0, 0, 0)));
+
 			return true;
 		}
 		return false;
@@ -255,7 +290,7 @@ namespace Example
 	/**
 	*/
 
-	MeshResource* MeshResource::Cube(V4 size, V4 color)
+	std::shared_ptr<MeshResource> MeshResource::Cube(V4 size, V4 color)
 	{
 		V4 top(0, 255, 0); //red
 		V4 back(128, 66, 128); //gray
@@ -460,7 +495,9 @@ namespace Example
 			5, 14, 17, //bottom
 		};
 
-		return new MeshResource(vertices, sizeof(vertices) / sizeof(Vertex), indices, sizeof(indices) / sizeof(unsigned int));
+		MeshResource* temp1 = new MeshResource(MeshResource(vertices, sizeof(vertices) / sizeof(Vertex), indices, sizeof(indices) / sizeof(unsigned int)));
+		std::shared_ptr<MeshResource> temp(temp1);
+		return temp;
 	}
 
 	void
@@ -471,8 +508,7 @@ namespace Example
 		float step = 0;
 		int width, height;
 		window->GetSize(width, height);
-		TextureResource texture;
-		texture.LoadFromFile("textures/perfect.jpg");
+		node->Texture->LoadFromFile("textures/perfect.jpg");
 		Camera cam(90, (float)width / height, 0.10f, 100.0f);
 		bool d = true;
 		char i = 0;
@@ -482,18 +518,18 @@ namespace Example
 		while (this->window->IsOpen())
 		{
 			step += 0.006f;
-			m = Translate(V4(0, 0, -5)) * Rotation(V4(1, 1, 0), step);
+			m = node->Transform * Translate(V4(0, 0, -5)) * Rotation(V4(1, 1, 0), step);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			this->window->Update();
 
 			// do stuff
-			glUseProgram(shaderObject->program);
-			texture.BindTexture();
+			glUseProgram(node->Shader->program);
+			node->Texture->BindTexture();
 
 			scene = v * m;
-			auto loc = glGetUniformLocation(shaderObject->program, "m4");
+			auto loc = glGetUniformLocation(node->Shader->program, "m4");
 			glUniformMatrix4fv(loc, 1, GL_TRUE, (float*)&scene);
-			cube->render();
+			node->Geometry->render();
 
 			this->window->SwapBuffers();
 		}

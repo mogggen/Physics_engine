@@ -9,6 +9,7 @@
 #include "core/MathLibrary.h"
 #include "core/app.h"
 #include "render/window.h"
+#include <memory>
 
 namespace Example
 {
@@ -25,7 +26,7 @@ namespace Example
 		GLuint vertexBuffer;
 		GLuint indexBuffer;
 	public:
-		MeshResource* Cube(const V4 size, const V4 color);
+		std::shared_ptr<MeshResource> Cube(const V4 size, const V4 color);
 		MeshResource(Vertex vertices[], int Verticeslength, unsigned int indices[], int indicesLength);
 		~MeshResource();
 		void Destroy();
@@ -62,6 +63,15 @@ namespace Example
 		void LoadShader(GLchar* vs, GLchar* ps, std::string vsPath, std::string psPath);
 	};
 
+	struct GraphicNode
+	{
+		std::shared_ptr<MeshResource> Geometry;
+		std::shared_ptr<TextureResource> Texture;
+		std::shared_ptr<ShaderObject> Shader;
+		M4 Transform;
+		GraphicNode(std::shared_ptr<MeshResource> geometry, std::shared_ptr<TextureResource> texture, std::shared_ptr<ShaderObject> shader, M4 transform);
+	};
+
 	class ExampleApp : public Core::App
 	{
 	public:
@@ -79,9 +89,9 @@ namespace Example
 		GLuint program;
 		GLuint vertexShader;
 		GLuint pixelShader;
-		MeshResource* cube;
-		ShaderObject* shaderObject;
-		GLuint triangle;
+		std::shared_ptr<MeshResource> cube;
+		std::shared_ptr<ShaderObject> shaderObject;
+		std::shared_ptr<GraphicNode> node;
 		Display::Window* window;
 	};
 } // namespace Example

@@ -13,6 +13,6 @@ uniform vec4 colorVector;
 void main()
 {
 	gl_Position = m4 * vec4(pos, 1);
-	Colors = color;
+	Colors = colorVector * color;
 	texturesOut = texturesIn;
 }

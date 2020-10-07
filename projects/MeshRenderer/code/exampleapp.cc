@@ -209,6 +209,24 @@ namespace Example
 		Transform = Translate(V4());
 	}
 
+	void GraphicNode::Draw()
+	{
+		Texture->LoadFromFile("textures/perfect.jpg");
+		Texture->BindTexture();
+
+		glUseProgram(this->Shader->program); //bind shader
+
+		//Set matrix
+		M4 scene;
+		glUniformMatrix4fv(glGetUniformLocation(Shader->program, "m4") , 1, GL_TRUE, (float*)&scene);
+
+		//set colorVector
+		V4 vec;
+		glUniform4fv(glGetUniformLocation(Shader->program, "colorVector"), 1, (float*)&vec);
+
+		Geometry->render();
+	}
+
 	//------------------------------------------------------------------------------
 	/**
 	*/
@@ -506,7 +524,7 @@ namespace Example
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
 		float step = 0;
-		node->Texture->LoadFromFile("textures/perfect.jpg");
+		
 		Camera cam(90, (float)width / height, 0.01f, 100.0f);
 		char i = 0;
 		M4 scene;
@@ -526,8 +544,7 @@ namespace Example
 			node->Texture->BindTexture();
 
 			scene = v * m * Scalar(V4(-1, -1, 1));
-			auto loc = glGetUniformLocation(node->Shader->program, "m4");
-			glUniformMatrix4fv(loc, 1, GL_TRUE, (float*)&scene);
+			
 			node->Geometry->render();
 
 			this->window->SwapBuffers();

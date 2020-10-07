@@ -70,6 +70,7 @@ namespace Example
 		std::shared_ptr<ShaderObject> Shader;
 		M4 Transform;
 		GraphicNode(std::shared_ptr<MeshResource> geometry, std::shared_ptr<TextureResource> texture, std::shared_ptr<ShaderObject> shader, M4 transform);
+		void Draw();
 	};
 
 	class ExampleApp : public Core::App

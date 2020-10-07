@@ -85,7 +85,8 @@ namespace Example
 		/// run app
 		void Run();
 	private:
-
+		M4 m;
+		M4 vp;
 		GLuint program;
 		GLuint vertexShader;
 		GLuint pixelShader;

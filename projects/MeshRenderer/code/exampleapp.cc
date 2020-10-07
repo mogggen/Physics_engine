@@ -207,10 +207,7 @@ namespace Example
 
 	GraphicNode::GraphicNode(std::shared_ptr<MeshResource> geometry, std::shared_ptr<TextureResource> texture, std::shared_ptr<ShaderObject> shader, M4 transform) : Geometry(geometry), Texture(texture), Shader(shader), Transform(transform)
 	{
-		for (char i = 0; i < 4; i++)
-		{
-			Transform[i][i] = 1;
-		}
+		Transform = Translate(V4());
 	}
 
 	//------------------------------------------------------------------------------
@@ -238,6 +235,7 @@ namespace Example
 	{
 		App::Open();
 		this->window = new Display::Window;
+		m = vp = Translate(V4());
 		window->SetKeyPressFunction([this](int32 keycode, int32 scancode, int32 action, int32 mods)
 		{
 			//deltatime
@@ -245,11 +243,12 @@ namespace Example
 			switch (keycode)
 			{
 			case GLFW_KEY_ESCAPE: window->Close();
-			case GLFW_KEY_W: node->Transform = node->Transform * Translate(V4(0, 0, v)); break;
-			case GLFW_KEY_S: node->Transform = node->Transform * Translate(V4(0, 0, -v)); break;
-			case GLFW_KEY_A: node->Transform = node->Transform * Translate(V4(-v, 0, 0)); break;
-			case GLFW_KEY_D: node->Transform = node->Transform * Translate(V4(v, 0, 0)); break;
+			case GLFW_KEY_W: m = m * Translate(V4(0, 0, v)); break;
+			case GLFW_KEY_S: m = m * Translate(V4(0, 0, -v)); break;
+			case GLFW_KEY_A: m = m * Translate(V4(-v, 0, 0)); break;
+			case GLFW_KEY_D: m = m * Translate(V4(v, 0, 0)); break;
 			}
+			node->Transform = m * vp;
 		});
 
 		window->SetMouseMoveFunction([this](float64 x, float64 y)
@@ -257,8 +256,8 @@ namespace Example
 			int width, height; window->GetSize(width, height);
 			float senseX = 0.002f * (x - width / 2);
 			float senseY = 0.002f * (y - height / 2);
-
-			node->Transform = Rotation(V4(1, 0, 0), senseY) * Rotation(V4(0, 1, 0), senseX);// *node->Transform;
+			vp = Rotation(V4(1, 0, 0), senseY) * Rotation(V4(0, 1, 0), senseX);
+			node->Transform = m * vp;
 		});
 		
 
@@ -509,7 +508,7 @@ namespace Example
 		int width, height;
 		window->GetSize(width, height);
 		node->Texture->LoadFromFile("textures/perfect.jpg");
-		Camera cam(90, (float)width / height, 0.10f, 100.0f);
+		Camera cam(90, (float)width / height, 0.01f, 100.0f);
 		bool d = true;
 		char i = 0;
 		M4 scene;

@@ -76,7 +76,7 @@ namespace Example
 		this->rad = rad;
 	}
 
-	M4 Camera::projectionViewMatrix()
+	M4 Camera::pv()
 	{
 		return projection(fov, aspect, n, f) * Translate(pos) * Rotation(dir, rad);
 	}
@@ -235,20 +235,18 @@ namespace Example
 	{
 		App::Open();
 		this->window = new Display::Window;
-		m = vp = Translate(V4());
+		Em = Evp = Translate(V4());
 		window->SetKeyPressFunction([this](int32 keycode, int32 scancode, int32 action, int32 mods)
 		{
 			//deltatime
-			float v = 0.02f;
 			switch (keycode)
 			{
-			case GLFW_KEY_ESCAPE: window->Close();
-			case GLFW_KEY_W: m = m * Translate(V4(0, 0, v)); break;
-			case GLFW_KEY_S: m = m * Translate(V4(0, 0, -v)); break;
-			case GLFW_KEY_A: m = m * Translate(V4(-v, 0, 0)); break;
-			case GLFW_KEY_D: m = m * Translate(V4(v, 0, 0)); break;
+			case GLFW_KEY_ESCAPE: window->Close(); break;
+			case GLFW_KEY_W: w = action; break;
+			case GLFW_KEY_S: s = action; break;
+			case GLFW_KEY_A: a = action; break;
+			case GLFW_KEY_D: d = action; break;
 			}
-			node->Transform = m * vp;
 		});
 
 		window->SetMouseMoveFunction([this](float64 x, float64 y)
@@ -256,8 +254,7 @@ namespace Example
 			int width, height; window->GetSize(width, height);
 			float senseX = 0.002f * (x - width / 2);
 			float senseY = 0.002f * (y - height / 2);
-			vp = Rotation(V4(1, 0, 0), senseY) * Rotation(V4(0, 1, 0), senseX);
-			node->Transform = m * vp;
+			Evp = Rotation(V4(1, 0, 0), senseY) * Rotation(V4(0, 1, 0), senseX);
 		});
 		
 
@@ -509,14 +506,15 @@ namespace Example
 		window->GetSize(width, height);
 		node->Texture->LoadFromFile("textures/perfect.jpg");
 		Camera cam(90, (float)width / height, 0.01f, 100.0f);
-		bool d = true;
 		char i = 0;
 		M4 scene;
 		M4 m;
-		M4 v = cam.projectionViewMatrix();
+		M4 v = cam.pv();
 		while (this->window->IsOpen())
 		{
-			step += 0.006f;
+			float speed = .08f;
+			Em = Em * Translate(Normalize(V4(d - a, 0, w - s)) * speed);
+			node->Transform = Em * Evp; // Em * Evp for relative coordinates, Evp * Em for global coordinates
 			m = node->Transform * Translate(V4(0, 0, -5)) * Rotation(V4(1, 1, 0), step);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			this->window->Update();

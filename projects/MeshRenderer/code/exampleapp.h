@@ -43,7 +43,7 @@ namespace Example
 		Camera(float fov, float ratio, float n, float f);
 		void setPos(V4 pos);
 		void setRot(V4 dir, float θ);
-		M4 projectionViewMatrix();
+		M4 pv();
 	};
 
 	class TextureResource
@@ -85,8 +85,9 @@ namespace Example
 		/// run app
 		void Run();
 	private:
-		M4 m;
-		M4 vp;
+		bool w = false, a = false, s = false, d = false;
+		M4 Em;
+		M4 Evp;
 		GLuint program;
 		GLuint vertexShader;
 		GLuint pixelShader;

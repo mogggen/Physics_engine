@@ -114,6 +114,7 @@ inline float V3::Length()
 
 inline void V3::Normalize()
 {
+	if (Length() == 0) return;
 	float length = Length();
 	for (char i = 0; i < 3; i++)
 		data[i] /= length;
@@ -409,6 +410,7 @@ inline float Length(V4 vector)
 /// <returns></returns>
 inline V4 Normalize(V4 vector)
 {
+	if (Length(vector) == 0) return vector;
 	float length = Length(vector);
 	for (char i = 0; i < 4; i++)
 		vector[i] /= length;

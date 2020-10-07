@@ -914,6 +914,16 @@ inline M4 Scalar(float s)
 	return temp;
 }
 
+inline M4 Scalar(V4 v)
+{
+	M4 temp;
+	temp[0] = V4(v[0], 0, 0, 0);
+	temp[1] = V4(0, v[1], 0, 0);
+	temp[2] = V4(0, 0, v[2], 0);
+	temp[3] = V4(0, 0, 0, 1);
+	return temp;
+}
+
 /// <param name="fov:">field of view, in degrees</param>
 /// <param name="aspect:">aspectRatio = width / heigth</param>
 /// <param name="n:">nearplane</param>

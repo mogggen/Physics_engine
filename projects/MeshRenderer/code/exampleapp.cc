@@ -83,9 +83,9 @@ namespace Example
 
 	void TextureResource::LoadFromFile(const char* filename)
 	{
-		int width, height, nrChannels;
+		int imgWidth, imgHeight, nrChannels;
 
-		unsigned char* img = stbi_load(filename, &width, &height, &nrChannels, STBI_rgb);
+		unsigned char* img = stbi_load(filename, &imgWidth, &imgHeight, &nrChannels, STBI_rgb);
 		if (img == nullptr)
 		{
 			printf("Image loaded incorrectly");
@@ -100,12 +100,12 @@ namespace Example
 
 		if (nrChannels == 3)
 		{
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, img);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imgWidth, imgHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, img);
 		}
 
 		else if (nrChannels == 4)
 		{
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, img);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imgWidth, imgHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, img);
 		}
 
 		glGenerateMipmap(GL_TEXTURE_2D);
@@ -123,7 +123,6 @@ namespace Example
 	void ShaderObject::LoadShader(GLchar* vs, GLchar* ps, std::string vsPath, std::string psPath)
 	{
 		std::streampos size;
-
 		//vs
 		std::ifstream pathVS(vsPath, std::ios::in | std::ios::binary | std::ios::ate);
 		if (pathVS.is_open())
@@ -235,6 +234,9 @@ namespace Example
 	{
 		App::Open();
 		this->window = new Display::Window;
+		//assign ExampleApp variables
+		w = a = s = d = q = e = false;
+		window->GetSize(width, height);
 		Em = Evp = Translate(V4());
 		window->SetKeyPressFunction([this](int32 keycode, int32 scancode, int32 action, int32 mods)
 		{
@@ -246,12 +248,14 @@ namespace Example
 			case GLFW_KEY_S: s = action; break;
 			case GLFW_KEY_A: a = action; break;
 			case GLFW_KEY_D: d = action; break;
+
+			case GLFW_KEY_Q: q = action; break;
+			case GLFW_KEY_E: e = action; break;
 			}
 		});
 
 		window->SetMouseMoveFunction([this](float64 x, float64 y)
 		{
-			int width, height; window->GetSize(width, height);
 			float senseX = 0.002f * (x - width / 2);
 			float senseY = 0.002f * (y - height / 2);
 			Evp = Rotation(V4(1, 0, 0), senseY) * Rotation(V4(0, 1, 0), senseX);
@@ -502,8 +506,6 @@ namespace Example
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
 		float step = 0;
-		int width, height;
-		window->GetSize(width, height);
 		node->Texture->LoadFromFile("textures/perfect.jpg");
 		Camera cam(90, (float)width / height, 0.01f, 100.0f);
 		char i = 0;
@@ -513,8 +515,8 @@ namespace Example
 		while (this->window->IsOpen())
 		{
 			float speed = .08f;
-			Em = Em * Translate(Normalize(V4(d - a, 0, w - s)) * speed);
-			node->Transform = Em * Evp; // Em * Evp for relative coordinates, Evp * Em for global coordinates
+			Em = Em * Translate(Normalize(V4(d - a, e - q, w - s)) * speed);
+			node->Transform = Evp * Em;
 			m = node->Transform * Translate(V4(0, 0, -5)) * Rotation(V4(1, 1, 0), step);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			this->window->Update();
@@ -523,7 +525,7 @@ namespace Example
 			glUseProgram(node->Shader->program);
 			node->Texture->BindTexture();
 
-			scene = v * m;
+			scene = v * m * Scalar(V4(-1, -1, 1));
 			auto loc = glGetUniformLocation(node->Shader->program, "m4");
 			glUniformMatrix4fv(loc, 1, GL_TRUE, (float*)&scene);
 			node->Geometry->render();

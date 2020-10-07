@@ -85,7 +85,9 @@ namespace Example
 		/// run app
 		void Run();
 	private:
-		bool w = false, a = false, s = false, d = false;
+		int width, height;
+		bool w, a, s, d,
+			q, e;
 		M4 Em;
 		M4 Evp;
 		GLuint program;

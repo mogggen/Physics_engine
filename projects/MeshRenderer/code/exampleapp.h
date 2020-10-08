@@ -59,18 +59,29 @@ namespace Example
 		GLchar* vs;
 		GLchar* ps;
 		GLuint program;
-		void getShader(GLuint vs, GLuint ps, GLuint prog);
+		void getShaderObject(GLuint vs, GLuint ps, GLuint prog);
 		void LoadShader(GLchar* vs, GLchar* ps, std::string vsPath, std::string psPath);
 	};
 
-	struct GraphicNode
+	class GraphicNode
 	{
 		std::shared_ptr<MeshResource> Geometry;
 		std::shared_ptr<TextureResource> Texture;
 		std::shared_ptr<ShaderObject> Shader;
 		M4 Transform;
+	public:
 		GraphicNode(std::shared_ptr<MeshResource> geometry, std::shared_ptr<TextureResource> texture, std::shared_ptr<ShaderObject> shader, M4 transform);
-		void Draw();
+		void DrawScene(M4& mvp, V4& rbga);
+
+		std::shared_ptr<MeshResource> getGeometry();
+		std::shared_ptr<TextureResource> getTexture();
+		std::shared_ptr<ShaderObject> getShader();
+		M4 getTransform();
+
+		void setGeometry(std::shared_ptr<MeshResource> geometry);
+		void setTexture(std::shared_ptr<TextureResource> texture);
+		void setShader(std::shared_ptr<ShaderObject> shader);
+		void setTransform(M4 transform);
 	};
 
 	class ExampleApp : public Core::App

@@ -151,7 +151,7 @@ namespace Example
 		this->ps = ps;
 	}
 
-	void ShaderObject::getShader(GLuint vertexShader, GLuint pixelShader, GLuint program)
+	void ShaderObject::getShaderObject(GLuint vertexShader, GLuint pixelShader, GLuint program)
 	{
 		LoadShader(vs, ps, "textures/vs.glsl", "textures/ps.glsl");
 
@@ -209,23 +209,30 @@ namespace Example
 		Transform = Translate(V4());
 	}
 
-	void GraphicNode::Draw()
+	void GraphicNode::DrawScene(M4&mvp, V4& rgba)
 	{
-		Texture->LoadFromFile("textures/perfect.jpg");
 		Texture->BindTexture();
 
-		glUseProgram(this->Shader->program); //bind shader
+		glUseProgram(this->Shader->program);
 
 		//Set matrix
-		M4 scene;
-		glUniformMatrix4fv(glGetUniformLocation(Shader->program, "m4") , 1, GL_TRUE, (float*)&scene);
+		glUniformMatrix4fv(glGetUniformLocation(Shader->program, "m4") , 1, GL_TRUE, (float*)&mvp);
 
 		//set colorVector
-		V4 vec;
-		glUniform4fv(glGetUniformLocation(Shader->program, "colorVector"), 1, (float*)&vec);
+		glUniform4fv(glGetUniformLocation(Shader->program, "colorVector"), 1, (float*)&rgba);
 
 		Geometry->render();
 	}
+
+	std::shared_ptr<MeshResource> GraphicNode::getGeometry() { return Geometry; }
+	std::shared_ptr<TextureResource> GraphicNode::getTexture() { return Texture; }
+	std::shared_ptr<ShaderObject> GraphicNode::getShader() { return Shader; }
+	M4 GraphicNode::getTransform() { return Transform; }
+
+	void GraphicNode::setGeometry(std::shared_ptr<MeshResource> geometry) { Geometry = geometry; }
+	void GraphicNode::setTexture(std::shared_ptr<TextureResource> texture) { Texture = texture; }
+	void GraphicNode::setShader(std::shared_ptr<ShaderObject> shader) { Shader = shader; }
+	void GraphicNode::setTransform(M4 transform) { Transform = transform; }
 
 	//------------------------------------------------------------------------------
 	/**
@@ -252,6 +259,7 @@ namespace Example
 	{
 		App::Open();
 		this->window = new Display::Window;
+
 		//assign ExampleApp variables
 		w = a = s = d = q = e = false;
 		window->GetSize(width, height);
@@ -293,7 +301,7 @@ namespace Example
 
 			//shaderObject
 			shaderObject = std::make_shared<ShaderObject>();
-			shaderObject->getShader(this->vertexShader, this->pixelShader, this->program);
+			shaderObject->getShaderObject(this->vertexShader, this->pixelShader, this->program);
 
 			
 			//GraphicNode
@@ -523,30 +531,17 @@ namespace Example
 	{
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
-		float step = 0;
-		
+		node->getTexture()->LoadFromFile("textures/perfect.jpg");
 		Camera cam(90, (float)width / height, 0.01f, 100.0f);
-		char i = 0;
-		M4 scene;
-		M4 m;
-		M4 v = cam.pv();
+		float speed = .08f;
+		M4 scene; V4 color(1, 1, 1);
 		while (this->window->IsOpen())
 		{
-			float speed = .08f;
 			Em = Em * Translate(Normalize(V4(d - a, e - q, w - s)) * speed);
-			node->Transform = Evp * Em;
-			m = node->Transform * Translate(V4(0, 0, -5)) * Rotation(V4(1, 1, 0), step);
+			scene = cam.pv() * (Evp * Em) * Translate(V4(0, 0, -5)) * Scalar(V4(-1, -1, 1));
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			this->window->Update();
-
-			// do stuff
-			glUseProgram(node->Shader->program);
-			node->Texture->BindTexture();
-
-			scene = v * m * Scalar(V4(-1, -1, 1));
-			
-			node->Geometry->render();
-
+			node->DrawScene(scene, color);
 			this->window->SwapBuffers();
 		}
 	}

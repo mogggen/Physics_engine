@@ -98,6 +98,7 @@ namespace Example
 		void Run();
 	private:
 		int width, height;
+		bool isRotate;
 		bool w, a, s, d,
 			q, e;
 		M4 Em;

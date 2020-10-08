@@ -78,7 +78,7 @@ namespace Example
 
 	M4 Camera::pv()
 	{
-		return projection(fov, aspect, n, f) * Translate(pos) * Rotation(dir, rad);
+		return projection(fov, aspect, n, f) * Translate(pos) /** Rotation(dir, rad)*/;
 	}
 
 	void TextureResource::LoadFromFile(const char* filename)
@@ -261,6 +261,7 @@ namespace Example
 		this->window = new Display::Window;
 
 		//assign ExampleApp variables
+		isRotate = false;
 		w = a = s = d = q = e = false;
 		window->GetSize(width, height);
 		Em = Evp = Translate(V4());
@@ -280,11 +281,19 @@ namespace Example
 			}
 		});
 
+		window->SetMousePressFunction([this](int32 button, int32 action, int32 mods)
+		{
+			isRotate = button == GLFW_MOUSE_BUTTON_1 && action >= GLFW_PRESS;
+		});
+
 		window->SetMouseMoveFunction([this](float64 x, float64 y)
 		{
-			float senseX = 0.002f * (x - width / 2);
-			float senseY = 0.002f * (y - height / 2);
-			Evp = Rotation(V4(1, 0, 0), senseY) * Rotation(V4(0, 1, 0), senseX);
+			if (isRotate)
+			{
+				float senseX = 0.002f * (x - width / 2);
+				float senseY = 0.002f * (y - height / 2);
+				Evp = Rotation(V4(1, 0, 0), senseY) * Rotation(V4(0, 1, 0), senseX);
+			}
 		});
 		
 
@@ -533,12 +542,14 @@ namespace Example
 		glDepthFunc(GL_LEQUAL);
 		node->getTexture()->LoadFromFile("textures/perfect.jpg");
 		Camera cam(90, (float)width / height, 0.01f, 100.0f);
+		cam.setPos(V4(0, 0, -3));
+		cam.setRot(V4(0, 1, 0), M_PI);
 		float speed = .08f;
 		M4 scene; V4 color(1, 1, 1);
 		while (this->window->IsOpen())
 		{
 			Em = Em * Translate(Normalize(V4(d - a, e - q, w - s)) * speed);
-			scene = cam.pv() * (Evp * Em) * Translate(V4(0, 0, -5)) * Scalar(V4(-1, -1, 1));
+			scene = cam.pv() * (Em * Evp) * Translate(V4(0, 0, 0)) * Scalar(V4(-1, -1, 1));
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			this->window->Update();
 			node->DrawScene(scene, color);

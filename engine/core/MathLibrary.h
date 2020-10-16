@@ -3,6 +3,199 @@
 
 #define M_PI 3.141592741f
 
+#pragma region Vector2
+//	Vector operations: +, -, *, length, normalize
+
+/// <summary>
+/// V2 is a 2 dimensional vector with coordinates.
+/// </summary>
+struct V2
+{
+	union
+	{
+		struct
+		{
+			float x, y;
+		};
+		float data[2];
+	};
+
+	inline V2();
+	inline V2(float x, float y, float z);
+
+	void operator+=(V2 right);
+	void operator-=(V2 right);
+	void operator*=(V2 right);
+	void operator*=(float right);
+	void operator/=(V2 right);
+	void operator/=(float right);
+	float& operator[](char index);
+
+	float Dot(V2 right);
+	void Cross(V2 right);
+
+	float Length();
+	void Normalize();
+};
+
+//Vector Constructors
+V2::V2() : x(0), y(0) { }
+
+V2::V2(float x, float y, float z) : x(x), y(y) { }
+
+
+//	operator methods
+inline void V2::operator+=(V2 right)
+{
+	for (char i = 0; i < 3; i++)
+		data[i] += right[i];
+}
+
+inline void V2::operator-=(V2 right)
+{
+	for (char i = 0; i < 3; i++)
+		data[i] -= right[i];
+}
+
+inline void V2::operator*=(V2 right)
+{
+	for (char i = 0; i < 3; i++)
+		data[i] *= right[i];
+}
+
+inline void V2::operator*=(float right)
+{
+	for (char i = 0; i < 3; i++)
+		data[i] *= right;
+}
+
+inline void V2::operator/=(V2 right)
+{
+	for (char i = 0; i < 3; i++)
+	{
+		data[i] /= right[i];
+	}
+}
+
+inline void V2::operator/=(float right)
+{
+	for (char i = 0; i < 3; i++)
+	{
+		data[i] /= right;
+	}
+}
+
+inline float V2::Dot(V2 right)
+{
+	return x * right.x + y * right.y;
+}
+
+//	utilitiy methods
+inline float& V2::operator[](char index)
+{
+	return data[index];
+}
+
+inline float V2::Length()
+{
+	return sqrt(pow(x, 2) + pow(y, 2));
+}
+
+inline void V2::Normalize()
+{
+	if (Length() == 0) return;
+	float length = Length();
+	for (char i = 0; i < 3; i++)
+		data[i] /= length;
+}
+
+//	operator functions
+inline V2 operator+(V2 left, V2 right)
+{
+	for (char i = 0; i < 3; i++)
+		left[i] += right[i];
+	return left;
+}
+
+inline V2 operator-(V2 left, V2 right)
+{
+	for (char i = 0; i < 3; i++)
+		left[i] -= right[i];
+	return left;
+}
+
+inline V2 operator*(V2 left, V2 right)
+{
+	for (char i = 0; i < 3; i++)
+		left[i] *= right[i];
+	return left;
+}
+
+inline V2 operator*(V2 left, float right)
+{
+	for (char i = 0; i < 3; i++)
+		left[i] *= right;
+	return left;
+}
+
+inline V2 operator*(float left, V2 right)
+{
+	for (char i = 0; i < 3; i++)
+		right[i] *= left;
+	return right;
+}
+
+inline V2 operator/(V2 left, V2 right)
+{
+	for (char i = 0; i < 3; i++)
+	{
+		left[i] /= right[i];
+	}
+}
+
+inline V2 operator/(V2 left, float right)
+{
+	for (char i = 0; i < 3; i++)
+	{
+		left[i] /= right;
+	}
+}
+
+inline V2 operator/(float left, V2 right)
+{
+	for (char i = 0; i < 3; i++)
+	{
+		right[i] /= left;
+	}
+}
+
+inline float Dot(V2 left, V2 right)
+{
+	float temp = 0;
+	for (char i = 0; i < 3; i++)
+		temp += left[i] * right[i];
+	return temp;
+}
+
+inline float Length(V2 vector)
+{
+	return sqrt(pow(vector.x, 2) + pow(vector.y, 2));
+}
+
+/// <summary>
+/// takes a V2 and normalize it, giving it a length of one.
+/// </summary>
+/// <param name="vector">the vector to normalize.</param>
+/// <returns></returns>
+inline V2 Normalize(V2 vector)
+{
+	float length = Length(vector);
+	for (char i = 0; i < 3; i++)
+		vector[i] /= length;
+	return vector;
+}
+#pragma endregion
+
 #pragma region Vector3
 //	Vector operations: +, -, *, length, normalize, dot product, cross product
 

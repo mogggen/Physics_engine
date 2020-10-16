@@ -283,15 +283,15 @@ namespace Example
 
 		window->SetMousePressFunction([this](int32 button, int32 action, int32 mods)
 		{
-			isRotate = button == GLFW_MOUSE_BUTTON_1 && action >= GLFW_PRESS;
+			isRotate = button == GLFW_MOUSE_BUTTON_1 && action;
 		});
 
 		window->SetMouseMoveFunction([this](float64 x, float64 y)
 		{
 			if (isRotate)
 			{
-				float senseX = 0.002f * (x - width / 2);
-				float senseY = 0.002f * (y - height / 2);
+				senseX = 0.002f * (x - width / 2);
+				senseY = 0.002f * (y - height / 2);
 				Evp = Rotation(V4(1, 0, 0), senseY) * Rotation(V4(0, 1, 0), senseX);
 			}
 		});

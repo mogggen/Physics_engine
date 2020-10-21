@@ -7,26 +7,12 @@
 */
 //------------------------------------------------------------------------------
 #include "core/app.h"
-#include "core/MathLibrary.h"
 #include "render/Vertex.h"
+#include "render/MeshResource.h"
 #include "render/window.h"
-#include <memory>
 
 namespace Example
 {
-	class MeshResource
-	{
-		GLint indices;
-		GLuint vertexBuffer;
-		GLuint indexBuffer;
-	public:
-		std::shared_ptr<MeshResource> Cube(const V4 size, const V4 color);
-		MeshResource(Vertex vertices[], int Verticeslength, unsigned int indices[], int indicesLength);
-		~MeshResource();
-		void Destroy();
-		void render();
-	};
-
 	class Camera
 	{
 		float fov, aspect, n, f;

@@ -1054,7 +1054,7 @@ inline void Inverse(M4& matrix)
 }
 
 //Line with direction of line and rotation around axis by theta radians
-inline M4 Rotation(V4 line, float θ)
+inline M4 Rotation(V4 line, float theta)
 {
 	line.Normalize();
 	M4 temp;
@@ -1067,17 +1067,17 @@ inline M4 Rotation(V4 line, float θ)
 	// [3] 0 0 0 1
 
 	// [coloumns][rows]
-	temp[0].x = cos(θ) + (1 - cos(θ)) * pow(line.x, 2); // 0
-	temp[0].y = (1 - cos(θ)) * line.x * line.y + line.z * sin(θ); // 1
-	temp[0].z = (1 - cos(θ)) * line.x * line.z - line.y * sin(θ); // 2
+	temp[0].x = cos(theta) + (1 - cos(theta)) * pow(line.x, 2); // 0
+	temp[0].y = (1 - cos(theta)) * line.x * line.y + line.z * sin(theta); // 1
+	temp[0].z = (1 - cos(theta)) * line.x * line.z - line.y * sin(theta); // 2
 
-	temp[1].x = (1 - cos(θ)) * line.x * line.y - line.z * sin(θ); // 3
-	temp[1].y = cos(θ) + (1 - cos(θ)) * pow(line.y, 2); // 4
-	temp[1].z = (1 - cos(θ)) * line.y * line.z + line.x * sin(θ); // 5
+	temp[1].x = (1 - cos(theta)) * line.x * line.y - line.z * sin(theta); // 3
+	temp[1].y = cos(theta) + (1 - cos(theta)) * pow(line.y, 2); // 4
+	temp[1].z = (1 - cos(theta)) * line.y * line.z + line.x * sin(theta); // 5
 
-	temp[2].x = (1 - cos(θ)) * line.x * line.z + line.y * sin(θ); // 6
-	temp[2].y = (1 - cos(θ)) * line.y * line.z - line.x * sin(θ); // 7
-	temp[2].z = cos(θ) + (1 - cos(θ)) * pow(line.z, 2); // 8
+	temp[2].x = (1 - cos(theta)) * line.x * line.z + line.y * sin(theta); // 6
+	temp[2].y = (1 - cos(theta)) * line.y * line.z - line.x * sin(theta); // 7
+	temp[2].z = cos(theta) + (1 - cos(theta)) * pow(line.z, 2); // 8
 
 	return temp;
 }

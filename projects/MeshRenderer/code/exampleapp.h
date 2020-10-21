@@ -6,20 +6,14 @@
 	(C) 2015-2020 Individual contributors, see AUTHORS file
 */
 //------------------------------------------------------------------------------
-#include "core/MathLibrary.h"
 #include "core/app.h"
+#include "core/MathLibrary.h"
+#include "render/Vertex.h"
 #include "render/window.h"
 #include <memory>
 
 namespace Example
 {
-	struct Vertex
-	{
-		V3 pos;
-		V4 rgba;
-		float texel[2];
-	};
-
 	class MeshResource
 	{
 		GLint indices;
@@ -42,7 +36,7 @@ namespace Example
 	public:
 		Camera(float fov, float ratio, float n, float f);
 		void setPos(V4 pos);
-		void setRot(V4 dir, float θ);
+		void setRot(V4 dir, float theta);
 		M4 pv();
 	};
 

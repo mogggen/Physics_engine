@@ -11,6 +11,18 @@ SET(files_render_display
 	MeshResource.h
 	MeshResource.cc
 
+	Camera.h
+	Camera.cc
+
+	TextureResource.h
+	TextureResource.cc
+
+	ShaderObject.h
+	ShaderObject.cc
+
+	GraphicNode.h
+	GraphicNode.cc
+
 	stb_image.h)
 SOURCE_GROUP("display" FILES ${files_render_display})
 

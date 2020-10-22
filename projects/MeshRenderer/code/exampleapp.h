@@ -9,61 +9,13 @@
 #include "core/app.h"
 #include "render/Vertex.h"
 #include "render/MeshResource.h"
+#include "render/Camera.h"
+#include "render/ShaderObject.h"
+#include "render/GraphicNode.h"
 #include "render/window.h"
 
 namespace Example
 {
-	class Camera
-	{
-		float fov, aspect, n, f;
-		V4 pos, up;
-		V4 dir;
-		float rad = 0.f;
-	public:
-		Camera(float fov, float ratio, float n, float f);
-		void setPos(V4 pos);
-		void setRot(V4 dir, float theta);
-		M4 pv();
-	};
-
-	class TextureResource
-	{
-		GLuint texture;
-	public:
-		void BindTexture();
-		void LoadFromFile(const char* filename);
-	};
-
-	struct ShaderObject
-	{
-		GLchar* vs;
-		GLchar* ps;
-		GLuint program;
-		void getShaderObject(GLuint vs, GLuint ps, GLuint prog);
-		void LoadShader(GLchar* vs, GLchar* ps, std::string vsPath, std::string psPath);
-	};
-
-	class GraphicNode
-	{
-		std::shared_ptr<MeshResource> Geometry;
-		std::shared_ptr<TextureResource> Texture;
-		std::shared_ptr<ShaderObject> Shader;
-		M4 Transform;
-	public:
-		GraphicNode(std::shared_ptr<MeshResource> geometry, std::shared_ptr<TextureResource> texture, std::shared_ptr<ShaderObject> shader, M4 transform);
-		void DrawScene(M4& mvp, V4& rbga);
-
-		std::shared_ptr<MeshResource> getGeometry();
-		std::shared_ptr<TextureResource> getTexture();
-		std::shared_ptr<ShaderObject> getShader();
-		M4 getTransform();
-
-		void setGeometry(std::shared_ptr<MeshResource> geometry);
-		void setTexture(std::shared_ptr<TextureResource> texture);
-		void setShader(std::shared_ptr<ShaderObject> shader);
-		void setTransform(M4 transform);
-	};
-
 	class ExampleApp : public Core::App
 	{
 	public:

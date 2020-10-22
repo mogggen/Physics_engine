@@ -100,19 +100,19 @@ std::shared_ptr<MeshResource> MeshResource::Cube(V4 size, V4 color)
 		//010
 		Vertex //back : 6
 		{
-			V3(-.5 * size[0], .5f * size[1], -.5f * size[2]),
+			V3(-.5f * size[0], .5f * size[1], -.5f * size[2]),
 			back,
 			1, 0
 		},
 		Vertex //left : 7
 		{
-			V3(-.5 * size[0], .5f * size[1], -.5f * size[2]),
+			V3(-.5f * size[0], .5f * size[1], -.5f * size[2]),
 			left,
 			0, 0
 		},
 		Vertex //top : 8
 		{
-			V3(-.5 * size[0], .5f * size[1], -.5f * size[2]),
+			V3(-.5f * size[0], .5f * size[1], -.5f * size[2]),
 			top,
 			0, 0
 		},

@@ -68,8 +68,8 @@ namespace Example
 		{
 			if (isRotate)
 			{
-				senseX = 0.002f * (x - width / 2);
-				senseY = 0.002f * (y - height / 2);
+				senseX = (0.002 * (x - width / 2));
+				senseY = (0.002 * (y - height / 2));
 				Evp = Rotation(V4(1, 0, 0), senseY) * Rotation(V4(0, 1, 0), senseX);
 			}
 		});
@@ -116,7 +116,7 @@ namespace Example
 		M4 scene; V4 color(1, 1, 1);
 		while (this->window->IsOpen())
 		{
-			Em = Em * Translate(Normalize(V4(d - a, e - q, w - s)) * speed);
+			Em = Em * Translate(Normalize(V4(float(d - a), float(e - q), float(w - s))) * speed);
 			scene = cam.pv() * (Em * Evp) * Translate(V4(0, 0, 0)) * Scalar(V4(-1, -1, 1));
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			this->window->Update();

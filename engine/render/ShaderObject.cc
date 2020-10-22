@@ -85,3 +85,8 @@ void ShaderObject::getShaderObject(GLuint vertexShader, GLuint pixelShader, GLui
 	}
 	this->program = program;
 }
+
+ShaderObject::~ShaderObject()
+{
+	glDeleteProgram(program);
+}

@@ -1,11 +1,16 @@
 #include "config.h"
 #include "render/TextureResource.h"
 
-void TextureResource::LoadFromFile(const char* filename)
+TextureResource::TextureResource(std::string file) : file("textures/" + file)
+{
+	
+}
+
+void TextureResource::LoadFromFile()
 	{
 		int imgWidth, imgHeight, nrChannels;
 
-		unsigned char* img = stbi_load(filename, &imgWidth, &imgHeight, &nrChannels, STBI_rgb);
+		unsigned char* img = stbi_load(file.c_str(), &imgWidth, &imgHeight, &nrChannels, STBI_rgb);
 		if (img == nullptr)
 		{
 			printf("Image loaded incorrectly");
@@ -33,8 +38,13 @@ void TextureResource::LoadFromFile(const char* filename)
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
-	void TextureResource::BindTexture()
-	{
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture);
-	}
+void TextureResource::BindTexture()
+{
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture);
+}
+
+TextureResource::~TextureResource()
+{
+	glDeleteTextures(1, &texture);
+}

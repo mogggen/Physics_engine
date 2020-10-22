@@ -9,4 +9,5 @@ struct ShaderObject
 	GLuint program;
 	void getShaderObject(GLuint vs, GLuint ps, GLuint prog);
 	void LoadShader(GLchar* vs, GLchar* ps, std::string vsPath, std::string psPath);
+	~ShaderObject();
 };

@@ -84,7 +84,7 @@ namespace Example
 			cube = cube->Cube(V4(1, 1, 1), V4(1, 1, 1));
 
 			//TextureResource
-			std::shared_ptr<TextureResource> texture = std::make_shared<TextureResource>();
+			std::shared_ptr<TextureResource> texture = std::make_shared<TextureResource>("perfect.jpg");
 
 			//shaderObject
 			shaderObject = std::make_shared<ShaderObject>();
@@ -108,7 +108,7 @@ namespace Example
 	{
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
-		node->getTexture()->LoadFromFile("textures/perfect.jpg");
+		node->getTexture()->LoadFromFile();
 		Camera cam(90, (float)width / height, 0.01f, 100.0f);
 		cam.setPos(V4(0, 0, -3));
 		cam.setRot(V4(0, 1, 0), M_PI);

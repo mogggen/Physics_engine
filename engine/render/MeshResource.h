@@ -2,17 +2,24 @@
 #include "Vertex.h"
 #include <GL/glew.h>
 #include <iostream>
+#include <vector>
 #include <memory>
 
 class MeshResource
 {
-	GLint indices;
+	GLint indicesLength;
 	GLuint vertexBuffer;
 	GLuint indexBuffer;
 public:
-	std::shared_ptr<MeshResource> Cube(const V4 size, const V4 color);
 	MeshResource(Vertex vertices[], int Verticeslength, unsigned int indices[], int indicesLength);
-	~MeshResource();
+	MeshResource(MeshResource& meshResource);
+
+	//Meshes
+	std::shared_ptr<MeshResource> Cube(const V4 size, const V4 color);
+	std::shared_ptr<MeshResource> CustomObj(std::string fileName);
+
 	void Destroy();
 	void render();
+
+	~MeshResource();
 };

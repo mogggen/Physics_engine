@@ -84,7 +84,7 @@ namespace Example
 			cube = cube->Cube(V4(1, 1, 1), V4(1, 1, 1));
 
 			//TextureResource
-			std::shared_ptr<TextureResource> texture = std::make_shared<TextureResource>("perfect.jpg");
+			std::shared_ptr<TextureResource> texture = std::make_shared<TextureResource>("pictures/perfect.jpg");
 
 			//shaderObject
 			shaderObject = std::make_shared<ShaderObject>();

@@ -14,6 +14,9 @@ SET(files_render_display
 	Camera.h
 	Camera.cc
 
+	Lightning.h
+	Lightning.cc
+
 	TextureResource.h
 	TextureResource.cc
 
@@ -22,6 +25,9 @@ SET(files_render_display
 
 	GraphicNode.h
 	GraphicNode.cc
+
+	FragShader.glsl
+	VertexShader.glsl
 
 	stb_image.h)
 SOURCE_GROUP("display" FILES ${files_render_display})

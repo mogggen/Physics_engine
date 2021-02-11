@@ -1,10 +1,16 @@
 #include "config.h"
 #include "render/ShaderObject.h"
 
+ShaderObject::ShaderObject()
+{
+
+}
+
 //filetype: .glsl
 void ShaderObject::LoadShader(GLchar* vs, GLchar* ps, std::string vsPath, std::string psPath)
 {
 	std::streampos size;
+	
 	//vs
 	std::ifstream pathVS(vsPath, std::ios::in | std::ios::binary | std::ios::ate);
 	if (pathVS.is_open())
@@ -35,7 +41,8 @@ void ShaderObject::LoadShader(GLchar* vs, GLchar* ps, std::string vsPath, std::s
 
 void ShaderObject::getShaderObject(GLuint vertexShader, GLuint pixelShader, GLuint program)
 {
-	LoadShader(vs, ps, "textures/vs.glsl", "textures/ps.glsl");
+	LoadShader(vs, ps, "core/render/vs.glsl", "core/render/ps.glsl");
+	//LoadShader(vs, ps, "textures/shaders/vs.glsl", "textures/shaders/ps.glsl");
 
 	// setup vertex shader
 	vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -84,6 +91,32 @@ void ShaderObject::getShaderObject(GLuint vertexShader, GLuint pixelShader, GLui
 		delete[] buf;
 	}
 	this->program = program;
+}
+
+
+
+void ShaderObject::setF(float floatIn, std::string uniform) {
+	glUseProgram(program);
+	glUniform1f(glGetUniformLocation(program, uniform.c_str()), floatIn);
+}
+
+void ShaderObject::setV3(V3 vec3, std::string uniform) {
+	glUseProgram(program);
+	glUniform3fv(glGetUniformLocation(program, uniform.c_str()), 1, (float*)&vec3);
+}
+
+void ShaderObject::setV4(V4 vec4, std::string uniform) {
+	glUseProgram(program);
+	glUniform4fv(glGetUniformLocation(program, uniform.c_str()), 1, (float*)&vec4);
+}
+
+void ShaderObject::setM4(M4 m4, std::string uniform) {
+	glUseProgram(program);
+	glUniformMatrix4fv(glGetUniformLocation(program, uniform.c_str()), 1, GL_FALSE, (float*)&(m4));
+}
+
+void ShaderObject::BindShader() {
+	glUseProgram(program);
 }
 
 ShaderObject::~ShaderObject()

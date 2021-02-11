@@ -21,7 +21,7 @@ struct V2
 	};
 
 	inline V2();
-	inline V2(float x, float y, float z);
+	inline V2(float x, float y);
 
 	void operator+=(V2 right);
 	void operator-=(V2 right);
@@ -40,7 +40,7 @@ struct V2
 //Vector Constructors
 V2::V2() : x(0), y(0) { }
 
-V2::V2(float x, float y, float z) : x(x), y(y) { }
+V2::V2(float x, float y) : x(x), y(y) { }
 
 
 //	operator methods

@@ -11,7 +11,7 @@ class MeshResource
 	GLuint vertexBuffer;
 	GLuint indexBuffer;
 public:
-	MeshResource(Vertex vertices[], int Verticeslength, unsigned int indices[], int indicesLength);
+	MeshResource(Vertex vertices[], unsigned int indices[], int Verticeslength, int indicesLength);
 	MeshResource(MeshResource& meshResource);
 
 	//Meshes

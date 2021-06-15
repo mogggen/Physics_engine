@@ -1,7 +1,7 @@
 #include "config.h"
 #include "render/MeshResource.h"
 
-MeshResource::MeshResource(Vertex vertices[], int Verticeslength, unsigned int indices[], int indicesLength) : indicesLength(indicesLength)
+MeshResource::MeshResource(Vertex vertices[], unsigned int indices[], int Verticeslength, int indicesLength) : indicesLength(indicesLength)
 {
 	glGenBuffers(1, &this->vertexBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, this->vertexBuffer);
@@ -269,7 +269,7 @@ std::shared_ptr<MeshResource> MeshResource::Cube(V4 size, V4 color)
 		5, 14, 17, //bottom
 	};
 
-	MeshResource* temp1 = new MeshResource(MeshResource(vertices, sizeof(vertices) / sizeof(Vertex), indices, sizeof(indices) / sizeof(unsigned int)));
+	MeshResource* temp1 = new MeshResource(MeshResource(vertices, indices, sizeof(vertices) / sizeof(Vertex), sizeof(indices) / sizeof(unsigned int)));
 	std::shared_ptr<MeshResource> temp(temp1);
 	return temp;
 }

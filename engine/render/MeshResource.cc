@@ -25,11 +25,15 @@ void MeshResource::render()
 	glBindBuffer(GL_ARRAY_BUFFER, this->vertexBuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->indexBuffer);
 
+
+	// these Attributes should be in the same order for vs.glsl (which is fragment shader also)
+	//and ps.glsl
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
 	glEnableVertexAttribArray(3);
 
+	//start, length, "parametrar", pointer positon for floats
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), NULL);
 	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(sizeof(GLfloat) * 3));
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(sizeof(GLfloat) * 7));

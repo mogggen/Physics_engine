@@ -41,8 +41,8 @@ void ShaderObject::LoadShader(GLchar* vs, GLchar* ps, std::string vsPath, std::s
 
 void ShaderObject::getShaderObject(GLuint vertexShader, GLuint pixelShader, GLuint program)
 {
-	LoadShader(vs, ps, "core/render/vs.glsl", "core/render/ps.glsl");
-	//LoadShader(vs, ps, "textures/shaders/vs.glsl", "textures/shaders/ps.glsl");
+	//LoadShader(vs, ps, "core/render/vs.glsl", "core/render/ps.glsl");
+	LoadShader(vs, ps, "textures/shaders/vs.glsl", "textures/shaders/ps.glsl");
 
 	// setup vertex shader
 	vertexShader = glCreateShader(GL_VERTEX_SHADER);

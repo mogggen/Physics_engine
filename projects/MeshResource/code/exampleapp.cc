@@ -81,7 +81,7 @@ namespace Example
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
 			//MeshResource
-			cube = cube->Cube(V4(1, 1, 1), V4(1, 1, 1));
+			cube = cube->Cube(V3(0, 0, 0), V4(1, 1, 1), V4(1, 1, 1));
 
 			//TextureResource
 			std::shared_ptr<TextureResource> texture = std::make_shared<TextureResource>("pictures/perfect.jpg");

@@ -33,7 +33,7 @@ void MeshResource::render()
 	glEnableVertexAttribArray(2);
 	glEnableVertexAttribArray(3);
 
-	//start, length, "parametrar", pointer positon for floats
+	//attribute, length, "parametrar", offset
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), NULL);
 	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(sizeof(GLfloat) * 3));
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(sizeof(GLfloat) * 7));
@@ -44,7 +44,7 @@ void MeshResource::render()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-std::shared_ptr<MeshResource> MeshResource::Cube(V4 size, V4 color)
+std::shared_ptr<MeshResource> MeshResource::Cube(V3 pos, V4 size, V4 color)
 {
 	V4 top(0, 255, 0); //red
 	V4 back(128, 66, 128); //gray

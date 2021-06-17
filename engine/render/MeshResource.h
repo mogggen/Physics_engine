@@ -15,7 +15,7 @@ public:
 	MeshResource(MeshResource& meshResource);
 
 	//Meshes
-	std::shared_ptr<MeshResource> Cube(const V4 size, const V4 color);
+	std::shared_ptr<MeshResource> Cube(const V3 pos, const V4 size, const V4 color);
 	std::shared_ptr<MeshResource> CustomObj(std::string fileName);
 
 	void Destroy();

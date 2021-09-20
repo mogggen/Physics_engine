@@ -1,7 +1,33 @@
 ﻿//#include "config.h"
 #pragma once
+#include <cmath>
 
-#define M_PI 3.141592741f
+#ifndef V2Zero
+#define V2Zero V2()
+#endif
+
+
+#ifndef V3Zero
+#define V3Zero V3()
+#endif
+
+#ifndef V4Zero
+#define V4Zero V4()
+#endif
+
+
+#ifndef V4Right
+#define V4Right V4(1.f, 0.f, 0.f)
+#endif
+
+#ifndef V4Forward
+#define V4Forward V4(0.f, 1.f, 0.f)
+#endif
+
+#ifndef V4Up
+#define V4Up V4(0.f, 0.f, 1.f)
+#endif
+
 
 #pragma region Vector2
 //	Vector operations: +, -, *, length, normalize

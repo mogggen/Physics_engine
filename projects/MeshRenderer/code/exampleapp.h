@@ -31,7 +31,6 @@ namespace Example
 	private:
 		int width, height;
 		float senseX, senseY;
-		bool isRotate;
 		bool w, a, s, d,
 			q, e;
 		M4 Em;
@@ -39,9 +38,15 @@ namespace Example
 		GLuint program;
 		GLuint vertexShader;
 		GLuint pixelShader;
+
 		std::shared_ptr<MeshResource> cube;
 		std::shared_ptr<ShaderObject> shaderObject;
 		std::shared_ptr<GraphicNode> node;
+
+		std::shared_ptr<MeshResource> monkey;
+		std::shared_ptr<ShaderObject> ShaderObjectSusanne;
+		std::shared_ptr<GraphicNode> susanne;
+
 		Display::Window* window;
 	};
 } // namespace Example

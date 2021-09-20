@@ -34,8 +34,9 @@ void MeshResource::render()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-std::shared_ptr<MeshResource> MeshResource::Cube(V4 size, V4 color)
+std::shared_ptr<MeshResource> MeshResource::Cube()
 {
+	V4 smh = V4Zero;
 	V4 top(0, 255, 0); //red
 	V4 back(128, 66, 128); //gray
 	V4 left(0, 0, 255); //blue
@@ -51,7 +52,7 @@ std::shared_ptr<MeshResource> MeshResource::Cube(V4 size, V4 color)
 	front = front * factor;
 	bottom = bottom * factor;
 
-	Vertex vertices[] =
+	Vertex vertices[] = // world points
 	{
 		//Mesh:	(0,1)	(1,1)	Tex:(0,0)	(1,0)
 		//		(0,0)	(1,0)		(0,1)	(1,1)
@@ -60,19 +61,19 @@ std::shared_ptr<MeshResource> MeshResource::Cube(V4 size, V4 color)
 		//000
 		Vertex //back : 0
 		{
-			V3(-.5f * size[0], -.5f * size[1], -.5f * size[2]),
-			back,
-			1, 1
+			V3(-.5f, -.5f, -.5f), // position, will transform later with the projection matrix
+			back, // raw color 0-1 : black-white
+			1, 1 // texture position, when the indicies are added, combined with this data, the orientation and size of the texture will make sense
 		},
 		Vertex //left : 1
 		{
-			V3(-.5f * size[0], -.5f * size[1], -.5f * size[2]),
+			V3(-.5f, -.5f, -.5f),
 			left,
 			0, 1
 		},
 		Vertex //bottom : 2
 		{
-			V3(-.5f * size[0], -.5f * size[1], -.5f * size[2]),
+			V3(-.5f, -.5f, -.5f),
 			bottom,
 			1, 0
 		},
@@ -80,19 +81,19 @@ std::shared_ptr<MeshResource> MeshResource::Cube(V4 size, V4 color)
 		//100
 		Vertex //back : 3
 		{
-			V3(.5f * size[0], -.5f * size[1], -.5f * size[2]),
+			V3(.5f, -.5f, -.5f),
 			back,
 			0, 1
 		},
 		Vertex //right : 4
 		{
-			V3(.5f * size[0], -.5f * size[1], -.5f * size[2]),
+			V3(.5f, -.5f, -.5f),
 			right,
 			1, 1
 		},
 		Vertex //bottom : 5
 		{
-			V3(.5f * size[0], -.5f * size[1], -.5f * size[2]),
+			V3(.5f, -.5f, -.5f),
 			bottom,
 			0, 0
 		},
@@ -100,19 +101,19 @@ std::shared_ptr<MeshResource> MeshResource::Cube(V4 size, V4 color)
 		//010
 		Vertex //back : 6
 		{
-			V3(-.5f * size[0], .5f * size[1], -.5f * size[2]),
+			V3(-.5f, .5f, -.5f),
 			back,
 			1, 0
 		},
 		Vertex //left : 7
 		{
-			V3(-.5f * size[0], .5f * size[1], -.5f * size[2]),
+			V3(-.5f, .5f, -.5f),
 			left,
 			0, 0
 		},
 		Vertex //top : 8
 		{
-			V3(-.5f * size[0], .5f * size[1], -.5f * size[2]),
+			V3(-.5f, .5f, -.5f),
 			top,
 			0, 0
 		},
@@ -120,19 +121,19 @@ std::shared_ptr<MeshResource> MeshResource::Cube(V4 size, V4 color)
 		//110
 		Vertex //back : 9
 		{
-			V3(.5f * size[0], .5f * size[1], -.5f * size[2]),
+			V3(.5f, .5f, -.5f),
 			back,
 			0, 0
 		},
 		Vertex //right : 10
 		{
-			V3(.5f * size[0], .5f * size[1], -.5f * size[2]),
+			V3(.5f, .5f, -.5f),
 			right,
 			1, 0
 		},
 		Vertex //top : 11
 		{
-			V3(.5f * size[0], .5f * size[1], -.5f * size[2]),
+			V3(.5f, .5f, -.5f),
 			top,
 			1, 0
 		},
@@ -140,19 +141,19 @@ std::shared_ptr<MeshResource> MeshResource::Cube(V4 size, V4 color)
 		//001
 		Vertex //left : 12
 		{
-			V3(-.5f * size[0], -.5f * size[1], .5f * size[2]),
+			V3(-.5f, -.5f, .5f),
 			left,
 			1, 1
 		},
 		Vertex //front : 13
 		{
-			V3(-.5f * size[0], -.5f * size[1], .5f * size[2]),
+			V3(-.5f, -.5f, .5f),
 			front,
 			0, 1
 		},
 		Vertex //bottom : 14
 		{
-			V3(-.5f * size[0], -.5f * size[1], .5f * size[2]),
+			V3(-.5f, -.5f, .5f),
 			bottom,
 			1, 1
 		},
@@ -160,19 +161,19 @@ std::shared_ptr<MeshResource> MeshResource::Cube(V4 size, V4 color)
 		//101
 		Vertex //right : 15
 		{
-			V3(.5f * size[0], -.5f * size[1], .5f * size[2]),
+			V3(.5f, -.5f, .5f),
 			right,
 			0, 1
 		},
 		Vertex //front : 16
 		{
-			V3(.5f * size[0], -.5f * size[1], .5f * size[2]),
+			V3(.5f, -.5f, .5f),
 			front,
 			1, 1
 		},
 		Vertex //bottom : 17
 		{
-			V3(.5f * size[0], -.5f * size[1], .5f * size[2]),
+			V3(.5f, -.5f, .5f),
 			bottom,
 			0, 1
 		},
@@ -180,19 +181,19 @@ std::shared_ptr<MeshResource> MeshResource::Cube(V4 size, V4 color)
 		//011
 		Vertex // left : 18
 		{
-			V3(-.5f * size[0], .5f * size[1], .5f * size[2]),
+			V3(-.5f, .5f, .5f),
 			left,
 			1, 0
 		},
 		Vertex // front : 19
 		{
-			V3(-.5f * size[0], .5f * size[1], .5f * size[2]),
+			V3(-.5f, .5f, .5f),
 			front,
 			0, 0
 		},
 		Vertex // top : 20
 		{
-			V3(-.5f * size[0], .5f * size[1], .5f * size[2]),
+			V3(-.5f, .5f, .5f),
 			top,
 			0, 1
 		},
@@ -200,25 +201,25 @@ std::shared_ptr<MeshResource> MeshResource::Cube(V4 size, V4 color)
 		//111
 		Vertex // right : 21
 		{
-			V3(.5f * size[0], .5f * size[1], .5f * size[2]),
+			V3(.5f, .5f, .5f),
 			right,
 			0, 0
 		},
 		Vertex // front : 22
 		{
-			V3(.5f * size[0], .5f * size[1], .5f * size[2]),
+			V3(.5f, .5f, .5f),
 			front,
 			1, 0
 		},
 		Vertex // top : 23
 		{
-			V3(.5f * size[0], .5f * size[1], .5f * size[2]),
+			V3(.5f, .5f, .5f),
 			top,
 			1, 1
 		},
 	};
 
-	unsigned int indices[]
+	unsigned int indices[] // World point's relations to form triangles and surfaces with razterisation
 	{
 		0, 3, 6,
 		3, 6, 9, //back

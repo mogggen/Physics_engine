@@ -10,8 +10,9 @@ class MeshResource
 	GLuint vertexBuffer;
 	GLuint indexBuffer;
 public:
-	std::shared_ptr<MeshResource> Cube(const V4 size, const V4 color);
-	MeshResource(Vertex vertices[], int Verticeslength, unsigned int indices[], int indicesLength);
+	std::shared_ptr<MeshResource> Cube();
+	std::shared_ptr<MeshResource> LoadObj();
+	MeshResource(Vertex vertices[], int verticeslength, unsigned int indices[], int indicesLength);
 	~MeshResource();
 	void Destroy();
 	void render();

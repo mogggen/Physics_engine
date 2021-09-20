@@ -1,8 +1,9 @@
 #include "config.h"
 #include "render/ShaderObject.h"
+#include <cstring>
 
 //filetype: .glsl
-void ShaderObject::LoadShader(GLchar* vs, GLchar* ps, std::string vsPath, std::string psPath)
+void ShaderObject::LoadShader(GLchar *vs, GLchar *ps, std::string vsPath, std::string psPath)
 {
 	std::streampos size;
 	//vs
@@ -48,7 +49,7 @@ void ShaderObject::getShaderObject(GLuint vertexShader, GLuint pixelShader, GLui
 	glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &shaderLogSize);
 	if (shaderLogSize > 0)
 	{
-		GLchar* buf = new GLchar[shaderLogSize];
+		GLchar *buf = new GLchar[shaderLogSize];
 		glGetShaderInfoLog(vertexShader, shaderLogSize, NULL, buf);
 		printf("[SHADER COMPILE ERROR]: %s", buf);
 		delete[] buf;
@@ -64,7 +65,7 @@ void ShaderObject::getShaderObject(GLuint vertexShader, GLuint pixelShader, GLui
 	glGetShaderiv(pixelShader, GL_INFO_LOG_LENGTH, &shaderLogSize);
 	if (shaderLogSize > 0)
 	{
-		GLchar* buf = new GLchar[shaderLogSize];
+		GLchar *buf = new GLchar[shaderLogSize];
 		glGetShaderInfoLog(pixelShader, shaderLogSize, NULL, buf);
 		printf("[SHADER COMPILE ERROR]: %s", buf);
 		delete[] buf;
@@ -78,7 +79,7 @@ void ShaderObject::getShaderObject(GLuint vertexShader, GLuint pixelShader, GLui
 	glGetProgramiv(program, GL_INFO_LOG_LENGTH, &shaderLogSize);
 	if (shaderLogSize > 0)
 	{
-		GLchar* buf = new GLchar[shaderLogSize];
+		GLchar *buf = new GLchar[shaderLogSize];
 		glGetProgramInfoLog(program, shaderLogSize, NULL, buf);
 		printf("[PROGRAM LINK ERROR]: %s", buf);
 		delete[] buf;

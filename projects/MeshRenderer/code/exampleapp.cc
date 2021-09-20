@@ -66,12 +66,9 @@ namespace Example
 
 		window->SetMouseMoveFunction([this](float64 x, float64 y)
 		{
-			if (isRotate)
-			{
-				senseX = (0.002 * (x - width / 2));
-				senseY = (0.002 * (y - height / 2));
-				Evp = Rotation(V4(1, 0, 0), senseY) * Rotation(V4(0, 1, 0), senseX);
-			}
+			senseX = (0.002 * (x - width / 2));
+			senseY = (0.002 * (y - height / 2));
+			Evp = Rotation(V4(1, 0, 0), senseY) * Rotation(V4(0, 1, 0), senseX);
 		});
 		
 
@@ -81,7 +78,10 @@ namespace Example
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
 			//MeshResource
-			cube = cube->Cube(V4(1, 1, 1), V4(1, 1, 1));
+			cube = cube->Cube();
+
+			//Load Susanne from file
+			susanne = susanne->LoadObj("monke.obj");
 
 			//TextureResource
 			std::shared_ptr<TextureResource> texture = std::make_shared<TextureResource>("perfect.jpg");
@@ -92,7 +92,9 @@ namespace Example
 
 			
 			//GraphicNode
-			node = std::make_shared<GraphicNode>(cube, texture, shaderObject, Translate(V4(0, 0, 0)));
+			node = std::make_shared<GraphicNode>(cube, texture, shaderObject, Translate(V4Zero));
+
+			susanne = std::make_shared<GraphicNode>(monkey, texture, ShaderObjectSusanne, Translate(V4Zero));
 
 			return true;
 		}
@@ -112,12 +114,17 @@ namespace Example
 		Camera cam(90, (float)width / height, 0.01f, 100.0f);
 		cam.setPos(V4(0, 0, -3));
 		cam.setRot(V4(0, 1, 0), M_PI);
+		
 		float speed = .08f;
-		M4 scene; V4 color(1, 1, 1);
+		
+		M4 scene;
+		V4 color(1, 0, 1);
+		
 		while (this->window->IsOpen())
 		{
 			Em = Em * Translate(Normalize(V4(float(d - a), float(e - q), float(w - s))) * speed);
-			scene = cam.pv() * (Em * Evp) * Translate(V4(0, 0, 0)) * Scalar(V4(-1, -1, 1));
+			scene = cam.pv() * (Em * Evp) * Translate(V4Zero) * Scalar(V4(-1, -1, 1)); // scaling because i can
+			
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			this->window->Update();
 			node->DrawScene(scene, color);

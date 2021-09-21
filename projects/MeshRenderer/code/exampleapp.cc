@@ -39,7 +39,6 @@ namespace Example
 		this->window = new Display::Window;
 
 		//assign ExampleApp variables
-		isRotate = false;
 		w = a = s = d = q = e = false;
 		window->GetSize(width, height);
 		Em = Evp = Translate(V4());
@@ -61,7 +60,7 @@ namespace Example
 
 		window->SetMousePressFunction([this](int32 button, int32 action, int32 mods)
 		{
-			isRotate = button == GLFW_MOUSE_BUTTON_1 && action;
+			//isRotate = button == GLFW_MOUSE_BUTTON_1 && action;
 		});
 
 		window->SetMouseMoveFunction([this](float64 x, float64 y)
@@ -81,7 +80,7 @@ namespace Example
 			cube = cube->Cube();
 
 			//Load Susanne from file
-			susanne = susanne->LoadObj("monke.obj");
+			//susanne = susanne->LoadObj("monke.obj");
 
 			//TextureResource
 			std::shared_ptr<TextureResource> texture = std::make_shared<TextureResource>("perfect.jpg");

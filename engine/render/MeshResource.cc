@@ -36,7 +36,6 @@ void MeshResource::render()
 
 std::shared_ptr<MeshResource> MeshResource::Cube()
 {
-	V4 smh = V4Zero;
 	V4 top(0, 255, 0); //red
 	V4 back(128, 66, 128); //gray
 	V4 left(0, 0, 255); //blue
@@ -239,6 +238,71 @@ std::shared_ptr<MeshResource> MeshResource::Cube()
 		2, 5, 14,
 		5, 14, 17, //bottom
 	};
+
+	MeshResource* temp1 = new MeshResource(MeshResource(vertices, sizeof(vertices) / sizeof(Vertex), indices, sizeof(indices) / sizeof(unsigned int)));
+	std::shared_ptr<MeshResource> temp(temp1);
+	return temp;
+}
+
+std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile)
+{
+	std::vector<char> buf;
+	FILE* fs = fopen(pathToFile, "r"); // "textures/cube.obj"	
+
+	std::vector<Vertex> vertices; // complete package
+	std::vector<V3> coords;
+	std::vector<V2> texels; // save for last
+	std::vector<float_t> normals; // generated from faces
+
+	if (fs)
+	{
+		uint32_t vertexIndex = 1u;
+		uint32_t textureIndex = 1u;
+		uint32_t normalIndex = 1u;
+
+
+		while (true)
+		{
+			if (!fscanf(fs, "%s", buf)) break;
+			if (buf[0] == 'v' && buf[1] == ' ')
+			{
+				V3 nextCoordinate;
+				fscanf(fs, "%f %f %f", &nextCoordinate.x, &nextCoordinate.y, &nextCoordinate.z);
+				coords.push_back(nextCoordinate);
+			}
+			if (buf[0] == 'v' && buf[1] == 't' && buf[2] == ' ')
+			{
+				V2 nextTexel = V2Zero;
+				texels.push_back(nextTexel);
+			}
+			if (buf[0] == 'v' && buf[1] == 'n' && buf[2] == ' ')
+			{
+				V3 nextNormal;
+			}
+
+			if (buf[0] == 'f' && buf[1] == ' ')
+			{
+				sssnext
+				if (fscanf(fs, "%f/%f/%f", &nextNormal.x, &nextNormal.y, &nextNormal.z) > 3)
+				{
+
+				}
+				else if (fscanf(fs, "%f/%f", ))
+				{
+
+				}
+			}
+			
+			else
+			{
+				break;
+			}
+		}
+	}
+	else
+	{
+		printf("file not found with path \"./%s\"", pathToFile);
+	}
 
 	MeshResource* temp1 = new MeshResource(MeshResource(vertices, sizeof(vertices) / sizeof(Vertex), indices, sizeof(indices) / sizeof(unsigned int)));
 	std::shared_ptr<MeshResource> temp(temp1);

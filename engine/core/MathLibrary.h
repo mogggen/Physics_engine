@@ -1,6 +1,9 @@
 ﻿//#include "config.h"
 #pragma once
 #include <cmath>
+#ifndef M_PI
+#define M_PI 3.141592553584
+#endif
 
 #ifndef V2Zero
 #define V2Zero V2()
@@ -51,7 +54,7 @@ struct V2
 	};
 
 	inline V2();
-	inline V2(float x, float y, float z);
+	inline V2(float x, float y);
 
 	void operator+=(V2 right);
 	void operator-=(V2 right);
@@ -70,7 +73,7 @@ struct V2
 //Vector Constructors
 V2::V2() : x(0), y(0) { }
 
-V2::V2(float x, float y, float z) : x(x), y(y) { }
+V2::V2(float x, float y) : x(x), y(y) { }
 
 
 //	operator methods

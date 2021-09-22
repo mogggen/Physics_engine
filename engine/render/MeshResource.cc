@@ -62,19 +62,19 @@ std::shared_ptr<MeshResource> MeshResource::Cube()
 		{
 			V3(-.5f, -.5f, -.5f), // position, will transform later with the projection matrix
 			back, // raw color 0-1 : black-white
-			1, 1 // texture position, when the indicies are added, combined with this data, the orientation and size of the texture will make sense
+			V2(1, 1) // texture position, when the indicies are added, combined with this data, the orientation and size of the texture will make sense
 		},
 		Vertex //left : 1
 		{
 			V3(-.5f, -.5f, -.5f),
 			left,
-			0, 1
+			V2(0, 1)
 		},
 		Vertex //bottom : 2
 		{
 			V3(-.5f, -.5f, -.5f),
 			bottom,
-			1, 0
+			V2(1, 0)
 		},
 
 		//100
@@ -82,19 +82,19 @@ std::shared_ptr<MeshResource> MeshResource::Cube()
 		{
 			V3(.5f, -.5f, -.5f),
 			back,
-			0, 1
+			V2(0, 1)
 		},
 		Vertex //right : 4
 		{
 			V3(.5f, -.5f, -.5f),
 			right,
-			1, 1
+			V2(1, 1)
 		},
 		Vertex //bottom : 5
 		{
 			V3(.5f, -.5f, -.5f),
 			bottom,
-			0, 0
+			V2(0, 0)
 		},
 
 		//010
@@ -102,19 +102,19 @@ std::shared_ptr<MeshResource> MeshResource::Cube()
 		{
 			V3(-.5f, .5f, -.5f),
 			back,
-			1, 0
+			V2(1, 0)
 		},
 		Vertex //left : 7
 		{
 			V3(-.5f, .5f, -.5f),
 			left,
-			0, 0
+			V2(0, 0)
 		},
 		Vertex //top : 8
 		{
 			V3(-.5f, .5f, -.5f),
 			top,
-			0, 0
+			V2(0, 0)
 		},
 
 		//110
@@ -122,19 +122,19 @@ std::shared_ptr<MeshResource> MeshResource::Cube()
 		{
 			V3(.5f, .5f, -.5f),
 			back,
-			0, 0
+			V2(0, 0)
 		},
 		Vertex //right : 10
 		{
 			V3(.5f, .5f, -.5f),
 			right,
-			1, 0
+			V2(1, 0)
 		},
 		Vertex //top : 11
 		{
 			V3(.5f, .5f, -.5f),
 			top,
-			1, 0
+			V2(1, 0)
 		},
 
 		//001
@@ -142,19 +142,19 @@ std::shared_ptr<MeshResource> MeshResource::Cube()
 		{
 			V3(-.5f, -.5f, .5f),
 			left,
-			1, 1
+			V2(1, 1)
 		},
 		Vertex //front : 13
 		{
 			V3(-.5f, -.5f, .5f),
 			front,
-			0, 1
+			V2(0, 1)
 		},
 		Vertex //bottom : 14
 		{
 			V3(-.5f, -.5f, .5f),
 			bottom,
-			1, 1
+			V2(1, 1)
 		},
 
 		//101
@@ -162,19 +162,19 @@ std::shared_ptr<MeshResource> MeshResource::Cube()
 		{
 			V3(.5f, -.5f, .5f),
 			right,
-			0, 1
+			V2(0, 1)
 		},
 		Vertex //front : 16
 		{
 			V3(.5f, -.5f, .5f),
 			front,
-			1, 1
+			V2(1, 1)
 		},
 		Vertex //bottom : 17
 		{
 			V3(.5f, -.5f, .5f),
 			bottom,
-			0, 1
+			V2(0, 1)
 		},
 
 		//011
@@ -182,19 +182,19 @@ std::shared_ptr<MeshResource> MeshResource::Cube()
 		{
 			V3(-.5f, .5f, .5f),
 			left,
-			1, 0
+			V2(1, 0)
 		},
 		Vertex // front : 19
 		{
 			V3(-.5f, .5f, .5f),
 			front,
-			0, 0
+			V2(0, 0)
 		},
 		Vertex // top : 20
 		{
 			V3(-.5f, .5f, .5f),
 			top,
-			0, 1
+			V2(0, 1)
 		},
 
 		//111
@@ -202,19 +202,19 @@ std::shared_ptr<MeshResource> MeshResource::Cube()
 		{
 			V3(.5f, .5f, .5f),
 			right,
-			0, 0
+			V2(0, 0)
 		},
 		Vertex // front : 22
 		{
 			V3(.5f, .5f, .5f),
 			front,
-			1, 0
+			V2(1, 0)
 		},
 		Vertex // top : 23
 		{
 			V3(.5f, .5f, .5f),
 			top,
-			1, 1
+			V2(1, 1)
 		},
 	};
 

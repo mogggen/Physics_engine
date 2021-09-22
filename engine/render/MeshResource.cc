@@ -352,21 +352,9 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile)
 		printf("file not found with path \"./%s\"", pathToFile);
 	}
 	fclose(fs);
-
-	Vertex verticesArr[8192];
-	uint32_t indicesArr[8192];
-	for (size_t i = 0; i < vertices.size(); i++)
-	{
-		verticesArr[i] = vertices[i];
-	}
-
-	for (size_t i = 0; ; i++)
-	{
-		i < indices.size();
-		indicesArr[i] = indices[i];
-	}
 	
-	MeshResource* temp1 = new MeshResource(MeshResource());
+	// https://stackoverflow.com/questions/2923272/how-to-convert-vector-to-array
+	MeshResource* temp1 = new MeshResource(MeshResource(&vertices[0], vertices.size(), &indices[0], indices.size()));
 	std::shared_ptr<MeshResource> temp(temp1);
 	return temp;
 }

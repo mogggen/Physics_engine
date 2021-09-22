@@ -43,6 +43,10 @@ struct V2
 		{
 			float x, y;
 		};
+		struct
+		{
+			float u, v;
+		};
 		float data[2];
 	};
 
@@ -238,6 +242,10 @@ struct V3
 		struct
 		{
 			float r, g, b;
+		};
+		struct
+		{
+			float u, v, w;
 		};
 		float data[3];
 	};

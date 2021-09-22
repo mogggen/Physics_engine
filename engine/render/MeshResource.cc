@@ -251,8 +251,8 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile)
 
 	std::vector<Vertex> vertices; // complete package
 	std::vector<V3> coords;
-	std::vector<V2> texels; // save for last
-	std::vector<float_t> normals; // generated from faces
+	std::vector<V2> texels;
+	std::vector<V3> normals;
 
 	if (fs)
 	{
@@ -264,35 +264,77 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile)
 		while (true)
 		{
 			if (!fscanf(fs, "%s", buf)) break;
+			
 			if (buf[0] == 'v' && buf[1] == ' ')
 			{
 				V3 nextCoordinate;
-				fscanf(fs, "%f %f %f", &nextCoordinate.x, &nextCoordinate.y, &nextCoordinate.z);
-				coords.push_back(nextCoordinate);
+				if (fscanf(fs, "%f %f %f", &nextCoordinate.x, &nextCoordinate.y, &nextCoordinate.z) == 3)
+				{
+					coords.push_back(nextCoordinate);
+				}
+				else
+				{
+					std::cerr << "missing arguments in vertex, expected 3" << std::endl;
+				}
 			}
-			if (buf[0] == 'v' && buf[1] == 't' && buf[2] == ' ')
+
+			else if (buf[0] == 'v' && buf[1] == 't' && buf[2] == ' ')
 			{
-				V2 nextTexel = V2Zero;
+				V2 nextTexel;
+				if (fscanf(fs, "%f %f %f", &nextTexel.x, &nextTexel.y) == 2)
+				{
+					texels.push_back(nextTexel);
+				}
+				else
+				{
+					std::cerr << "missing arguments in vertex, expected 3" << std::endl;
+				}
 				texels.push_back(nextTexel);
 			}
-			if (buf[0] == 'v' && buf[1] == 'n' && buf[2] == ' ')
+
+			else if (buf[0] == 'v' && buf[1] == 'n' && buf[2] == ' ')
 			{
 				V3 nextNormal;
 			}
 
-			if (buf[0] == 'f' && buf[1] == ' ')
+			else if (buf[0] == 'f' && buf[1] == ' ')
 			{
-				sssnext
-				if (fscanf(fs, "%f/%f/%f", &nextNormal.x, &nextNormal.y, &nextNormal.z) > 3)
-				{
+				uint32_t
+				vertexIndex,
+				textureIndex,
+				normalIndex;
+				
+				Vertex nextVertex;
 
-				}
-				else if (fscanf(fs, "%f/%f", ))
+				while (true)
 				{
-
+					if (fscanf(fs, "%i/%i/%i", &vertexIndex, &textureIndex, &normalIndex) == 3)
+					{
+						nextVertex.pos = coords[vertexIndex];
+						nextVertex.texel = texels[textureIndex];
+						nextVertex.normal = normals[normalIndex];
+					}
+					else if (fscanf(fs, "%i/%i", &vertexIndex, &textureIndex) == 2)
+					{
+						nextVertex.pos = coords[vertexIndex];
+						nextVertex.texel = texels[textureIndex];
+					}
+					else if (fscanf(fs, "%i//%i", &vertexIndex, &normalIndex) == 2)
+					{
+						nextVertex.pos = coords[vertexIndex];
+						nextVertex.normal = normals[normalIndex];
+					}
+					else if (fscanf(fs, "%i", &vertexIndex) == 1)
+					{
+						nextVertex.pos = coords[vertexIndex];
+					}
+					else
+					{
+						std::cerr << "missing arguments in face, expected no more than 3" << std::endl;
+						break;
+					}
 				}
 			}
-			
 			else
 			{
 				break;
@@ -303,6 +345,7 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile)
 	{
 		printf("file not found with path \"./%s\"", pathToFile);
 	}
+	fclose(fs);
 
 	MeshResource* temp1 = new MeshResource(MeshResource(vertices, sizeof(vertices) / sizeof(Vertex), indices, sizeof(indices) / sizeof(unsigned int)));
 	std::shared_ptr<MeshResource> temp(temp1);

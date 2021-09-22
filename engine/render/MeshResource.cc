@@ -248,11 +248,13 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile)
 {
 	std::vector<char> buf;
 	FILE* fs = fopen(pathToFile, "r"); // "textures/cube.obj"	
-
-	std::vector<Vertex> vertices; // complete package
+	
+	unsigned long long numOfIndices = 0;
+	std::vector<uint32_t> indices;
 	std::vector<V3> coords;
 	std::vector<V2> texels;
 	std::vector<V3> normals;
+	std::vector<Vertex> vertices; // complete package
 
 	if (fs)
 	{
@@ -299,45 +301,38 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile)
 
 			else if (buf[0] == 'f' && buf[1] == ' ')
 			{
-				uint32_t
-				vertexIndex,
-				textureIndex,
-				normalIndex;
-				
-				Vertex nextVertex;
+				uint32_t vertexIndex, textureIndex, normalIndex;
+				char a[16], b[16], c[16], d[16];
+				uint8_t argc = fscanf(fs, "%s %s %s %s", &a, &b, &c, &d);
 
-				while (true)
+				int listOfIndices[4][3];
+				for (size_t i = 0; i < 2; i++)
 				{
-					if (fscanf(fs, "%i/%i/%i", &vertexIndex, &textureIndex, &normalIndex) == 3)
+					sscanf(a, "%d/ %d/ %d/", &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]);
+
+					vertices.push_back(Vertex(coords[(listOfIndices[i][0]) - 1], V4(1, 1, 1, 1), texels[(listOfIndices[i][1]) - 1], normals[(listOfIndices[i][2]) - 1]));
+
+					indices.push_back(numOfIndices);
+
+					numOfIndices++;
+				}
+				
+				if (argc == 4)
+				{
+					if (d[0] != 'f' && d[0] != '#' && d[0] != ' ' && d[0] != '\n')
 					{
-						nextVertex.pos = coords[vertexIndex];
-						nextVertex.texel = texels[textureIndex];
-						nextVertex.normal = normals[normalIndex];
-					}
-					else if (fscanf(fs, "%i/%i", &vertexIndex, &textureIndex) == 2)
-					{
-						nextVertex.pos = coords[vertexIndex];
-						nextVertex.texel = texels[textureIndex];
-					}
-					else if (fscanf(fs, "%i//%i", &vertexIndex, &normalIndex) == 2)
-					{
-						nextVertex.pos = coords[vertexIndex];
-						nextVertex.normal = normals[normalIndex];
-					}
-					else if (fscanf(fs, "%i", &vertexIndex) == 1)
-					{
-						nextVertex.pos = coords[vertexIndex];
-					}
-					else
-					{
-						std::cerr << "missing arguments in face, expected no more than 3" << std::endl;
-						break;
+
+						sscanf(d, "%d/ %d/ %d/", &listOfIndices[3][0], &listOfIndices[3][1], &listOfIndices[3][2]);
+
+						vertices.push_back(Vertex(coords[(listOfIndices[3][0]) - 1], V4(1, 1, 1, 1), texels[(listOfIndices[3][1]) - 1], normals[(listOfIndices[3][2]) - 1]));
+
+						indices.push_back(numOfIndices - 3);
+						indices.push_back(numOfIndices - 1);
+						indices.push_back(numOfIndices);
+						
+						numOfIndices++;
 					}
 				}
-			}
-			else
-			{
-				break;
 			}
 		}
 	}
@@ -347,7 +342,7 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile)
 	}
 	fclose(fs);
 
-	MeshResource* temp1 = new MeshResource(MeshResource(vertices, sizeof(vertices) / sizeof(Vertex), indices, sizeof(indices) / sizeof(unsigned int)));
+	MeshResource* temp1 = new MeshResource(MeshResource(vertices, vertices.size(), indices, indices.size()));
 	std::shared_ptr<MeshResource> temp(temp1);
 	return temp;
 }

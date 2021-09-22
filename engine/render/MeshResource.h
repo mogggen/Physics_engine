@@ -13,7 +13,7 @@ class MeshResource
 public:
 	std::shared_ptr<MeshResource> Cube();
 	std::shared_ptr<MeshResource> LoadObj(const char* pathToFile);
-	MeshResource(Vertex vertices[], int verticeslength, unsigned int indices[], int indicesLength);
+	MeshResource(Vertex vertices[], int verticeslength, uint32_t indices[], int indicesLength);
 	~MeshResource();
 	void Destroy();
 	void render();

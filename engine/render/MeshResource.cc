@@ -246,10 +246,10 @@ std::shared_ptr<MeshResource> MeshResource::Cube()
 
 std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile)
 {
-	std::vector<char> buf;
+	char buf[1024];
 	FILE* fs = fopen(pathToFile, "r"); // "textures/cube.obj"	
 	
-	unsigned long long numOfIndices = 0;
+	unsigned long long verticesUsed = 0ull;
 	std::vector<uint32_t> indices;
 	std::vector<V3> coords;
 	std::vector<V2> texels;
@@ -258,16 +258,15 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile)
 
 	if (fs)
 	{
-		uint32_t vertexIndex = 1u;
-		uint32_t textureIndex = 1u;
-		uint32_t normalIndex = 1u;
-
-
 		while (true)
 		{
-			if (!fscanf(fs, "%s", buf)) break;
+			int foo = fscanf(fs, "%1024s", buf); // reads one word at a time and places it at buf[0] with a trailing '\0'
+			if (foo <= 0)
+			{
+				break;
+			}
 			
-			if (buf[0] == 'v' && buf[1] == ' ')
+			if (buf[0] == 'v' && buf[1] == '\0')
 			{
 				V3 nextCoordinate;
 				if (fscanf(fs, "%f %f %f", &nextCoordinate.x, &nextCoordinate.y, &nextCoordinate.z) == 3)
@@ -280,26 +279,33 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile)
 				}
 			}
 
-			else if (buf[0] == 'v' && buf[1] == 't' && buf[2] == ' ')
+			else if (buf[0] == 'v' && buf[1] == 't' && buf[2] == '\0')
 			{
 				V2 nextTexel;
-				if (fscanf(fs, "%f %f %f", &nextTexel.x, &nextTexel.y) == 2)
+				if (fscanf(fs, "%f %f", &nextTexel.x, &nextTexel.y) == 2)
 				{
 					texels.push_back(nextTexel);
 				}
 				else
 				{
-					std::cerr << "missing arguments in vertex, expected 3" << std::endl;
+					std::cerr << "missing arguments in texel, expected 2" << std::endl;
 				}
-				texels.push_back(nextTexel);
 			}
 
-			else if (buf[0] == 'v' && buf[1] == 'n' && buf[2] == ' ')
+			else if (buf[0] == 'v' && buf[1] == 'n' && buf[2] == '\0')
 			{
 				V3 nextNormal;
+				if (fscanf(fs, "%f %f %f", &nextNormal.x, &nextNormal.y, &nextNormal.z) == 3)
+				{
+					normals.push_back(nextNormal);
+				}
+				else
+				{
+					std::cerr << "missing arguments in texel, expected 3" << std::endl;
+				}
 			}
 
-			else if (buf[0] == 'f' && buf[1] == ' ')
+			else if (buf[0] == 'f' && buf[1] == '\0')
 			{
 				uint32_t vertexIndex, textureIndex, normalIndex;
 				char a[16], b[16], c[16], d[16];
@@ -317,14 +323,14 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile)
 							texels[(listOfIndices[i][1]) - 1],
 							normals[(listOfIndices[i][2]) - 1],
 						});
-					indices.push_back(numOfIndices);
+					indices.push_back(verticesUsed);
 
-					numOfIndices++;
+					verticesUsed++;
 				}
 				
 				if (argc == 4)
 				{
-					if (d[0] != 'f' && d[0] != '#' && d[0] != ' ' && d[0] != '\n')
+					if (d[0] != 'f' && d[0] != '#')
 					{
 
 						sscanf(d, "%d/ %d/ %d/", &listOfIndices[3][0], &listOfIndices[3][1], &listOfIndices[3][2]);
@@ -337,11 +343,11 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile)
 								normals[(listOfIndices[3][2]) - 1],
 							});
 
-						indices.push_back(numOfIndices - 3);
-						indices.push_back(numOfIndices - 1);
-						indices.push_back(numOfIndices);
+						indices.push_back(verticesUsed - 3);
+						indices.push_back(verticesUsed - 1);
+						indices.push_back(verticesUsed);
 						
-						numOfIndices++;
+						verticesUsed++;
 					}
 				}
 			}
@@ -353,7 +359,6 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile)
 	}
 	fclose(fs);
 	
-	// https://stackoverflow.com/questions/2923272/how-to-convert-vector-to-array
 	MeshResource* temp1 = new MeshResource(MeshResource(&vertices[0], vertices.size(), &indices[0], indices.size()));
 	std::shared_ptr<MeshResource> temp(temp1);
 	return temp;

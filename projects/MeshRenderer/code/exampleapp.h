@@ -44,7 +44,7 @@ namespace Example
 		std::shared_ptr<GraphicNode> node;
 
 		std::shared_ptr<MeshResource> monkey;
-		std::shared_ptr<ShaderObject> ShaderObjectSusanne;
+		std::shared_ptr<ShaderObject> shaderObjectSusanne;
 		std::shared_ptr<GraphicNode> susanne;
 
 		Display::Window* window;

@@ -9,5 +9,5 @@ out vec4 Color;
 
 void main()
 {
-	Color = texture(textureArray, texturesOut) * Colors;
+	Color = /*texture(textureArray, texturesOut) */ Colors;
 }

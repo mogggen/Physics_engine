@@ -77,10 +77,12 @@ namespace Example
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
 			//MeshResource
-			cube = cube->Cube();
+			//cube = cube->Cube();
+
+			cube = MeshResource::LoadObj("textures/cube.obj");
 
 			//Load Susanne from file
-			//susanne = susanne->LoadObj("monke.obj");
+			//monkey = monkey->LoadObj("textures/monke susanne.obj");
 
 			//TextureResource
 			std::shared_ptr<TextureResource> texture = std::make_shared<TextureResource>("perfect.jpg");
@@ -89,11 +91,13 @@ namespace Example
 			shaderObject = std::make_shared<ShaderObject>();
 			shaderObject->getShaderObject(this->vertexShader, this->pixelShader, this->program);
 
+			shaderObject = std::make_shared<ShaderObject>();
+			shaderObjectSusanne->getShaderObject(this->vertexShader, this->pixelShader, this->program);
 			
 			//GraphicNode
 			node = std::make_shared<GraphicNode>(cube, texture, shaderObject, Translate(V4Zero));
 
-			susanne = std::make_shared<GraphicNode>(monkey, texture, ShaderObjectSusanne, Translate(V4Zero));
+			susanne = std::make_shared<GraphicNode>(monkey, texture, shaderObjectSusanne, Translate(V4Zero));
 
 			return true;
 		}
@@ -115,7 +119,7 @@ namespace Example
 		cam.setRot(V4(0, 1, 0), M_PI);
 		
 		float speed = .08f;
-		
+
 		M4 scene;
 		V4 color(1, 0, 1);
 		
@@ -127,6 +131,7 @@ namespace Example
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			this->window->Update();
 			node->DrawScene(scene, color);
+			susanne->DrawScene(scene, color);
 			this->window->SwapBuffers();
 		}
 	}

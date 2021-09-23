@@ -11,8 +11,8 @@ class MeshResource
 	GLuint vertexBuffer;
 	GLuint indexBuffer;
 public:
-	std::shared_ptr<MeshResource> Cube();
-	std::shared_ptr<MeshResource> LoadObj(const char* pathToFile);
+	static std::shared_ptr<MeshResource> Cube();
+	static std::shared_ptr<MeshResource> LoadObj(const char* pathToFile);
 	MeshResource(Vertex vertices[], int verticeslength, uint32_t indices[], int indicesLength);
 	~MeshResource();
 	void Destroy();

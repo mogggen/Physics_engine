@@ -14,7 +14,7 @@ void GraphicNode::DrawScene(M4& mvp, V4& rgba)
 	glUseProgram(this->Shader->program);
 
 	//Set matrix
-	glUniformMatrix4fv(glGetUniformLocation(Shader->program, "m4"), 1, GL_TRUE, (float*)&mvp);
+	glUniformMatrix4fv(glGetUniformLocation(Shader->program, "m4Pos"), 1, GL_TRUE, (float*)&mvp);
 
 	//set colorVector
 	glUniform4fv(glGetUniformLocation(Shader->program, "colorVector"), 1, (float*)&rgba);

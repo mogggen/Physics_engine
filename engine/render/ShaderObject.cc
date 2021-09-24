@@ -87,6 +87,35 @@ void ShaderObject::getShaderObject(GLuint vertexShader, GLuint pixelShader, GLui
 	this->program = program;
 }
 
+void ShaderObject::setFloat(float facIn, std::string parameterName)
+{
+	glUseProgram(program);
+	glUniform1f(glGetUniformLocation(program, parameterName.c_str()), facIn);
+}
+
+void ShaderObject::setVec3(V3 vecIn, std::string parameterName)
+{
+	glUseProgram(program);
+	glUniform3fv(glGetUniformLocation(program, parameterName.c_str()), 1, (float*)&vecIn);
+}
+
+void ShaderObject::setVec4(V4 vecIn, std::string parameterName)
+{
+	glUseProgram(program);
+	glUniform4fv(glGetUniformLocation(program, parameterName.c_str()), 1, (float*)&vecIn);
+}
+
+void ShaderObject::setMat4(M4 matIn, std::string parameterName)
+{
+	glUseProgram(program);
+	glUniformMatrix4fv(glGetUniformLocation(program, parameterName.c_str()), 1, GL_FALSE, (float*)&(matIn));
+}
+
+void ShaderObject::bindShaderObject()
+{
+	glUseProgram(program);
+}
+
 ShaderObject::~ShaderObject()
 {
 	glDeleteProgram(program);

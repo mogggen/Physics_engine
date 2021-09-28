@@ -311,11 +311,11 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile)
 			else if (buf[0] == 'f' && buf[1] == '\0')
 			{
 				uint32_t vertexIndex, textureIndex, normalIndex;
-				const char* a;
-				const char* b;
-				const char* c;
-				const char* d;
-				uint8_t argc = fscanf(fs, "%s %s %s %s", a, b, c, d);
+				char a[64];
+				char b[64];
+				char c[64];
+				char d[64];
+				uint8_t argc = fscanf(fs, "%s %s %s %s", &a, &b, &c, &d);
 
 				uint32_t listOfIndices[4][3];
 				for (size_t i = 0; i < 3; i++)

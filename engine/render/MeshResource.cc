@@ -249,7 +249,8 @@ std::shared_ptr<MeshResource> MeshResource::Cube()
 std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile)
 {
 	char buf[1024];
-	FILE* fs = fopen(pathToFile, "r"); // "textures/cube.obj"	
+	FILE* fs;
+	errno_t err = fopen_s(&fs, pathToFile, "r"); // "textures/cube.obj"
 	
 	unsigned long long verticesUsed = 0ull;
 	std::vector<uint32_t> indices;
@@ -310,20 +311,36 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile)
 			else if (buf[0] == 'f' && buf[1] == '\0')
 			{
 				uint32_t vertexIndex, textureIndex, normalIndex;
-				char a[16], b[16], c[16], d[16];
-				uint8_t argc = fscanf(fs, "%s %s %s %s", &a, &b, &c, &d);
+				const char* a;
+				const char* b;
+				const char* c;
+				const char* d;
+				uint8_t argc = fscanf(fs, "%s %s %s %s", a, b, c, d);
 
-				int listOfIndices[4][3];
+				uint32_t listOfIndices[4][3];
 				for (size_t i = 0; i < 3; i++)
 				{
-					sscanf(a, "%d/ %d/ %d/", &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]);
+					switch (i)
+					{
+					case 0:
+						if (sscanf(a, "%d/ %d/ %d/", &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3) continue;
+						break;
+					case 1:
+						if (sscanf(b, "%d/ %d/ %d/", &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3) continue;
+						break;
+					case 2:
+						if (sscanf(c, "%d/ %d/ %d/", &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3) continue;
+						break;
+					default:
+						break;
+					}
 
 					vertices.push_back(Vertex
 						{
-							coords[(listOfIndices[i][0]) - 1],
+							coords[(listOfIndices[i][0]) - std::ios::streampos(1)],
 							V4(1, 1, 1, 1),
-							texels[(listOfIndices[i][1]) - 1],
-							normals[(listOfIndices[i][2]) - 1],
+							texels[(listOfIndices[i][1]) - std::iostream::streampos(1)],
+							normals[(listOfIndices[i][2]) - std::iostream::streampos(1)],
 						});
 					indices.push_back(verticesUsed);
 
@@ -335,14 +352,14 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile)
 					if (d[0] != 'f' && d[0] != '#')
 					{
 
-						sscanf(d, "%d/ %d/ %d/", &listOfIndices[3][0], &listOfIndices[3][1], &listOfIndices[3][2]);
+						if (sscanf(d, "%d/ %d/ %d/", &listOfIndices[3][0], &listOfIndices[3][1], &listOfIndices[3][2]) != 3) break;
 
 						vertices.push_back(Vertex
 							{
-								coords[(listOfIndices[3][0]) - 1],
+								coords[(listOfIndices[3][0]) - std::ios_base::streampos(1)],
 								V4(1, 1, 1, 1),
-								texels[(listOfIndices[3][1]) - 1],
-								normals[(listOfIndices[3][2]) - 1],
+								texels[(listOfIndices[3][1]) - std::ios_base::streampos(1)],
+								normals[(listOfIndices[3][2]) - std::ios_base::streampos(1)],
 							});
 
 						indices.push_back(verticesUsed - 3);
@@ -359,7 +376,9 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile)
 	{
 		printf("file not found with path \"./%s\"", pathToFile);
 	}
-	fclose(fs);
+	
+	if (!err && fs != NULL)
+		fclose(fs);
 	
 	MeshResource* temp1 = new MeshResource(MeshResource(&vertices[0], vertices.size(), &indices[0], indices.size()));
 	std::shared_ptr<MeshResource> temp(temp1);

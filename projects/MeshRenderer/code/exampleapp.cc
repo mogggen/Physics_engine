@@ -60,14 +60,22 @@ namespace Example
 
 		window->SetMousePressFunction([this](int32 button, int32 action, int32 mods)
 		{
-			//isRotate = button == GLFW_MOUSE_BUTTON_1 && action;
+			isRotate = button == GLFW_MOUSE_BUTTON_1 && action;
+			if (!isRotate)
+			{
+				prevX = senseX;
+				prevY = senseY;
+			}
 		});
 
 		window->SetMouseMoveFunction([this](float64 x, float64 y)
 		{
-			senseX = (0.002 * (x - width / 2));
-			senseY = (0.002 * (y - height / 2));
-			Evp = Rotation(V4(1, 0, 0), senseY) * Rotation(V4(0, 1, 0), senseX);
+			if (isRotate)
+			{
+				senseX = prevX + (0.002 * (x - width / 2));
+				senseY = prevY + (0.002 * (y - height / 2));
+				Evp = Rotation(V4(1, 0, 0), senseY) * Rotation(V4(0, 1, 0), senseX);
+			}
 		});
 		
 
@@ -77,27 +85,27 @@ namespace Example
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
 			//MeshResource
-			//cube = cube->Cube();
+			//cube = MeshResource::Cube();
 
-			cube = MeshResource::LoadObj("textures/cube.obj");
+			cube = MeshResource::LoadObj("textures/sphere.obj");
 
 			//Load Susanne from file
 			//monkey = monkey->LoadObj("textures/monke susanne.obj");
 
 			//TextureResource
-			std::shared_ptr<TextureResource> texture = std::make_shared<TextureResource>("textures/perfect.jpg");
+			std::shared_ptr<TextureResource> texture = std::make_shared<TextureResource>("textures/cubepic.png");
 
 			//shaderObject
-			shaderObject = std::make_shared<ShaderResource>();
-			shaderObject->getShaderObject(this->vertexShader, this->pixelShader, this->program);
+			shaderResource = std::make_shared<ShaderResource>();
+			shaderResource->getShaderResource(this->vertexShader, this->pixelShader, this->program);
 
-			shaderObject = std::make_shared<ShaderResource>();
-			shaderObjectSusanne->getShaderObject(this->vertexShader, this->pixelShader, this->program);
+			//shaderObjectSusanne = std::make_shared<ShaderResource>();
+			//shaderObjectSusanne->getShaderResource(this->vertexShader, this->pixelShader, this->program);
 			
 			//GraphicNode
-			node = std::make_shared<GraphicNode>(cube, texture, shaderObject, Translate(V4Zero));
+			node = std::make_shared<GraphicNode>(cube, texture, shaderResource, Translate(V4Zero));
 
-			susanne = std::make_shared<GraphicNode>(monkey, texture, shaderObjectSusanne, Translate(V4Zero));
+			//susanne = std::make_shared<GraphicNode>(monkey, texture, shaderObjectSusanne, Translate(V4Zero));
 
 			return true;
 		}
@@ -107,6 +115,17 @@ namespace Example
 	//------------------------------------------------------------------------------
 	/**
 	*/
+
+	void Print(const M4& m)
+	{
+		for (size_t i = 0; i < 4; i++)
+		{
+			V4& v = m[i];
+			std::cout << '(';
+			for (char i = 0; i < 4; i++)
+				std::cout << round(v.data[i]) << (i == 3 ? ")\n" : ", ");
+		}
+	}
 
 	void
 		ExampleApp::Run()
@@ -121,7 +140,7 @@ namespace Example
 		float speed = .08f;
 
 		M4 scene;
-		V4 color(1, 0, 1);
+		V4 color(1, 1, 1, 1);
 		
 		while (this->window->IsOpen())
 		{
@@ -130,6 +149,8 @@ namespace Example
 			
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			this->window->Update();
+
+			shaderResource->setM4(cam.pv(), "m4ProjViewPos");
 			node->DrawScene(scene, color);
 			// susanne->DrawScene(scene, color);
 			this->window->SwapBuffers();

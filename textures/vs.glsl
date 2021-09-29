@@ -19,7 +19,7 @@ void main()
 {
 	gl_Position = m4ProjViewPos * m4Pos * vec4(posIn, 1);
 
-	colorOut = colorVector * vec4(1, 1, 1, 1);
+	colorOut = colorVector * colorIn;
 	texturesOut = texturesIn;
 	fragPosOut = (m4Pos * vec4(posIn, 1)).xyz;
 	normalOut = mat3(transpose(inverse(m4Pos))) * normalIn;

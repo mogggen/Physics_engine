@@ -30,9 +30,10 @@ namespace Example
 		void Run();
 	private:
 		int width, height;
-		float senseX, senseY;
+		float64 prevX = 0, prevY = 0;
+		float64 senseX = 0, senseY = 0;
 		bool w, a, s, d,
-			q, e;
+			q, e, isRotate = false;
 		M4 Em;
 		M4 Evp;
 		GLuint program;
@@ -40,11 +41,11 @@ namespace Example
 		GLuint pixelShader;
 
 		std::shared_ptr<MeshResource> cube;
-		std::shared_ptr<ShaderResource> shaderObject;
+		std::shared_ptr<ShaderResource> shaderResource;
 		std::shared_ptr<GraphicNode> node;
 
 		std::shared_ptr<MeshResource> monkey;
-		std::shared_ptr<ShaderResource> shaderObjectSusanne;
+		std::shared_ptr<ShaderResource> shaderResourceSusanne;
 		std::shared_ptr<GraphicNode> susanne;
 
 		Display::Window* window;

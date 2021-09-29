@@ -1,7 +1,9 @@
 #include "config.h"
 #include "render/MeshResource.h"
+#include <stdio.h>
+#include <inttypes.h>
 
-MeshResource::MeshResource(Vertex vertices[], int Verticeslength, uint32_t indices[], int indicesLength) : indices(indicesLength)
+MeshResource::MeshResource(Vertex vertices[], uint64_t Verticeslength, uint64_t indices[], uint64_t indicesLength) : indices(indicesLength)
 {
 	glGenBuffers(1, &this->vertexBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, this->vertexBuffer);
@@ -38,12 +40,12 @@ void MeshResource::render()
 
 std::shared_ptr<MeshResource> MeshResource::Cube()
 {
-	V4 top(0, 255, 0); //red
-	V4 back(128, 66, 128); //gray
-	V4 left(0, 0, 255); //blue
-	V4 right(255, 0, 0); //red
-	V4 front(255, 165, 0); //orange
-	V4 bottom(64, 224, 208); //turquoise
+	V4 top(0, 255, 0, 100); //red
+	V4 back(128, 66, 128, 100); //gray
+	V4 left(0, 0, 255, 100); //blue
+	V4 right(255, 0, 0, 100); //red
+	V4 front(255, 165, 0, 100); //orange
+	V4 bottom(64, 224, 208, 100); //turquoise
 
 	float factor = .01f;
 	top = top * factor;
@@ -220,7 +222,7 @@ std::shared_ptr<MeshResource> MeshResource::Cube()
 		},
 	};
 
-	unsigned int indices[] // World point's relations to form triangles and surfaces with razterisation
+	unsigned long long indices[] // World point's relations to form triangles and surfaces with razterisation
 	{
 		0, 3, 6,
 		3, 6, 9, //back
@@ -253,7 +255,7 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile)
 	errno_t err = fopen_s(&fs, pathToFile, "r"); // "textures/cube.obj"
 	
 	unsigned long long verticesUsed = 0ull;
-	std::vector<uint32_t> indices;
+	std::vector<uint64_t> indices;
 	std::vector<V3> coords;
 	std::vector<V2> texels;
 	std::vector<V3> normals;
@@ -310,26 +312,25 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile)
 
 			else if (buf[0] == 'f' && buf[1] == '\0')
 			{
-				uint32_t vertexIndex, textureIndex, normalIndex;
 				char a[64];
 				char b[64];
 				char c[64];
 				char d[64];
 				uint8_t argc = fscanf(fs, "%s %s %s %s", &a, &b, &c, &d);
 
-				uint32_t listOfIndices[4][3];
+				uint64_t listOfIndices[4][3];
 				for (size_t i = 0; i < 3; i++)
 				{
 					switch (i)
 					{
 					case 0:
-						if (sscanf(a, "%d/ %d/ %d/", &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3) continue;
+						if (sscanf(a, "%" PRIu64 "/ %" PRIu64 "/ %" PRIu64 "/", &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3) continue;
 						break;
 					case 1:
-						if (sscanf(b, "%d/ %d/ %d/", &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3) continue;
+						if (sscanf(b, "%" PRIu64 "/ %" PRIu64 "/ %" PRIu64 "/", &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3) continue;
 						break;
 					case 2:
-						if (sscanf(c, "%d/ %d/ %d/", &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3) continue;
+						if (sscanf(c, "%" PRIu64 "/ %" PRIu64 "/ %" PRIu64 "/", &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3) continue;
 						break;
 					default:
 						break;
@@ -352,7 +353,7 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile)
 					if (d[0] != 'f' && d[0] != '#')
 					{
 
-						if (sscanf(d, "%d/ %d/ %d/", &listOfIndices[3][0], &listOfIndices[3][1], &listOfIndices[3][2]) != 3) break;
+						if (sscanf(d, "%" PRIu64 "/ %" PRIu64 "/ %" PRIu64 "/", &listOfIndices[3][0], &listOfIndices[3][1], &listOfIndices[3][2]) != 3) break;
 
 						vertices.push_back(Vertex
 							{

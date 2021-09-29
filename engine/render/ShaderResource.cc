@@ -34,7 +34,7 @@ void ShaderResource::LoadShader(GLchar *vs, GLchar *ps, std::string vsPath, std:
 	this->ps = ps;
 }
 
-void ShaderResource::getShaderObject(GLuint vertexShader, GLuint pixelShader, GLuint program)
+void ShaderResource::getShaderResource(GLuint vertexShader, GLuint pixelShader, GLuint program)
 {
 	LoadShader(vs, ps, "textures/vs.glsl", "textures/ps.glsl"); //TODO fix shader and byteoffset keep normals, but use constant color
 
@@ -87,31 +87,43 @@ void ShaderResource::getShaderObject(GLuint vertexShader, GLuint pixelShader, GL
 	this->program = program;
 }
 
-void ShaderResource::setFloat(float facIn, std::string parameterName)
+void ShaderResource::setFloat(float32 facIn, std::string parameterName)
 {
 	glUseProgram(program);
 	glUniform1f(glGetUniformLocation(program, parameterName.c_str()), facIn);
 }
 
-void ShaderResource::setVec3(V3 vecIn, std::string parameterName)
+void ShaderResource::setV1(float32 vecIn, std::string parameterName)
 {
 	glUseProgram(program);
-	glUniform3fv(glGetUniformLocation(program, parameterName.c_str()), 1, (float*)&vecIn);
+	glUniform1fv(glGetUniformLocation(program, parameterName.c_str()), 1, (float32*)&vecIn);
 }
 
-void ShaderResource::setVec4(V4 vecIn, std::string parameterName)
+void ShaderResource::setV2(V2 vecIn, std::string parameterName)
 {
 	glUseProgram(program);
-	glUniform4fv(glGetUniformLocation(program, parameterName.c_str()), 1, (float*)&vecIn);
+	glUniform2fv(glGetUniformLocation(program, parameterName.c_str()), 1, (float32*)&vecIn);
 }
 
-void ShaderResource::setMat4(M4 matIn, std::string parameterName)
+void ShaderResource::setV3(V3 vecIn, std::string parameterName)
 {
 	glUseProgram(program);
-	glUniformMatrix4fv(glGetUniformLocation(program, parameterName.c_str()), 1, GL_FALSE, (float*)&(matIn));
+	glUniform3fv(glGetUniformLocation(program, parameterName.c_str()), 1, (float32*)&vecIn);
 }
 
-void ShaderResource::bindShaderObject()
+void ShaderResource::setV4(V4 vecIn, std::string parameterName)
+{
+	glUseProgram(program);
+	glUniform4fv(glGetUniformLocation(program, parameterName.c_str()), 1, (float32*)&vecIn);
+}
+
+void ShaderResource::setM4(M4 matIn, std::string parameterName)
+{
+	glUseProgram(program);
+	glUniformMatrix4fv(glGetUniformLocation(program, parameterName.c_str()), 1, GL_FALSE, (float32*)&(matIn));
+}
+
+void ShaderResource::bindShaderResource()
 {
 	glUseProgram(program);
 }

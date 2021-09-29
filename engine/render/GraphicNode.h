@@ -15,8 +15,6 @@ public:
 	GraphicNode(std::shared_ptr<MeshResource> geometry, std::shared_ptr<TextureResource> texture, std::shared_ptr<ShaderResource> shader, M4 transform);
 	void DrawScene(M4& mvp, V4& rbga);
 
-	void LoadObj(std::shared_ptr<MeshResource>& mesh);
-
 	std::shared_ptr<MeshResource> getGeometry();
 	std::shared_ptr<TextureResource> getTexture();
 	std::shared_ptr<ShaderResource> getShader();

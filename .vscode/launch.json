@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(gdb) Launch",
+            "name": "(gdb) Launch \"meshRenderer\"",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/projects/MeshRenderer/meshRenderer",
+            "program": "${workspaceFolder}/bin/meshRenderer",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

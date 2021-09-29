@@ -17,8 +17,8 @@ SET(files_render_display
 	TextureResource.h
 	TextureResource.cc
 
-	ShaderObject.h
-	ShaderObject.cc
+	ShaderResource.h
+	ShaderResource.cc
 
 	GraphicNode.h
 	GraphicNode.cc

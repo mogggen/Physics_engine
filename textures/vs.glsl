@@ -18,8 +18,8 @@ uniform sampler2D textureArray;
 void main()
 {
 	gl_Position = m4ProjViewPos * m4Pos * vec4(posIn, 1);
-	
-	colorOut = colorVector * colorIn;
+
+	colorOut = colorVector * vec4(1, 1, 1, 1);
 	texturesOut = texturesIn;
 	fragPosOut = (m4Pos * vec4(posIn, 1)).xyz;
 	normalOut = mat3(transpose(inverse(m4Pos))) * normalIn;

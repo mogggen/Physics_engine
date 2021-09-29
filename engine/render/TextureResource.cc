@@ -1,7 +1,7 @@
 #include "config.h"
 #include "render/TextureResource.h"
 
-TextureResource::TextureResource(std::string file) : file("textures/" + file)
+TextureResource::TextureResource(std::string file) : file(file)
 {
 	
 }

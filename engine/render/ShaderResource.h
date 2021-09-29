@@ -3,14 +3,14 @@
 #include <fstream>
 #include "core/MathLibrary.h"
 
-struct ShaderObject
+struct ShaderResource
 {
 	GLchar* vs;
 	GLchar* ps;
 	GLuint program;
 
 	public:
-	~ShaderObject();
+	~ShaderResource();
 	void getShaderObject(GLuint vs, GLuint ps, GLuint program);
 	void LoadShader(GLchar* vs, GLchar* ps, std::string vsPath, std::string psPath);
 	void bindShaderObject();

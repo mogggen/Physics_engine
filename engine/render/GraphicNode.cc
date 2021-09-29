@@ -2,7 +2,7 @@
 #include "render/GraphicNode.h"
 
 
-GraphicNode::GraphicNode(std::shared_ptr<MeshResource> geometry, std::shared_ptr<TextureResource> texture, std::shared_ptr<ShaderObject> shader, M4 transform) : Geometry(geometry), Texture(texture), Shader(shader), Transform(transform)
+GraphicNode::GraphicNode(std::shared_ptr<MeshResource> geometry, std::shared_ptr<TextureResource> texture, std::shared_ptr<ShaderResource> shader, M4 transform) : Geometry(geometry), Texture(texture), Shader(shader), Transform(transform)
 {
 	Transform = Translate(V4());
 }
@@ -24,10 +24,10 @@ void GraphicNode::DrawScene(M4& mvp, V4& rgba)
 
 std::shared_ptr<MeshResource> GraphicNode::getGeometry() { return Geometry; }
 std::shared_ptr<TextureResource> GraphicNode::getTexture() { return Texture; }
-std::shared_ptr<ShaderObject> GraphicNode::getShader() { return Shader; }
+std::shared_ptr<ShaderResource> GraphicNode::getShader() { return Shader; }
 M4 GraphicNode::getTransform() { return Transform; }
 
 void GraphicNode::setGeometry(std::shared_ptr<MeshResource> geometry) { Geometry = geometry; }
 void GraphicNode::setTexture(std::shared_ptr<TextureResource> texture) { Texture = texture; }
-void GraphicNode::setShader(std::shared_ptr<ShaderObject> shader) { Shader = shader; }
+void GraphicNode::setShader(std::shared_ptr<ShaderResource> shader) { Shader = shader; }
 void GraphicNode::setTransform(M4 transform) { Transform = transform; }

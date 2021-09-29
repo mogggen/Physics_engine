@@ -1,9 +1,9 @@
 #include "config.h"
-#include "render/ShaderObject.h"
+#include "render/ShaderResource.h"
 #include <cstring>
 
 //filetype: .glsl
-void ShaderObject::LoadShader(GLchar *vs, GLchar *ps, std::string vsPath, std::string psPath)
+void ShaderResource::LoadShader(GLchar *vs, GLchar *ps, std::string vsPath, std::string psPath)
 {
 	std::streampos size;
 	//vs
@@ -34,7 +34,7 @@ void ShaderObject::LoadShader(GLchar *vs, GLchar *ps, std::string vsPath, std::s
 	this->ps = ps;
 }
 
-void ShaderObject::getShaderObject(GLuint vertexShader, GLuint pixelShader, GLuint program)
+void ShaderResource::getShaderObject(GLuint vertexShader, GLuint pixelShader, GLuint program)
 {
 	LoadShader(vs, ps, "textures/vs.glsl", "textures/ps.glsl"); //TODO fix shader and byteoffset keep normals, but use constant color
 
@@ -87,36 +87,36 @@ void ShaderObject::getShaderObject(GLuint vertexShader, GLuint pixelShader, GLui
 	this->program = program;
 }
 
-void ShaderObject::setFloat(float facIn, std::string parameterName)
+void ShaderResource::setFloat(float facIn, std::string parameterName)
 {
 	glUseProgram(program);
 	glUniform1f(glGetUniformLocation(program, parameterName.c_str()), facIn);
 }
 
-void ShaderObject::setVec3(V3 vecIn, std::string parameterName)
+void ShaderResource::setVec3(V3 vecIn, std::string parameterName)
 {
 	glUseProgram(program);
 	glUniform3fv(glGetUniformLocation(program, parameterName.c_str()), 1, (float*)&vecIn);
 }
 
-void ShaderObject::setVec4(V4 vecIn, std::string parameterName)
+void ShaderResource::setVec4(V4 vecIn, std::string parameterName)
 {
 	glUseProgram(program);
 	glUniform4fv(glGetUniformLocation(program, parameterName.c_str()), 1, (float*)&vecIn);
 }
 
-void ShaderObject::setMat4(M4 matIn, std::string parameterName)
+void ShaderResource::setMat4(M4 matIn, std::string parameterName)
 {
 	glUseProgram(program);
 	glUniformMatrix4fv(glGetUniformLocation(program, parameterName.c_str()), 1, GL_FALSE, (float*)&(matIn));
 }
 
-void ShaderObject::bindShaderObject()
+void ShaderResource::bindShaderObject()
 {
 	glUseProgram(program);
 }
 
-ShaderObject::~ShaderObject()
+ShaderResource::~ShaderResource()
 {
 	glDeleteProgram(program);
 }

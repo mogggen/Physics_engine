@@ -130,7 +130,7 @@ inline float& V2::operator[](char index)
 
 inline float V2::Length()
 {
-	return sqrtf(powf(x, 2) + powf(y, 2));
+	return sqrtf(x * x + y * y);
 }
 
 inline void V2::Normalize()
@@ -141,7 +141,7 @@ inline void V2::Normalize()
 		data[i] /= length;
 }
 
-//	operator functions
+// operator functions
 inline V2 operator+(V2 left, V2 right)
 {
 	for (char i = 0; i < 2; i++)
@@ -183,6 +183,7 @@ inline V2 operator/(V2 left, V2 right)
 	{
 		left[i] /= right[i];
 	}
+	return left;
 }
 
 inline V2 operator/(V2 left, float right)
@@ -191,6 +192,7 @@ inline V2 operator/(V2 left, float right)
 	{
 		left[i] /= right;
 	}
+	return left;
 }
 
 inline V2 operator/(float left, V2 right)
@@ -199,6 +201,7 @@ inline V2 operator/(float left, V2 right)
 	{
 		right[i] /= left;
 	}
+	return right;
 }
 
 inline float Dot(V2 left, V2 right)
@@ -211,7 +214,7 @@ inline float Dot(V2 left, V2 right)
 
 inline float Length(V2 vector)
 {
-	return sqrtf(powf(vector.x, 2) + powf(vector.y, 2));
+	return sqrtf(vector.x * vector.x + vector.y * vector.y);
 }
 
 /// <summary>
@@ -338,7 +341,7 @@ inline float& V3::operator[](char index)
 
 inline float V3::Length()
 {
-	return sqrtf(powf(x, 2) + powf(y, 2) + powf(z, 2));
+	return sqrtf(x * x + y * y + z * z);
 }
 
 inline void V3::Normalize()
@@ -391,6 +394,7 @@ inline V3 operator/(V3 left, V3 right)
 	{
 		left[i] /= right[i];
 	}
+	return left;
 }
 
 inline V3 operator/(V3 left, float right)
@@ -399,6 +403,7 @@ inline V3 operator/(V3 left, float right)
 	{
 		left[i] /= right;
 	}
+	return left;
 }
 
 inline V3 operator/(float left, V3 right)
@@ -407,6 +412,7 @@ inline V3 operator/(float left, V3 right)
 	{
 		right[i] /= left;
 	}
+	return right;
 }
 
 inline float Dot(V3 left, V3 right)
@@ -432,7 +438,7 @@ inline V3 Cross(V3 left, V3 right)
 
 inline float Length(V3 vector)
 {
-	return sqrtf(powf(vector.x, 2) + powf(vector.y, 2) + powf(vector.z, 2));
+	return sqrtf(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
 }
 
 /// <summary>
@@ -559,7 +565,7 @@ inline float& V4::operator[](char index)
 
 inline float V4::Length()
 {
-	return sqrtf(powf(x, 2) + powf(y, 2) + powf(z, 2) + powf(w, 2));
+	return sqrtf(x * x + y * y + z * z + w * w);
 }
 
 inline void V4::Normalize()
@@ -629,7 +635,7 @@ inline V4 Cross(V4 left, V4 right)
 
 inline float Length(V4 vector)
 {
-	return sqrtf(powf(vector.x, 2) + powf(vector.y, 2) + powf(vector.z, 2));
+	return sqrtf(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
 }
 
 /// <summary>
@@ -671,8 +677,8 @@ struct M4
 M4::M4()
 {
 	for (char i = 0; i < 3; i++)
-		vectors[i] = V4(0, 0, 0);
-	vectors[3] = V4();
+		vectors[i] = V4(0, 0, 0, 0);
+	vectors[3] = V4(0, 0, 0, 0);
 }
 
 M4::M4(V4 v[4])
@@ -1103,17 +1109,17 @@ inline M4 Rotation(V4 line, float theta)
 	// [3] 0 0 0 1
 
 	// [coloumns][rows]
-	temp[0].x = cosf(theta) + (1 - cosf(theta)) * powf(line.x, 2); // 0
+	temp[0].x = cosf(theta) + (1 - cosf(theta)) * (line.x * line.x); // 0
 	temp[0].y = (1 - cosf(theta)) * line.x * line.y + line.z * sinf(theta); // 1
 	temp[0].z = (1 - cosf(theta)) * line.x * line.z - line.y * sinf(theta); // 2
 
 	temp[1].x = (1 - cosf(theta)) * line.x * line.y - line.z * sinf(theta); // 3
-	temp[1].y = cosf(theta) + (1 - cosf(theta)) * powf(line.y, 2); // 4
+	temp[1].y = cosf(theta) + (1 - cosf(theta)) * (line.y * line.y); // 4
 	temp[1].z = (1 - cosf(theta)) * line.y * line.z + line.x * sinf(theta); // 5
 
 	temp[2].x = (1 - cosf(theta)) * line.x * line.z + line.y * sinf(theta); // 6
 	temp[2].y = (1 - cosf(theta)) * line.y * line.z - line.x * sinf(theta); // 7
-	temp[2].z = cosf(theta) + (1 - cosf(theta)) * powf(line.z, 2); // 8
+	temp[2].z = cosf(theta) + (1 - cosf(theta)) * (line.z * line.z); // 8
 
 	return temp;
 }

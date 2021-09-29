@@ -10,7 +10,7 @@
 #include "render/Vertex.h"
 #include "render/MeshResource.h"
 #include "render/Camera.h"
-#include "render/ShaderObject.h"
+#include "render/ShaderResource.h"
 #include "render/GraphicNode.h"
 #include "render/window.h"
 
@@ -40,11 +40,11 @@ namespace Example
 		GLuint pixelShader;
 
 		std::shared_ptr<MeshResource> cube;
-		std::shared_ptr<ShaderObject> shaderObject;
+		std::shared_ptr<ShaderResource> shaderObject;
 		std::shared_ptr<GraphicNode> node;
 
 		std::shared_ptr<MeshResource> monkey;
-		std::shared_ptr<ShaderObject> shaderObjectSusanne;
+		std::shared_ptr<ShaderResource> shaderObjectSusanne;
 		std::shared_ptr<GraphicNode> susanne;
 
 		Display::Window* window;

@@ -85,13 +85,13 @@ namespace Example
 			//monkey = monkey->LoadObj("textures/monke susanne.obj");
 
 			//TextureResource
-			std::shared_ptr<TextureResource> texture = std::make_shared<TextureResource>("perfect.jpg");
+			std::shared_ptr<TextureResource> texture = std::make_shared<TextureResource>("textures/perfect.jpg");
 
 			//shaderObject
-			shaderObject = std::make_shared<ShaderObject>();
+			shaderObject = std::make_shared<ShaderResource>();
 			shaderObject->getShaderObject(this->vertexShader, this->pixelShader, this->program);
 
-			shaderObject = std::make_shared<ShaderObject>();
+			shaderObject = std::make_shared<ShaderResource>();
 			shaderObjectSusanne->getShaderObject(this->vertexShader, this->pixelShader, this->program);
 			
 			//GraphicNode

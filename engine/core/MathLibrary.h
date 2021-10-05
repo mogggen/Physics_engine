@@ -258,6 +258,7 @@ struct V3
 
 	inline V3();
 	inline V3(float x, float y, float z);
+	inline V3(V2, float z);
 
 	void operator+=(V3 right);
 	void operator-=(V3 right);
@@ -275,10 +276,11 @@ struct V3
 };
 
 //Vector Constructors
-V3::V3() : x(0), y(0), z(0) { }
+V3::V3() : x(0), y(0), z(0) {}
 
-V3::V3(float x, float y, float z) : x(x), y(y), z(z) { }
+V3::V3(float x, float y, float z) : x(x), y(y), z(z) {}
 
+V3::V3(V2 vec, float z) : x(vec.x), y(vec.y), z(z) {}
 
 //	operator methods
 inline void V3::operator+=(V3 right)
@@ -479,6 +481,7 @@ struct V4
 	
 	inline V4();
 	inline V4(float x, float y, float z, float w);
+	inline V4(V3 vec, float w);
 
 	void operator+=(V4 right);
 	void operator-=(V4 right);
@@ -493,13 +496,20 @@ struct V4
 
 	float Length();
 	void Normalize();
+	V3 toV3();
 };
 
 //Vector Constructors
-V4::V4() : x(0), y(0), z(0), w(0) { }
+V4::V4() : x(0), y(0), z(0), w(0) {}
 
-V4::V4(float x, float y, float z, float w=0) : x(x), y(y), z(z), w(w) { }
+V4::V4(float x, float y, float z, float w=0) : x(x), y(y), z(z), w(w) {}
 
+V4::V4(V3 vec, float w=0) : x(vec.x), y(vec.y), z(vec.z), w(w) {}
+
+inline V3 V4::toV3()
+{
+	return V3(this->x, this->y, this->z);
+}
 
 //	operator methods
 inline void V4::operator+=(V4 right)

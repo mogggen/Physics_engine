@@ -222,7 +222,7 @@ std::shared_ptr<MeshResource> MeshResource::Cube()
 		},
 	};
 
-	unsigned long long indices[] // World point's relations to form triangles and surfaces with razterisation
+	long unsigned int indices[] // World point's relations to form triangles and surfaces with razterisation
 	{
 		0, 3, 6,
 		3, 6, 9, //back
@@ -251,8 +251,7 @@ std::shared_ptr<MeshResource> MeshResource::Cube()
 std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile)
 {
 	char buf[1024];
-	FILE* fs;
-	errno_t err = fopen_s(&fs, pathToFile, "r"); // "textures/cube.obj"
+	FILE* fs = fopen64(pathToFile, "r"); // "textures/cube.obj"
 	
 	unsigned long long verticesUsed = 0ull;
 	std::vector<uint64_t> indices;
@@ -378,7 +377,7 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile)
 		printf("file not found with path \"./%s\"", pathToFile);
 	}
 	
-	if (!err && fs != NULL)
+	// if (!err && fs != NULL)
 		fclose(fs);
 	
 	MeshResource* temp1 = new MeshResource(MeshResource(&vertices[0], vertices.size(), &indices[0], indices.size()));

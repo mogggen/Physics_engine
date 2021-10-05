@@ -23,6 +23,9 @@ SET(files_render_display
 	GraphicNode.h
 	GraphicNode.cc
 
+	Lightning.h
+	Lightning.cc
+
 	stb_image.h)
 SOURCE_GROUP("display" FILES ${files_render_display})
 

@@ -10,6 +10,7 @@
 #include "render/Vertex.h"
 #include "render/MeshResource.h"
 #include "render/Camera.h"
+#include "render/Lightning.h"
 #include "render/ShaderResource.h"
 #include "render/GraphicNode.h"
 #include "render/window.h"

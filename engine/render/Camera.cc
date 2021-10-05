@@ -7,6 +7,11 @@ Camera::Camera(float fov, float aspect, float n, float f) : fov(fov), aspect(asp
 	dir = V4(0, 1, 0);
 }
 
+V3 Camera::getPos()
+{
+	return pos.toV3();
+}
+
 void Camera::setPos(V4 pos)
 {
 	this->pos = pos;

@@ -116,11 +116,11 @@ namespace Example
 	/**
 	*/
 
-	void Print(const M4& m)
+	void Print(M4 m)
 	{
 		for (size_t i = 0; i < 4; i++)
 		{
-			V4& v = m[i];
+			V4 v = m[i];
 			std::cout << '(';
 			for (char i = 0; i < 4; i++)
 				std::cout << round(v.data[i]) << (i == 3 ? ")\n" : ", ");
@@ -136,6 +136,7 @@ namespace Example
 		Camera cam(90, (float)width / height, 0.01f, 100.0f);
 		cam.setPos(V4(0, 0, -3));
 		cam.setRot(V4(0, 1, 0), M_PI);
+		Lightning light(V3(1, 1, 0), V3(1, 1, 1), .2f);
 		
 		float speed = .08f;
 
@@ -146,11 +147,11 @@ namespace Example
 		{
 			Em = Em * Translate(Normalize(V4(float(d - a), float(e - q), float(w - s))) * speed);
 			scene = cam.pv() * (Em * Evp) * Translate(V4Zero) * Scalar(V4(-1, -1, 1)); // scaling because i can
-			
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			this->window->Update();
 
 			shaderResource->setM4(cam.pv(), "m4ProjViewPos");
+			light.bindLight(shaderResource, cam.getPos());
 			node->DrawScene(scene, color);
 			// susanne->DrawScene(scene, color);
 			this->window->SwapBuffers();

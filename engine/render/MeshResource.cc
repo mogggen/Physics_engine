@@ -243,9 +243,7 @@ std::shared_ptr<MeshResource> MeshResource::Cube()
 		5, 14, 17, //bottom
 	};
 
-	MeshResource* temp1 = new MeshResource(MeshResource(vertices, sizeof(vertices) / sizeof(Vertex), indices, sizeof(indices) / sizeof(unsigned int)));
-	std::shared_ptr<MeshResource> temp(temp1);
-	return temp;
+	return std::make_shared<MeshResource>(MeshResource(vertices, sizeof(vertices) / sizeof(Vertex), indices, sizeof(indices) / sizeof(unsigned int)));;
 }
 
 std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile)

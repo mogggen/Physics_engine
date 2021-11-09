@@ -10,7 +10,7 @@ uniform vec3 lightPos;
 uniform float lightIntensity;
 
 uniform vec3 camPos;
-uniform specularIntensity;
+uniform float specularIntensity;
 uniform sampler2D textureArray;
 
 out vec4 Color;

@@ -22,5 +22,5 @@ void main()
 	colorOut = colorVector * colorIn;
 	texturesOut = texturesIn;
 	fragPosOut = (m4Pos * vec4(posIn, 1)).xyz;
-	normalOut = mat3(transpose(inverse(m4Pos))) * colorIn;
+	normalOut = mat3(transpose(inverse(m4Pos))) * normalIn;
 }

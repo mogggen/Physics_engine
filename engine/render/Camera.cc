@@ -25,5 +25,5 @@ void Camera::setRot(V4 dir, float rad)
 
 M4 Camera::pv()
 {
-	return projection(fov, aspect, n, f) * Translate(pos) /** Rotation(dir, rad)*/;
+	return projection(fov, aspect, n, f) * Rotation(dir, rad) * Translate(pos);
 }

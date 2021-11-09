@@ -28,9 +28,9 @@ void MeshResource::render()
 	glEnableVertexAttribArray(3);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), NULL);
-	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(sizeof(float32) * 3));
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(sizeof(float32) * 7));
-	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)(sizeof(GLfloat) * 9));
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *)(sizeof(float32) * 3));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *)(sizeof(float32) * 7));
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *)(sizeof(GLfloat) * 9));
 
 	glDrawElements(GL_TRIANGLES, indices, GL_UNSIGNED_INT, 0);
 
@@ -40,12 +40,12 @@ void MeshResource::render()
 
 std::shared_ptr<MeshResource> MeshResource::Cube()
 {
-	V4 top(0, 255, 0, 100); //red
-	V4 back(128, 66, 128, 100); //gray
-	V4 left(0, 0, 255, 100); //blue
-	V4 right(255, 0, 0, 100); //red
-	V4 front(255, 165, 0, 100); //orange
-	V4 bottom(64, 224, 208, 100); //turquoise
+	V4 top(0, 255, 0, 100);		  // red
+	V4 back(128, 66, 128, 100);	  // gray
+	V4 left(0, 0, 255, 100);	  // blue
+	V4 right(255, 0, 0, 100);	  // red
+	V4 front(255, 165, 0, 100);	  // orange
+	V4 bottom(64, 224, 208, 100); // turquoise
 
 	float factor = .01f;
 	top = top * factor;
@@ -56,202 +56,179 @@ std::shared_ptr<MeshResource> MeshResource::Cube()
 	bottom = bottom * factor;
 
 	Vertex vertices[] = // world points
-	{
-		//Mesh:	(0,1)	(1,1)	Tex:(0,0)	(1,0)
-		//		(0,0)	(1,0)		(0,1)	(1,1)
+		{
+			// Mesh:	(0,1)	(1,1)	Tex:(0,0)	(1,0)
+			//		(0,0)	(1,0)		(0,1)	(1,1)
 
-		//xyz
-		//000
-		Vertex //back : 0
-		{
-			V3(-.5f, -.5f, -.5f), // position, will transform later with the projection matrix
-			back, // raw color 0-1 : black-white
-			V2(1, 1) // texture position, when the indicies are added, combined with this data, the orientation and size of the texture will make sense
-		},
-		Vertex //left : 1
-		{
-			V3(-.5f, -.5f, -.5f),
-			left,
-			V2(0, 1)
-		},
-		Vertex //bottom : 2
-		{
-			V3(-.5f, -.5f, -.5f),
-			bottom,
-			V2(1, 0)
-		},
+			// xyz
+			// 000
+			Vertex // back : 0
+			{
+				V3(-.5f, -.5f, -.5f), // position, will transform later with the projection matrix
+				back,				  // raw color 0-1 : black-white
+				V2(1, 1)			  // texture position, when the indicies are added, combined with this data, the orientation and size of the texture will make sense
+			},
+			Vertex // left : 1
+			{
+				V3(-.5f, -.5f, -.5f),
+				left,
+				V2(0, 1)},
+			Vertex // bottom : 2
+			{
+				V3(-.5f, -.5f, -.5f),
+				bottom,
+				V2(1, 0)},
 
-		//100
-		Vertex //back : 3
-		{
-			V3(.5f, -.5f, -.5f),
-			back,
-			V2(0, 1)
-		},
-		Vertex //right : 4
-		{
-			V3(.5f, -.5f, -.5f),
-			right,
-			V2(1, 1)
-		},
-		Vertex //bottom : 5
-		{
-			V3(.5f, -.5f, -.5f),
-			bottom,
-			V2(0, 0)
-		},
+			// 100
+			Vertex // back : 3
+			{
+				V3(.5f, -.5f, -.5f),
+				back,
+				V2(0, 1)},
+			Vertex // right : 4
+			{
+				V3(.5f, -.5f, -.5f),
+				right,
+				V2(1, 1)},
+			Vertex // bottom : 5
+			{
+				V3(.5f, -.5f, -.5f),
+				bottom,
+				V2(0, 0)},
 
-		//010
-		Vertex //back : 6
-		{
-			V3(-.5f, .5f, -.5f),
-			back,
-			V2(1, 0)
-		},
-		Vertex //left : 7
-		{
-			V3(-.5f, .5f, -.5f),
-			left,
-			V2(0, 0)
-		},
-		Vertex //top : 8
-		{
-			V3(-.5f, .5f, -.5f),
-			top,
-			V2(0, 0)
-		},
+			// 010
+			Vertex // back : 6
+			{
+				V3(-.5f, .5f, -.5f),
+				back,
+				V2(1, 0)},
+			Vertex // left : 7
+			{
+				V3(-.5f, .5f, -.5f),
+				left,
+				V2(0, 0)},
+			Vertex // top : 8
+			{
+				V3(-.5f, .5f, -.5f),
+				top,
+				V2(0, 0)},
 
-		//110
-		Vertex //back : 9
-		{
-			V3(.5f, .5f, -.5f),
-			back,
-			V2(0, 0)
-		},
-		Vertex //right : 10
-		{
-			V3(.5f, .5f, -.5f),
-			right,
-			V2(1, 0)
-		},
-		Vertex //top : 11
-		{
-			V3(.5f, .5f, -.5f),
-			top,
-			V2(1, 0)
-		},
+			// 110
+			Vertex // back : 9
+			{
+				V3(.5f, .5f, -.5f),
+				back,
+				V2(0, 0)},
+			Vertex // right : 10
+			{
+				V3(.5f, .5f, -.5f),
+				right,
+				V2(1, 0)},
+			Vertex // top : 11
+			{
+				V3(.5f, .5f, -.5f),
+				top,
+				V2(1, 0)},
 
-		//001
-		Vertex //left : 12
-		{
-			V3(-.5f, -.5f, .5f),
-			left,
-			V2(1, 1)
-		},
-		Vertex //front : 13
-		{
-			V3(-.5f, -.5f, .5f),
-			front,
-			V2(0, 1)
-		},
-		Vertex //bottom : 14
-		{
-			V3(-.5f, -.5f, .5f),
-			bottom,
-			V2(1, 1)
-		},
+			// 001
+			Vertex // left : 12
+			{
+				V3(-.5f, -.5f, .5f),
+				left,
+				V2(1, 1)},
+			Vertex // front : 13
+			{
+				V3(-.5f, -.5f, .5f),
+				front,
+				V2(0, 1)},
+			Vertex // bottom : 14
+			{
+				V3(-.5f, -.5f, .5f),
+				bottom,
+				V2(1, 1)},
 
-		//101
-		Vertex //right : 15
-		{
-			V3(.5f, -.5f, .5f),
-			right,
-			V2(0, 1)
-		},
-		Vertex //front : 16
-		{
-			V3(.5f, -.5f, .5f),
-			front,
-			V2(1, 1)
-		},
-		Vertex //bottom : 17
-		{
-			V3(.5f, -.5f, .5f),
-			bottom,
-			V2(0, 1)
-		},
+			// 101
+			Vertex // right : 15
+			{
+				V3(.5f, -.5f, .5f),
+				right,
+				V2(0, 1)},
+			Vertex // front : 16
+			{
+				V3(.5f, -.5f, .5f),
+				front,
+				V2(1, 1)},
+			Vertex // bottom : 17
+			{
+				V3(.5f, -.5f, .5f),
+				bottom,
+				V2(0, 1)},
 
-		//011
-		Vertex // left : 18
-		{
-			V3(-.5f, .5f, .5f),
-			left,
-			V2(1, 0)
-		},
-		Vertex // front : 19
-		{
-			V3(-.5f, .5f, .5f),
-			front,
-			V2(0, 0)
-		},
-		Vertex // top : 20
-		{
-			V3(-.5f, .5f, .5f),
-			top,
-			V2(0, 1)
-		},
+			// 011
+			Vertex // left : 18
+			{
+				V3(-.5f, .5f, .5f),
+				left,
+				V2(1, 0)},
+			Vertex // front : 19
+			{
+				V3(-.5f, .5f, .5f),
+				front,
+				V2(0, 0)},
+			Vertex // top : 20
+			{
+				V3(-.5f, .5f, .5f),
+				top,
+				V2(0, 1)},
 
-		//111
-		Vertex // right : 21
-		{
-			V3(.5f, .5f, .5f),
-			right,
-			V2(0, 0)
-		},
-		Vertex // front : 22
-		{
-			V3(.5f, .5f, .5f),
-			front,
-			V2(1, 0)
-		},
-		Vertex // top : 23
-		{
-			V3(.5f, .5f, .5f),
-			top,
-			V2(1, 1)
-		},
-	};
+			// 111
+			Vertex // right : 21
+			{
+				V3(.5f, .5f, .5f),
+				right,
+				V2(0, 0)},
+			Vertex // front : 22
+			{
+				V3(.5f, .5f, .5f),
+				front,
+				V2(1, 0)},
+			Vertex // top : 23
+			{
+				V3(.5f, .5f, .5f),
+				top,
+				V2(1, 1)},
+		};
 
 	long unsigned int indices[] // World point's relations to form triangles and surfaces with razterisation
-	{
-		0, 3, 6,
-		3, 6, 9, //back
+		{
+			0, 3, 6,
+			3, 6, 9, // back
 
-		1, 12, 7,
-		7, 12, 18, //left
+			1, 12, 7,
+			7, 12, 18, // left
 
-		4, 15, 10,
-		10, 15, 21, //right
+			4, 15, 10,
+			10, 15, 21, // right
 
-		13, 16, 19,
-		16, 19, 22, //front
+			13, 16, 19,
+			16, 19, 22, // front
 
-		20, 8, 23,
-		8, 23, 11, //top
+			20, 8, 23,
+			8, 23, 11, // top
 
-		2, 5, 14,
-		5, 14, 17, //bottom
-	};
+			2, 5, 14,
+			5, 14, 17, // bottom
+		};
 
-	return std::make_shared<MeshResource>(MeshResource(vertices, sizeof(vertices) / sizeof(Vertex), indices, sizeof(indices) / sizeof(unsigned int)));;
+	return std::make_shared<MeshResource>(MeshResource(vertices, sizeof(vertices) / sizeof(Vertex), indices, sizeof(indices) / sizeof(unsigned int)));
+	;
 }
 
-std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile)
+std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 {
 	char buf[1024];
-	FILE* fs = fopen64(pathToFile, "r"); // "textures/cube.obj"
-	
-	unsigned long long verticesUsed = 0ull;
+	FILE *fs = fopen64(pathToFile, "r"); // "textures/cube.obj"
+
 	std::vector<uint64_t> indices;
 	std::vector<V3> coords;
 	std::vector<V2> texels;
@@ -267,7 +244,7 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile)
 			{
 				break;
 			}
-			
+
 			if (buf[0] == 'v' && buf[1] == '\0')
 			{
 				V3 nextCoordinate;
@@ -316,55 +293,125 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile)
 				uint8_t argc = fscanf(fs, "%s %s %s %s", &a, &b, &c, &d);
 
 				uint64_t listOfIndices[4][3];
-				for (size_t i = 0; i < 3; i++)
+
+				if (argc == 4 && d[0] != 'f' && d[0] != '#')
 				{
-					switch (i)
+					for (size_t i = 0; i < 3; i++)
 					{
-					case 0:
-						if (sscanf(a, "%" PRIu64 "/ %" PRIu64 "/ %" PRIu64 "/", &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3) continue;
-						break;
-					case 1:
-						if (sscanf(b, "%" PRIu64 "/ %" PRIu64 "/ %" PRIu64 "/", &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3) continue;
-						break;
-					case 2:
-						if (sscanf(c, "%" PRIu64 "/ %" PRIu64 "/ %" PRIu64 "/", &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3) continue;
-						break;
-					default:
-						break;
+						switch (i)
+						{
+						case 0:
+							if (sscanf(a, "%llu"
+										  "/ %llu"
+										  "/ %llu"
+										  "/",
+									   &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3)
+								continue;
+							break;
+						case 1:
+							if (sscanf(b, "%llu"
+										  "/ %llu"
+										  "/ %llu"
+										  "/",
+									   &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3)
+								continue;
+							break;
+						case 2:
+							if (sscanf(c, "%llu"
+										  "/ %llu"
+										  "/ %llu"
+										  "/",
+									   &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3)
+								continue;
+							break;
+						default:
+							break;
+						}
+
+						vertices.push_back(Vertex{
+							coords[(listOfIndices[i][0]) - 1],
+							V4(1, 1, 1, 1),
+							texels[(listOfIndices[i][1]) - 1],
+							normals[(listOfIndices[i][2]) - 1],
+						});
+						indices.push_back(vertices.size() - 1);
 					}
 
-					vertices.push_back(Vertex
-						{
-							coords[(listOfIndices[i][0]) - std::ios::streampos(1)],
-							V4(1, 1, 1, 1),
-							texels[(listOfIndices[i][1]) - std::iostream::streampos(1)],
-							normals[(listOfIndices[i][2]) - std::iostream::streampos(1)],
-						});
-					indices.push_back(verticesUsed);
+					if (sscanf(d, "%llu/ %llu / %llu /", &listOfIndices[3][0], &listOfIndices[3][1], &listOfIndices[3][2]) != 3)
+						break;
 
-					verticesUsed++;
-				}
-				
-				if (argc == 4)
-				{
-					if (d[0] != 'f' && d[0] != '#')
+					vertices.push_back(Vertex{
+						coords[(listOfIndices[3][0]) - 1],
+						V4(1, 1, 1, 1),
+						texels[(listOfIndices[3][1]) - 1],
+						normals[(listOfIndices[3][2]) - 1],
+					});
+
+					float dist1 = (vertices[vertices.size() - 4].pos - vertices[vertices.size() - 2].pos).Length();
+					float dist2 = (vertices[vertices.size() - 3].pos - vertices[vertices.size() - 1].pos).Length();
+					if (dist1 > dist2)
 					{
+						indices.push_back(vertices.size() - 4);
+						indices.push_back(vertices.size() - 3);
+						indices.push_back(vertices.size() - 1);
 
-						if (sscanf(d, "%" PRIu64 "/ %" PRIu64 "/ %" PRIu64 "/", &listOfIndices[3][0], &listOfIndices[3][1], &listOfIndices[3][2]) != 3) break;
+						indices.push_back(vertices.size() - 3);
+						indices.push_back(vertices.size() - 2);
+						indices.push_back(vertices.size() - 1);
+					}
+					else
+					{
+						indices.push_back(vertices.size() - 4);
+						indices.push_back(vertices.size() - 3);
+						indices.push_back(vertices.size() - 2);
 
-						vertices.push_back(Vertex
-							{
-								coords[(listOfIndices[3][0]) - std::ios_base::streampos(1)],
-								V4(1, 1, 1, 1),
-								texels[(listOfIndices[3][1]) - std::ios_base::streampos(1)],
-								normals[(listOfIndices[3][2]) - std::ios_base::streampos(1)],
-							});
+						indices.push_back(vertices.size() - 4);
+						indices.push_back(vertices.size() - 2);
+						indices.push_back(vertices.size() - 1);
+					}
+					// verticesUsed is vertices.size() - 1
+				}
+				else if (argc == 3)
+				{
+					for (size_t i = 0; i < 3; i++)
+					{
+						switch (i)
+						{
+						case 0:
+							if (sscanf(a, "%llu"
+										  "/ %llu"
+										  "/ %llu"
+										  "/",
+									   &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3)
+								continue;
+							break;
+						case 1:
+							if (sscanf(b, "%llu"
+										  "/ %llu"
+										  "/ %llu"
+										  "/",
+									   &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3)
+								continue;
+							break;
+						case 2:
+							if (sscanf(c, "%llu"
+										  "/ %llu"
+										  "/ %llu"
+										  "/",
+									   &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3)
+								continue;
+							break;
+						default:
+							break;
+						}
 
-						indices.push_back(verticesUsed - 3);
-						indices.push_back(verticesUsed - 1);
-						indices.push_back(verticesUsed);
-						
-						verticesUsed++;
+						vertices.push_back(Vertex{
+							coords[(listOfIndices[i][0]) - 1],
+							V4(1, 1, 1, 1),
+							texels[(listOfIndices[i][1]) - 1],
+							normals[(listOfIndices[i][2]) - 1],
+						});
+						indices.push_back(vertices.size() - 1);
 					}
 				}
 			}
@@ -374,13 +421,11 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile)
 	{
 		printf("file not found with path \"./%s\"", pathToFile);
 	}
-	
+
 	// if (!err && fs != NULL)
-		fclose(fs);
-	
-	MeshResource* temp1 = new MeshResource(MeshResource(&vertices[0], vertices.size(), &indices[0], indices.size()));
-	std::shared_ptr<MeshResource> temp(temp1);
-	return temp;
+	fclose(fs);
+
+	return std::make_shared<MeshResource>(&vertices[0], vertices.size(), &indices[0], indices.size());
 }
 
 /// <summary>

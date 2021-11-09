@@ -28,8 +28,8 @@ void MeshResource::render()
 	glEnableVertexAttribArray(3);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), NULL);
-	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *)(sizeof(float32) * 3));
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *)(sizeof(float32) * 7));
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *)(sizeof(GLfloat) * 3));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *)(sizeof(GLfloat) * 7));
 	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *)(sizeof(GLfloat) * 9));
 
 	glDrawElements(GL_TRIANGLES, indices, GL_UNSIGNED_INT, 0);
@@ -199,7 +199,7 @@ std::shared_ptr<MeshResource> MeshResource::Cube()
 				V2(1, 1)},
 		};
 
-	long unsigned int indices[] // World point's relations to form triangles and surfaces with razterisation
+	uint64_t indices[] // World point's relations to form triangles and surfaces with razterisation
 		{
 			0, 3, 6,
 			3, 6, 9, // back
@@ -220,8 +220,7 @@ std::shared_ptr<MeshResource> MeshResource::Cube()
 			5, 14, 17, // bottom
 		};
 
-	return std::make_shared<MeshResource>(MeshResource(vertices, sizeof(vertices) / sizeof(Vertex), indices, sizeof(indices) / sizeof(unsigned int)));
-	;
+	return std::make_shared<MeshResource>(vertices, sizeof(vertices) / sizeof(Vertex), indices, sizeof(indices) / sizeof(uint64_t));
 }
 
 std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
@@ -307,25 +306,25 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 						switch (i)
 						{
 						case 0:
-							if (sscanf(a, "%llu"
-										  "/ %llu"
-										  "/ %llu"
+							if (sscanf(a, "%lu"
+										  "/ %lu"
+										  "/ %lu"
 										  "/",
 									   &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3)
 								continue;
 							break;
 						case 1:
-							if (sscanf(b, "%llu"
-										  "/ %llu"
-										  "/ %llu"
+							if (sscanf(b, "%lu"
+										  "/ %lu"
+										  "/ %lu"
 										  "/",
 									   &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3)
 								continue;
 							break;
 						case 2:
-							if (sscanf(c, "%llu"
-										  "/ %llu"
-										  "/ %llu"
+							if (sscanf(c, "%lu"
+										  "/ %lu"
+										  "/ %lu"
 										  "/",
 									   &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3)
 								continue;
@@ -343,7 +342,7 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 						indices.push_back(vertices.size() - 1);
 					}
 
-					if (sscanf(d, "%llu/ %llu / %llu /", &listOfIndices[3][0], &listOfIndices[3][1], &listOfIndices[3][2]) != 3)
+					if (sscanf(d, "%lu/ %lu / %lu /", &listOfIndices[3][0], &listOfIndices[3][1], &listOfIndices[3][2]) != 3)
 						break;
 
 					vertices.push_back(Vertex{
@@ -375,7 +374,6 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 						indices.push_back(vertices.size() - 2);
 						indices.push_back(vertices.size() - 1);
 					}
-					// verticesUsed is vertices.size() - 1
 				}
 				else if (argc == 3)
 				{
@@ -384,25 +382,25 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 						switch (i)
 						{
 						case 0:
-							if (sscanf(a, "%llu"
-										  "/ %llu"
-										  "/ %llu"
+							if (sscanf(a, "%lu"
+										  "/ %lu"
+										  "/ %lu"
 										  "/",
 									   &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3)
 								continue;
 							break;
 						case 1:
-							if (sscanf(b, "%llu"
-										  "/ %llu"
-										  "/ %llu"
+							if (sscanf(b, "%lu"
+										  "/ %lu"
+										  "/ %lu"
 										  "/",
 									   &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3)
 								continue;
 							break;
 						case 2:
-							if (sscanf(c, "%llu"
-										  "/ %llu"
-										  "/ %llu"
+							if (sscanf(c, "%lu"
+										  "/ %lu"
+										  "/ %lu"
 										  "/",
 									   &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3)
 								continue;
@@ -412,10 +410,10 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 						}
 
 						vertices.push_back(Vertex{
-							coords[(listOfIndices[i][0]) - 1],
+							coords[listOfIndices[i][0] - 1],
 							V4(1, 1, 1, 1),
-							texels[(listOfIndices[i][1]) - 1],
-							normals[(listOfIndices[i][2]) - 1],
+							texels[listOfIndices[i][1] - 1],
+							normals[listOfIndices[i][2] - 1],
 						});
 						indices.push_back(vertices.size() - 1);
 					}

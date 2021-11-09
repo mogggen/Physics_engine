@@ -227,8 +227,14 @@ std::shared_ptr<MeshResource> MeshResource::Cube()
 std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 {
 	char buf[1024];
-	FILE *fs = fopen64(pathToFile, "r"); // "textures/cube.obj"
-
+	FILE* fs;
+#ifndef __linux
+	fopen_s(&fs, pathToFile, "r"); // textures/sphere.obj
+#else
+	fs = fopen64(pathToFile, "r"); // "textures/sphere.obj"
+#endif
+	
+	unsigned long long verticesUsed = 0ull;
 	std::vector<uint64_t> indices;
 	std::vector<V3> coords;
 	std::vector<V2> texels;
@@ -422,7 +428,6 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 		printf("file not found with path \"./%s\"", pathToFile);
 	}
 
-	// if (!err && fs != NULL)
 	fclose(fs);
 
 	return std::make_shared<MeshResource>(&vertices[0], vertices.size(), &indices[0], indices.size());

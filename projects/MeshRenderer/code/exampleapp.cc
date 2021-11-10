@@ -87,7 +87,7 @@ namespace Example
 			//MeshResource
 			//cube = MeshResource::Cube();
 
-			cube = MeshResource::LoadObj("textures/sphere.obj");
+			cube = MeshResource::LoadObj("textures/cube.obj");
 
 			//Load Susanne from file
 			//monkey = monkey->LoadObj("textures/monke susanne.obj");

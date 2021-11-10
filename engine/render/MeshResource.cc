@@ -311,7 +311,6 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 										  "/ %lu"
 										  "/",
 									   &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3)
-								continue;
 							break;
 						case 1:
 							if (sscanf(b, "%lu"
@@ -319,7 +318,6 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 										  "/ %lu"
 										  "/",
 									   &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3)
-								continue;
 							break;
 						case 2:
 							if (sscanf(c, "%lu"
@@ -327,7 +325,6 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 										  "/ %lu"
 										  "/",
 									   &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3)
-								continue;
 							break;
 						default:
 							break;
@@ -339,7 +336,6 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 							texels[(listOfIndices[i][1]) - 1],
 							normals[(listOfIndices[i][2]) - 1],
 						});
-						indices.push_back(vertices.size() - 1);
 					}
 
 					if (sscanf(d, "%lu/ %lu / %lu /", &listOfIndices[3][0], &listOfIndices[3][1], &listOfIndices[3][2]) != 3)
@@ -354,7 +350,7 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 
 					float dist1 = (vertices[vertices.size() - 4].pos - vertices[vertices.size() - 2].pos).Length();
 					float dist2 = (vertices[vertices.size() - 3].pos - vertices[vertices.size() - 1].pos).Length();
-					if (dist1 > dist2)
+					if (true || dist1 > dist2)
 					{
 						indices.push_back(vertices.size() - 4);
 						indices.push_back(vertices.size() - 3);
@@ -374,6 +370,7 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 						indices.push_back(vertices.size() - 2);
 						indices.push_back(vertices.size() - 1);
 					}
+					std::cout << "vertices" << vertices.size() << "indices" << indices.size() <<std::endl;
 				}
 				else if (argc == 3)
 				{
@@ -417,8 +414,10 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 						});
 						indices.push_back(vertices.size() - 1);
 					}
+					std::cout << "triangles" << std::endl;
 				}
 			}
+			
 		}
 	}
 	else
@@ -426,6 +425,17 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 		printf("file not found with path \"./%s\"", pathToFile);
 	}
 
+	for (int i = 0; i < indices.size(); i++)
+	{
+		if (i != 0 && i % 3 == 0) std::cout << std::endl;
+		std::cout << indices[i] << std::endl;
+	}
+	
+	for (int i = 0; i < vertices.size(); i++)
+	{
+		if (i != 0 && i % 3 == 0) std::cout << std::endl;
+		std::cout << "(" << vertices[i].pos.x << " " << vertices[i].pos.y << " " << vertices[i].pos.z << ")" << std::endl;
+	}
 	fclose(fs);
 
 	return std::make_shared<MeshResource>(&vertices[0], vertices.size(), &indices[0], indices.size());

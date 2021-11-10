@@ -17,7 +17,7 @@ uniform sampler2D textureArray;
 
 void main()
 {
-	gl_Position = m4ProjViewPos * m4Pos * vec4(posIn, 1);
+	gl_Position = m4Pos * vec4(posIn, 1);
 
 	colorOut = colorVector * colorIn;
 	texturesOut = texturesIn;

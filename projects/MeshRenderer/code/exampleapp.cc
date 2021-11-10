@@ -87,7 +87,7 @@ namespace Example
 			//MeshResource
 			//cube = MeshResource::Cube();
 
-			cube = MeshResource::LoadObj("textures/cube.obj");
+			cube = MeshResource::LoadObj("textures/fireHydrant.obj");
 
 			//Load Susanne from file
 			//monkey = monkey->LoadObj("textures/monke susanne.obj");
@@ -136,7 +136,7 @@ namespace Example
 		Camera cam(90, (float)width / height, 0.01f, 100.0f);
 		cam.setPos(V4(0, 0, -3));
 		cam.setRot(V4(0, 1, 0), M_PI);
-		Lightning light(V3(1, 1, 0), V3(1, 1, 1), .2f);
+		Lightning light(V3(10, 10, 10), V3(1, 1, 1), .01f);
 		
 		float speed = .08f;
 
@@ -146,7 +146,7 @@ namespace Example
 		while (this->window->IsOpen())
 		{
 			Em = Em * Translate(Normalize(V4(float(d - a), float(e - q), float(w - s))) * speed);
-			scene = cam.pv() * (Em * Evp) * Translate(V4Zero) * Scalar(V4(-1, -1, 1)); // scaling because i can
+			scene = cam.pv() * (Em * Evp) * Translate(V4Zero) * Scalar(V4(.1, .1, .1)); // scaling because i can
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			this->window->Update();
 

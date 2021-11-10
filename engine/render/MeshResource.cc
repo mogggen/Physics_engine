@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <inttypes.h>
 
-MeshResource::MeshResource(Vertex vertices[], uint64_t Verticeslength, uint64_t indices[], uint64_t indicesLength) : indices(indicesLength)
+MeshResource::MeshResource(Vertex vertices[], uint32_t Verticeslength, uint32_t indices[], uint32_t indicesLength) : indices(indicesLength)
 {
 	glGenBuffers(1, &this->vertexBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, this->vertexBuffer);
@@ -199,7 +199,7 @@ std::shared_ptr<MeshResource> MeshResource::Cube()
 				V2(1, 1)},
 		};
 
-	uint64_t indices[] // World point's relations to form triangles and surfaces with razterisation
+	uint32_t indices[] // World point's relations to form triangles and surfaces with razterisation
 		{
 			0, 3, 6,
 			3, 6, 9, // back
@@ -234,7 +234,7 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 #endif
 	
 	unsigned long long verticesUsed = 0ull;
-	std::vector<uint64_t> indices;
+	std::vector<uint32_t> indices;
 	std::vector<V3> coords;
 	std::vector<V2> texels;
 	std::vector<V3> normals;
@@ -297,7 +297,7 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 				char d[64];
 				uint8_t argc = fscanf(fs, "%s %s %s %s", &a, &b, &c, &d);
 
-				uint64_t listOfIndices[4][3];
+				uint32_t listOfIndices[4][3];
 
 				if (argc == 4 && d[0] != 'f' && d[0] != '#')
 				{
@@ -350,7 +350,7 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 
 					float dist1 = (vertices[vertices.size() - 4].pos - vertices[vertices.size() - 2].pos).Length();
 					float dist2 = (vertices[vertices.size() - 3].pos - vertices[vertices.size() - 1].pos).Length();
-					if (true || dist1 > dist2)
+					if (dist1 > dist2)
 					{
 						indices.push_back(vertices.size() - 4);
 						indices.push_back(vertices.size() - 3);
@@ -370,7 +370,6 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 						indices.push_back(vertices.size() - 2);
 						indices.push_back(vertices.size() - 1);
 					}
-					std::cout << "vertices" << vertices.size() << "indices" << indices.size() <<std::endl;
 				}
 				else if (argc == 3)
 				{
@@ -414,7 +413,6 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 						});
 						indices.push_back(vertices.size() - 1);
 					}
-					std::cout << "triangles" << std::endl;
 				}
 			}
 			
@@ -422,22 +420,10 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 	}
 	else
 	{
-		printf("file not found with path \"./%s\"", pathToFile);
-	}
-
-	for (int i = 0; i < indices.size(); i++)
-	{
-		if (i != 0 && i % 3 == 0) std::cout << std::endl;
-		std::cout << indices[i] << std::endl;
-	}
-	
-	for (int i = 0; i < vertices.size(); i++)
-	{
-		if (i != 0 && i % 3 == 0) std::cout << std::endl;
-		std::cout << "(" << vertices[i].pos.x << " " << vertices[i].pos.y << " " << vertices[i].pos.z << ")" << std::endl;
+		printf("file not found with path \"./%s\"\n", pathToFile);
 	}
 	fclose(fs);
-
+	printf("loaded %s\n", pathToFile);
 	return std::make_shared<MeshResource>(&vertices[0], vertices.size(), &indices[0], indices.size());
 }
 

@@ -226,13 +226,13 @@ std::shared_ptr<MeshResource> MeshResource::Cube()
 std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 {
 	char buf[1024];
-	FILE* fs;
+	FILE *fs;
 #ifndef __linux
 	fopen_s(&fs, pathToFile, "r"); // textures/sphere.obj
 #else
 	fs = fopen64(pathToFile, "r"); // "textures/sphere.obj"
 #endif
-	
+
 	unsigned long long verticesUsed = 0ull;
 	std::vector<uint32_t> indices;
 	std::vector<V3> coords;
@@ -291,62 +291,28 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 
 			else if (buf[0] == 'f' && buf[1] == '\0')
 			{
-				char a[64];
-				char b[64];
-				char c[64];
-				char d[64];
-				uint8_t argc = fscanf(fs, "%s %s %s %s", &a, &b, &c, &d);
+				char pos[4][64];
+				uint8_t argc = fscanf(fs, "%s %s %s %s", &pos[0], &pos[1], &pos[2], &pos[3]);
 
 				uint32_t listOfIndices[4][3];
 
-				if (argc == 4 && d[0] != 'f' && d[0] != '#')
+				if (argc == 4 && pos[3][0] != 'f' && pos[3][0] != '#')
 				{
-					for (size_t i = 0; i < 3; i++)
+					for (size_t i = 0; i < 4; i++)
 					{
-						switch (i)
-						{
-						case 0:
-							if (sscanf(a, "%lu"
-										  "/ %lu"
-										  "/ %lu"
-										  "/",
-									   &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3)
+						if (sscanf(pos[i], "%lu"
+										   "/ %lu"
+										   "/ %lu"
+										   "/",
+								   &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) != 3)
 							break;
-						case 1:
-							if (sscanf(b, "%lu"
-										  "/ %lu"
-										  "/ %lu"
-										  "/",
-									   &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3)
-							break;
-						case 2:
-							if (sscanf(c, "%lu"
-										  "/ %lu"
-										  "/ %lu"
-										  "/",
-									   &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3)
-							break;
-						default:
-							break;
-						}
-
-						vertices.push_back(Vertex{
-							coords[(listOfIndices[i][0]) - 1],
-							V4(1, 1, 1, 1),
-							texels[(listOfIndices[i][1]) - 1],
-							normals[(listOfIndices[i][2]) - 1],
-						});
+							vertices.push_back(Vertex{
+								coords[(listOfIndices[i][0]) - 1],
+								V4(1, 1, 1, 1),
+								texels[(listOfIndices[i][1]) - 1],
+								normals[(listOfIndices[i][2]) - 1],
+							});
 					}
-
-					if (sscanf(d, "%lu/ %lu / %lu /", &listOfIndices[3][0], &listOfIndices[3][1], &listOfIndices[3][2]) != 3)
-						break;
-
-					vertices.push_back(Vertex{
-						coords[(listOfIndices[3][0]) - 1],
-						V4(1, 1, 1, 1),
-						texels[(listOfIndices[3][1]) - 1],
-						normals[(listOfIndices[3][2]) - 1],
-					});
 
 					float dist1 = (vertices[vertices.size() - 4].pos - vertices[vertices.size() - 2].pos).Length();
 					float dist2 = (vertices[vertices.size() - 3].pos - vertices[vertices.size() - 1].pos).Length();
@@ -375,47 +341,23 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 				{
 					for (size_t i = 0; i < 3; i++)
 					{
-						switch (i)
-						{
-						case 0:
-							if (sscanf(a, "%lu"
-										  "/ %lu"
-										  "/ %lu"
-										  "/",
-									   &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3)
-								continue;
-							break;
-						case 1:
-							if (sscanf(b, "%lu"
-										  "/ %lu"
-										  "/ %lu"
-										  "/",
-									   &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3)
-								continue;
-							break;
-						case 2:
-							if (sscanf(c, "%lu"
-										  "/ %lu"
-										  "/ %lu"
-										  "/",
-									   &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) == 3)
-								continue;
-							break;
-						default:
-							break;
-						}
+						if (sscanf(pos[i], "%lu"
+										   "/ %lu"
+										   "/ %lu"
+										   "/",
+								   &listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) != 3)
+								   break;
 
-						vertices.push_back(Vertex{
-							coords[listOfIndices[i][0] - 1],
-							V4(1, 1, 1, 1),
-							texels[listOfIndices[i][1] - 1],
-							normals[listOfIndices[i][2] - 1],
-						});
+							vertices.push_back(Vertex{
+								coords[listOfIndices[i][0] - 1],
+								V4(1, 1, 1, 1),
+								texels[listOfIndices[i][1] - 1],
+								normals[listOfIndices[i][2] - 1],
+							});
 						indices.push_back(vertices.size() - 1);
 					}
 				}
 			}
-			
 		}
 	}
 	else

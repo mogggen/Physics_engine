@@ -85,12 +85,8 @@ namespace Example
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
 			//MeshResource
-			//cube = MeshResource::Cube();
 
 			cube = MeshResource::LoadObj("textures/fireHydrant.obj");
-
-			//Load Susanne from file
-			//monkey = monkey->LoadObj("textures/monke susanne.obj");
 
 			//TextureResource
 			std::shared_ptr<TextureResource> texture = std::make_shared<TextureResource>("textures/cubepic.png");
@@ -98,14 +94,9 @@ namespace Example
 			//shaderObject
 			shaderResource = std::make_shared<ShaderResource>();
 			shaderResource->getShaderResource(this->vertexShader, this->pixelShader, this->program);
-
-			//shaderObjectSusanne = std::make_shared<ShaderResource>();
-			//shaderObjectSusanne->getShaderResource(this->vertexShader, this->pixelShader, this->program);
 			
 			//GraphicNode
 			node = std::make_shared<GraphicNode>(cube, texture, shaderResource, Translate(V4Zero));
-
-			//susanne = std::make_shared<GraphicNode>(monkey, texture, shaderObjectSusanne, Translate(V4Zero));
 
 			return true;
 		}
@@ -153,7 +144,6 @@ namespace Example
 			shaderResource->setM4(cam.pv(), "m4ProjViewPos");
 			light.bindLight(shaderResource, cam.getPos());
 			node->DrawScene(scene, color);
-			// susanne->DrawScene(scene, color);
 			this->window->SwapBuffers();
 		}
 	}

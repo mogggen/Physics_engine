@@ -4,7 +4,7 @@
 
 // !Row major rendering meaning??
 
-// look for design pattern for terms
+// look for design pattern for terms https://gamedev.stackexchange.com/questions/29556/design-patterns-in-game-physics
 
 
 

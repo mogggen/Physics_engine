@@ -1192,7 +1192,27 @@ inline M4 projection(float fov, float aspect, float n, float f)
 
 #pragma region Quaternions
 
-struct Quaternion
+struct Quat
 {
+	union
+	{
+		struct
+		{
+			float x, y, z, w;
+		}
+		struct
+		{
+			data[4];
+		}
+	}
+
+	Quat(float x, float y, float z, float w);
+
+	// to Euler angles
+
+
+
 	//http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-17-quaternions/
 };
+
+#pragma endregion // Quaternions

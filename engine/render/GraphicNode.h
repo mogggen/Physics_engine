@@ -4,12 +4,15 @@
 #include "render/MeshResource.h"
 #include "render/TextureResource.h"
 #include "render/ShaderResource.h"
+#include "render/Physics.h"
+
 
 class GraphicNode
 {
 	std::shared_ptr<MeshResource> Geometry;
 	std::shared_ptr<TextureResource> Texture;
 	std::shared_ptr<ShaderResource> Shader;
+	Actor
 	M4 Transform;
 public:
 	GraphicNode(std::shared_ptr<MeshResource> geometry, std::shared_ptr<TextureResource> texture, std::shared_ptr<ShaderResource> shader, M4 transform);

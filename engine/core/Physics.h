@@ -12,7 +12,12 @@
 
 // cheat sheet https://www.dummies.com/education/science/physics/physics-i-for-dummies-cheat-sheet/
 
-
+struct Actor
+{
+    M4 transform;
+    Quaternion torque;
+    
+}
 
 
 
@@ -42,13 +47,13 @@
 
 // Newton's three laws of motion
 
+// First Law: speed is preserved
+
+// Second Law: F = m * a
 
 
 
-
-
-
-
+// mass
 
 //Center of Mass
 

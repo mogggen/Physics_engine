@@ -673,7 +673,7 @@ inline V4 Normalize(V4 vector)
 
 struct M4
 {
-	V4 vectors[4];
+	V4 data[4];
 	V4 operator[](char index) const;
 	V4& operator[](char index);
 
@@ -686,9 +686,10 @@ struct M4
 
 M4::M4()
 {
-	for (char i = 0; i < 3; i++)
-		vectors[i] = V4(0, 0, 0, 0);
-	vectors[3] = V4(0, 0, 0, 0);
+	for (size_t i = 0; i < 16; i++)
+	{
+		(*this)[i % 4][i / 4] = i % 4 == i / 4;
+	}
 }
 
 M4::M4(V4 v[4])
@@ -699,12 +700,12 @@ M4::M4(V4 v[4])
 
 inline V4 M4::operator[](char index) const
 {
-	return vectors[index];
+	return data[index];
 }
 
 inline V4& M4::operator[](char index)
 {
-	return vectors[index];
+	return data[index];
 }
 
 inline M4 operator*(M4 left, M4 right)
@@ -726,39 +727,36 @@ inline V4 operator*(M4 left, V4 right)
 
 inline void M4::Transpose()
 {
-	M4 temp;
+	M4 temp = *this;
 	for (char i = 0; i < 16; i++)
 	{
-		temp[i / 4][i % 4] = temp[i % 4][i / 4];
+		if (i / 4 == i % 4) continue;
+		(*this)[i % 4][i / 4] = temp[i / 4][i % 4];
 	}
-	for (char i = 0; i < 16; i++)
-	{
-		temp[i % 4][i / 4] = temp[i % 4][i / 4];
-	}
-		*this = temp;
 }
 
 inline M4 Transpose(M4 matrix)
 {
-	M4 temp;
+	M4 temp = matrix;
 	for (char i = 0; i < 16; i++)
 	{
-		temp[i / 4][i % 4] = matrix[i % 4][i / 4];
+		if (i / 4 == i % 4) continue;
+		matrix[i / 4][i % 4] = temp[i / 4][i % 4];
 	}
-	return temp;
+	return matrix;
 }
 
 /// <summary>
 /// Inverse a 4-by-4 matrix.
 /// </summary>
 /// <param name="matrix">the matrix to inverse</param>
-inline M4 Inverse()
+inline M4 Inverse(M4 matrix)
 {
 	//to hold the matrix values
 	float m[16];
 
 	// to hold the Inverse
-	M4 matrix;
+	
 	char k = 0;
 	for (char i = 0; i < 4; i++)
 	{
@@ -1188,4 +1186,13 @@ inline M4 projection(float fov, float aspect, float n, float f)
 	return temp;
 }
 
-#pragma endregion
+#pragma endregion // Matrix
+
+
+
+#pragma region Quaternions
+
+struct Quaternion
+{
+	//http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-17-quaternions/
+};

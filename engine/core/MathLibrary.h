@@ -1199,13 +1199,14 @@ struct Quat
 		struct
 		{
 			float x, y, z, w;
-		}
+		};
 		struct
 		{
-			data[4];
-		}
-	}
+			float data[4];
+		};
+	};
 
+	Quat();
 	Quat(float x, float y, float z, float w);
 
 	// to Euler angles
@@ -1214,5 +1215,18 @@ struct Quat
 
 	//http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-17-quaternions/
 };
+
+Quat::Quat()
+{
+	x = 0;
+	y = 0;
+	z = 0;
+	w = 0;
+}
+
+Quat::Quat(float x, float y, float z, float w) : x(x), y(y), z(z), w(w)
+{
+
+}
 
 #pragma endregion // Quaternions

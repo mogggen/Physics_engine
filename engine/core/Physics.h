@@ -1,6 +1,7 @@
 #pragma once
-#include "core/MathLibrary.h"
-#include "render/GraphicNode.h"
+//#include "core/MathLibrary.h"
+//#include "core/Actor.h"
+// #include "render/GraphicNode.h"
 
 // !Row major rendering meaning??
 
@@ -12,13 +13,7 @@
 
 // cheat sheet https://www.dummies.com/education/science/physics/physics-i-for-dummies-cheat-sheet/
 
-struct Actor
-{
-    M4 transform;
-    float mass;
-    Quat torque;
-    M4 ToRotationMatrix();
-}
+
 
 
 
@@ -183,7 +178,7 @@ struct Actor
 
 
 
-
+/*
 
 // example code: Quaternion.h
 
@@ -247,7 +242,7 @@ If using quaternions to represent rotations, q must be a unit quaternion.
     (axis_of_rotation is unit length)
 
 See also example.cpp .
-*/
+
 
 
 #include <stdio.h>
@@ -676,3 +671,4 @@ int main()
     
   return 0;
 }
+*/

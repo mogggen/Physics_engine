@@ -1206,8 +1206,8 @@ struct Quat
 		};
 	};
 
-	Quat();
-	Quat(float x, float y, float z, float w);
+	inline Quat();
+	inline Quat(float x, float y, float z, float w);
 
 	// to Euler angles
 

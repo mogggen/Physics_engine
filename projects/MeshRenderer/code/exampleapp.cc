@@ -95,7 +95,7 @@ namespace Example
 			shaderResource = std::make_shared<ShaderResource>();
 			shaderResource->getShaderResource(this->vertexShader, this->pixelShader, this->program);
 			
-			Actor dummy;
+			std::shared_ptr<Actor> dummy;
 			//GraphicNode
 			node = std::make_shared<GraphicNode>(cube, texture, shaderResource, dummy);
 
@@ -128,11 +128,11 @@ namespace Example
 		node->getTexture()->LoadFromFile();
 
 		// calculate center of mass
-		for (size_t i = 0; i < sizeof(node->getMesh()->vertices) / sizeof(Vertex); i++)
-		{
-			std::cout << node->getMesh()->vertices[i].pos.x << " " << node->getMesh()->vertices[i].pos.y << " " << node->getMesh()->vertices[i].pos.z << std::endl;
-			std::cin.get();
-		}
+		// for (size_t i = 0; i < sizeof(node->getMesh()->vertices) / sizeof(Vertex); i++)
+		// {
+		// 	std::cout << node->getMesh()->vertices[i].pos.x << " " << node->getMesh()->vertices[i].pos.y << " " << node->getMesh()->vertices[i].pos.z << std::endl;
+		// 	std::cin.get();
+		// }
 		
 
 		Camera cam(90, (float)width / height, 0.01f, 100.0f);

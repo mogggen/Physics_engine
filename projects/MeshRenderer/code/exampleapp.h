@@ -14,7 +14,7 @@
 #include "render/ShaderResource.h"
 #include "render/GraphicNode.h"
 #include "render/window.h"
-#include "core/Physics.h"
+//#include "core/Physics.h"
 #include "core/Actor.h"
 
 namespace Example

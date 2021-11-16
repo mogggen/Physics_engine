@@ -4,11 +4,11 @@ Actor::Actor()
 {
     transform = M4();
     mass = 1000.f;
-    torque = 
+    velocity = 0.f;
+    torque = Quat();
 }
 
-Actor::Actor(M4 transform, float mass, Quat torque) : transform(transform), mass(mass), torque(torque)
+Actor::Actor(M4 transform, float mass, float velocity, Quat torque) : transform(transform), mass(mass), velocity(velocity), torque(torque)
 {
 
 }
-

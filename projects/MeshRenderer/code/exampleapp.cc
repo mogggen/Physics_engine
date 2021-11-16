@@ -32,6 +32,18 @@ namespace Example
 	/**
 	*/
 
+
+	void Print(M4 m)
+	{
+		for (size_t i = 0; i < 4; i++)
+		{
+			V4 v = m[i];
+			std::cout << '(';
+			for (char i = 0; i < 4; i++)
+				std::cout << round(v.data[i]) << (i == 3 ? ")\n" : ", ");
+		}
+	}
+
 	bool
 		ExampleApp::Open()
 	{
@@ -95,7 +107,8 @@ namespace Example
 			shaderResource = std::make_shared<ShaderResource>();
 			shaderResource->getShaderResource(this->vertexShader, this->pixelShader, this->program);
 			
-			std::shared_ptr<Actor> dummy;
+			Actor* dummy;
+
 			//GraphicNode
 			node = std::make_shared<GraphicNode>(cube, texture, shaderResource, dummy);
 
@@ -108,32 +121,16 @@ namespace Example
 	/**
 	*/
 
-	void Print(M4 m)
-	{
-		for (size_t i = 0; i < 4; i++)
-		{
-			V4 v = m[i];
-			std::cout << '(';
-			for (char i = 0; i < 4; i++)
-				std::cout << round(v.data[i]) << (i == 3 ? ")\n" : ", ");
-		}
-	}
 
 	void
 		ExampleApp::Run()
 	{
+		
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
-		
-		node->getTexture()->LoadFromFile();
 
-		// calculate center of mass
-		// for (size_t i = 0; i < sizeof(node->getMesh()->vertices) / sizeof(Vertex); i++)
-		// {
-		// 	std::cout << node->getMesh()->vertices[i].pos.x << " " << node->getMesh()->vertices[i].pos.y << " " << node->getMesh()->vertices[i].pos.z << std::endl;
-		// 	std::cin.get();
-		// }
-		
+		const float g = -9.806f;
+		node->getTexture()->LoadFromFile();
 
 		Camera cam(90, (float)width / height, 0.01f, 100.0f);
 		cam.setPos(V4(0, 0, -3));
@@ -143,13 +140,23 @@ namespace Example
 		
 		float speed = .08f;
 
+		// a scene matrix to represent the world position relative to the camera
 		M4 scene;
 		V4 color(1, 1, 1, 1);
 		
 		while (this->window->IsOpen())
 		{
+			// set frame cap
+			glfwSetTime(1000.0 / 60);
+
+			// Implement gravity, without collison detection
+			node->actor->velocity = node->actor->velocity + node->actor->mass * g;
+
+			node->actor->transform = node->actor->transform * Translate(V4(1, 1, 1) * node->actor->velocity);
+
 			Em = Em * Translate(Normalize(V4(float(d - a), float(e - q), float(w - s))) * speed);
-			scene = cam.pv() * (Em * Evp) * Translate(V4Zero) * Scalar(V4(.1, .1, .1)); // scaling because i can
+			scene = cam.pv() * (Em * Evp) * Translate(V4()) * Scalar(V4(.1, .1, .1));
+
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			this->window->Update();
 

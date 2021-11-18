@@ -26,6 +26,9 @@ SET(files_render_display
 	Lightning.h
 	Lightning.cc
 
+	Actor.h
+	Actor.cc
+
 	stb_image.h)
 SOURCE_GROUP("display" FILES ${files_render_display})
 

@@ -2,13 +2,13 @@
 #include "core/MathLibrary.h"
 
 struct Actor
-{
+{ 
     M4 transform;
-    float velocity;
     float mass;
+    float velocity;
     Quat torque;
 
 	Actor();
-    Actor(M4 transform, float mass, float velocity, Quat torque);
+    Actor(float mass, float velocity);
     M4 ToRotationMatrix();
 };

@@ -3,7 +3,11 @@
 #--------------------------------------------------------------------------
 
 SET(files_core
+
 	MathLibrary.h
+
+	Physics.h
+
 	app.h
 	app.cc)
 SOURCE_GROUP("core" FILES ${files_core})

@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(gdb) Launch \"meshRenderer\"",
+            "name": "(gdb) Launch \"physics\"",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/bin/meshRenderer",
+            "program": "${workspaceFolder}/bin/physics",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

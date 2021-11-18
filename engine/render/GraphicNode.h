@@ -3,7 +3,7 @@
 #include "render/MeshResource.h"
 #include "render/TextureResource.h"
 #include "render/ShaderResource.h"
-#include "core/Actor.h"
+#include "render/Actor.h"
 
 
 class GraphicNode

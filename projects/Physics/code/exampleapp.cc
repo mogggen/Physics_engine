@@ -9,6 +9,8 @@
 #include <fstream>
 #include <cstring>
 
+struct Actor;
+
 using namespace Display;
 namespace Example
 {
@@ -40,7 +42,7 @@ namespace Example
 			V4 v = m[i];
 			std::cout << '(';
 			for (char i = 0; i < 4; i++)
-				std::cout << round(v.data[i]) << (i == 3 ? ")\n" : ", ");
+				std::cout << v.data[i] << (i == 3 ? ")\n" : ", ");
 		}
 	}
 
@@ -107,7 +109,12 @@ namespace Example
 			shaderResource = std::make_shared<ShaderResource>();
 			shaderResource->getShaderResource(this->vertexShader, this->pixelShader, this->program);
 			
-			Actor* dummy;
+			Actor temporary;
+			temporary.velocity = 0.f;
+			temporary.mass = 1.f;
+			temporary.transform = Translate(V4(0, 0, 0));
+			
+			Actor* dummy = &temporary;
 
 			//GraphicNode
 			node = std::make_shared<GraphicNode>(cube, texture, shaderResource, dummy);
@@ -125,7 +132,6 @@ namespace Example
 	void
 		ExampleApp::Run()
 	{
-		
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
 
@@ -152,9 +158,10 @@ namespace Example
 			// Implement gravity, without collison detection
 			node->actor->velocity = node->actor->velocity + node->actor->mass * g;
 
-			node->actor->transform = node->actor->transform * Translate(V4(1, 1, 1) * node->actor->velocity);
-
-			Em = Em * Translate(Normalize(V4(float(d - a), float(e - q), float(w - s))) * speed);
+			node->actor->transform = node->actor->transform * (Translate(V4(1, 1, 1) * node->actor->velocity));
+			printf("\n");
+			Print(node->actor->transform); 
+			Em = Em * Translate(Normalize(V4(float(d - a), float(e - q), float(w - s))) * -speed);
 			scene = cam.pv() * (Em * Evp) * Translate(V4()) * Scalar(V4(.1, .1, .1));
 
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

@@ -1,0 +1,8 @@
+
+pick a algorithm
+SAT easy to implement, higher complexity
+SAT diffcult to implement, improved complexity
+
+GKJ minkowski sum, relatively easy to implement, https://en.wikipedia.org/wiki/Gilbert%E2%80%93Johnson%E2%80%93Keerthi_distance_algorithm
+but can only one point so have to store previous points to get the entire collision of e.g a face.
+

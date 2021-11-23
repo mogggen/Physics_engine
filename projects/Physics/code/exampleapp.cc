@@ -8,6 +8,8 @@
 #include <iostream>
 #include <fstream>
 #include <cstring>
+#include <ctime>
+#include <unistd.h>
 
 struct Actor;
 
@@ -110,9 +112,6 @@ namespace Example
 			shaderResource->getShaderResource(this->vertexShader, this->pixelShader, this->program);
 			
 			Actor temporary;
-			temporary.velocity = 0.f;
-			temporary.mass = 1.f;
-			temporary.transform = Translate(V4(0, 0, 0));
 			
 			Actor* dummy = &temporary;
 
@@ -135,7 +134,7 @@ namespace Example
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
 
-		const float g = -9.806f;
+		const float g = -9.806e-4f;
 		node->getTexture()->LoadFromFile();
 
 		Camera cam(90, (float)width / height, 0.01f, 100.0f);
@@ -157,11 +156,9 @@ namespace Example
 
 			// Implement gravity, without collison detection
 			node->actor->velocity = node->actor->velocity + node->actor->mass * g;
+			node->actor->position = node->actor->position + V4(-1, 1, -1) * node->actor->velocity;
 
-			node->actor->transform = node->actor->transform * (Translate(V4(1, 1, 1) * node->actor->velocity));
-			printf("\n");
-			Print(node->actor->transform); 
-			Em = Em * Translate(Normalize(V4(float(d - a), float(e - q), float(w - s))) * -speed);
+			Em = Em * Translate(node->actor->position); //Translate(Normalize(V4(float(d - a), float(e - q), float(w - s))) * -speed);
 			scene = cam.pv() * (Em * Evp) * Translate(V4()) * Scalar(V4(.1, .1, .1));
 
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -171,6 +168,7 @@ namespace Example
 			light.bindLight(shaderResource, cam.getPos());
 			node->DrawScene(scene, color);
 			this->window->SwapBuffers();
+			usleep(100000);
 		}
 	}
 

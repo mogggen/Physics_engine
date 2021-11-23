@@ -3,12 +3,12 @@
 
 struct Actor
 { 
-    M4 transform;
+    V4 position;
     float mass;
     float velocity;
     Quat torque;
 
 	Actor();
-    Actor(float mass, float velocity);
+    Actor(V4 position, float mass, float velocity, Quat torque);
     M4 ToRotationMatrix();
 };

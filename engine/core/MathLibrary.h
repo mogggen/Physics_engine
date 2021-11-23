@@ -41,6 +41,7 @@ struct V2
 	float Dot(V2 right);
 
 	float Length();
+	float Length2();
 	void Normalize();
 };
 
@@ -105,6 +106,12 @@ inline float V2::Length()
 {
 	return sqrtf(x * x + y * y);
 }
+
+inline float V2::Length2()
+{
+	return x * x + y * y;
+}
+	
 
 inline void V2::Normalize()
 {
@@ -191,6 +198,11 @@ inline float Length(V2 vector)
 	return sqrtf(vector.x * vector.x + vector.y * vector.y);
 }
 
+inline float Length2(V2 vector)
+{
+	return vector.x * vector.x + vector.y * vector.y;
+}
+
 /// <summary>
 /// takes a V2 and normalize it, giving it a length of one.
 /// </summary>
@@ -246,6 +258,7 @@ struct V3
 	void Cross(V3 right);
 
 	float Length();
+	float Length2();
 	void Normalize();
 };
 
@@ -320,11 +333,15 @@ inline float V3::Length()
 	return sqrtf(x * x + y * y + z * z);
 }
 
+inline float Length(V4 vector)
+{
+	return vector.x * vector.x + vector.y * vector.y + vector.z * vector.z;
+}
+
 inline void V3::Normalize()
 {
-	if (Length() == 0)
-		return;
 	float length = Length();
+	if (length)
 	for (size_t i = 0; i < 3; i++)
 		data[i] /= length;
 }
@@ -418,6 +435,11 @@ inline float Length(V3 vector)
 	return sqrtf(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
 }
 
+inline float Length2(V3 vector)
+{
+	return vector.x * vector.x + vector.y * vector.y + vector.z * vector.z;
+}
+
 /// <summary>
 /// takes a V3 and normalize it, giving it a length of one.
 /// </summary>
@@ -426,8 +448,9 @@ inline float Length(V3 vector)
 inline V3 Normalize(V3 vector)
 {
 	float length = Length(vector);
-	for (size_t i = 0; i < 3; i++)
-		vector[i] /= length;
+	if (length)
+		for (size_t i = 0; i < 3; i++)
+			vector[i] /= length;
 	return vector;
 }
 
@@ -470,6 +493,7 @@ struct V4
 	void Cross(V4 right);
 
 	float Length();
+	float Length2();
 	void Normalize();
 	V3 toV3();
 };
@@ -548,7 +572,12 @@ inline float &V4::operator[](size_t index)
 
 inline float V4::Length()
 {
-	return sqrtf(x * x + y * y + z * z + w * w);
+	return sqrtf(x * x + y * y + z * z);
+}
+
+inline float V4::Length2()
+{
+	return x * x + y * y + z * z;
 }
 
 inline void V4::Normalize()
@@ -618,6 +647,11 @@ inline V4 Cross(V4 left, V4 right)
 inline float Length(V4 vector)
 {
 	return sqrtf(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
+}
+
+inline float Length2(V4 vector)
+{
+	return vector.x * vector.x + vector.y * vector.y + vector.z * vector.z;
 }
 
 /// <summary>
@@ -1160,8 +1194,13 @@ inline M4 projection(float fov, float aspect, float n, float f)
 
 struct Quat
 {
+	float scalar;
 	union
 	{
+		struct
+		{
+			V4 vector;
+		};
 		struct
 		{
 			float x, y, z, w;
@@ -1190,6 +1229,134 @@ Quat::Quat()
 
 Quat::Quat(float x, float y, float z, float w) : x(x), y(y), z(z), w(w)
 {
+
 }
 
 #pragma endregion // Quaternions
+
+
+#pragma region Plane
+
+
+struct Plane
+{
+	V3 normal;
+	V3 point; // p2, p3
+	
+	inline Plane(V3 point, V3 normal);
+	bool pointIsOnPlane(V3 point, float margin);
+};
+
+Plane::Plane(V3 point, V3 normal) : point(point), normal(normal)
+{
+
+}
+
+bool Plane::pointIsOnPlane(V3 point, float margin=1.e-5f)
+{
+	// get plane equation
+}
+
+#pragma endregion // Plane
+
+
+#pragma region Ray
+
+struct Ray
+{
+	V3 start;
+	V3 dir;
+	inline Ray(V3 start, V3 dir);
+	V3 intersect(Plane plane);
+};
+
+Ray::Ray(V3 start, V3 dir) : start(start), dir(dir)
+{
+
+}
+
+V3 Ray::intersect(Plane plane)
+{
+	V3 normDir = Normalize(dir);
+	float t; // find t
+
+	// line equation
+	// x = start.x + dir.x * t
+	// y = start.y + dir.y * t
+	// z = start.z + dir.z * t
+
+	// plane equation
+	// plane.normal.x * (x - plane.point.x) +
+	// plane.normal.y * (y - plane.point.y) +
+	// plane.normal.z * (z - plane.point.z) = 0.f
+
+	// (plane.normal.x * x) + (plane.normal.x * -plane.point.x) +
+	// (plane.normal.y * y) + (plane.normal.y * -plane.point.y) +
+	// (plane.normal.z * z) + (plane.normal.z * -plane.point.z) = 0.f
+
+	// (plane.normal.x * x) +
+	// (plane.normal.y * y) +
+	// (plane.normal.z * z) =
+	// -(plane.normal.x * -plane.point.x)
+	// -(plane.normal.y * -plane.point.y)
+	// -(plane.normal.z * -plane.point.z)
+
+	// (plane.normal.x * x) +
+	// (plane.normal.y * y) +
+	// (plane.normal.z * z) =
+	// (plane.point.x * -plane.normal.x) +
+	// (plane.point.y * -plane.normal.y) +
+	// (plane.point.z * -plane.normal.z)
+
+
+	// plug in the values of the line
+	// (plane.normal.x * (start.x + dir.x * t)) +
+	// (plane.normal.y * (start.y + dir.y * t)) +
+	// (plane.normal.z * (start.z + dir.z * t)) =
+	// (plane.point.x * -plane.normal.x) +
+	// (plane.point.y * -plane.normal.y) +
+	// (plane.point.z * -plane.normal.z)
+
+	// (plane.normal.x * start.x) + (plane.normal.x * dir.x * t)) +
+	// (plane.normal.y * start.y) + (plane.normal.y * dir.y * t)) +
+	// (plane.normal.z * start.z) + (plane.normal.z * dir.z * t)) =
+	// (plane.point.x * -plane.normal.x) +
+	// (plane.point.y * -plane.normal.y) +
+	// (plane.point.z * -plane.normal.z)
+
+	// (plane.normal.x * dir.x * t)) +
+	// (plane.normal.y * dir.y * t)) +
+	// (plane.normal.z * dir.z * t)) =
+	// (plane.point.x * -plane.normal.x) +
+	// (plane.point.y * -plane.normal.y) +
+	// (plane.point.z * -plane.normal.z) +
+	// (start.x * plane.normal.x) +
+	// (start.y * plane.normal.y) +
+	// (start.z * plane.normal.z)
+
+	// (plane.normal.x * dir.x * t)) +
+	// (plane.normal.y * dir.y * t)) +
+	// (plane.normal.z * dir.z * t)) =
+	// (-plane.point.x * plane.normal.x) +
+	// (-plane.point.y * plane.normal.y) +
+	// (-plane.point.z * plane.normal.z) +
+	// (start.x * plane.normal.x) +
+	// (start.y * plane.normal.y) +
+	// (start.z * plane.normal.z)
+
+	// ...
+
+	// dir * t = start.point - start
+
+
+	// work out the value for t
+
+
+	// divide with plane.normal.xyz
+
+	// 
+
+	// check if point with factor of t is within the margin
+}
+
+#pragma endregion // Ray

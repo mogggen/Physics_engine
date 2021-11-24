@@ -1267,7 +1267,7 @@ struct Ray
 	V3 start;
 	V3 dir;
 	inline Ray(V3 start, V3 dir);
-	V3 intersect(Plane plane);
+	bool Intersect(V3& res, const Plane plane);
 };
 
 Ray::Ray(V3 start, V3 dir) : start(start), dir(dir)
@@ -1275,88 +1275,15 @@ Ray::Ray(V3 start, V3 dir) : start(start), dir(dir)
 
 }
 
-V3 Ray::intersect(Plane plane)
+bool Ray::Intersect(V3& res, const Plane plane)
 {
-	V3 normDir = Normalize(dir);
-	float t; // find t
+    if (!Dot(plane.normal, dir)) return false;
 
-	// line equation
-	// x = start.x + dir.x * t
-	// y = start.y + dir.y * t
-	// z = start.z + dir.z * t
-
-	// plane equation
-	// plane.normal.x * (x - plane.point.x) +
-	// plane.normal.y * (y - plane.point.y) +
-	// plane.normal.z * (z - plane.point.z) = 0.f
-
-	// (plane.normal.x * x) + (plane.normal.x * -plane.point.x) +
-	// (plane.normal.y * y) + (plane.normal.y * -plane.point.y) +
-	// (plane.normal.z * z) + (plane.normal.z * -plane.point.z) = 0.f
-
-	// (plane.normal.x * x) +
-	// (plane.normal.y * y) +
-	// (plane.normal.z * z) =
-	// -(plane.normal.x * -plane.point.x)
-	// -(plane.normal.y * -plane.point.y)
-	// -(plane.normal.z * -plane.point.z)
-
-	// (plane.normal.x * x) +
-	// (plane.normal.y * y) +
-	// (plane.normal.z * z) =
-	// (plane.point.x * -plane.normal.x) +
-	// (plane.point.y * -plane.normal.y) +
-	// (plane.point.z * -plane.normal.z)
-
-
-	// plug in the values of the line
-	// (plane.normal.x * (start.x + dir.x * t)) +
-	// (plane.normal.y * (start.y + dir.y * t)) +
-	// (plane.normal.z * (start.z + dir.z * t)) =
-	// (plane.point.x * -plane.normal.x) +
-	// (plane.point.y * -plane.normal.y) +
-	// (plane.point.z * -plane.normal.z)
-
-	// (plane.normal.x * start.x) + (plane.normal.x * dir.x * t)) +
-	// (plane.normal.y * start.y) + (plane.normal.y * dir.y * t)) +
-	// (plane.normal.z * start.z) + (plane.normal.z * dir.z * t)) =
-	// (plane.point.x * -plane.normal.x) +
-	// (plane.point.y * -plane.normal.y) +
-	// (plane.point.z * -plane.normal.z)
-
-	// (plane.normal.x * dir.x * t)) +
-	// (plane.normal.y * dir.y * t)) +
-	// (plane.normal.z * dir.z * t)) =
-	// (plane.point.x * -plane.normal.x) +
-	// (plane.point.y * -plane.normal.y) +
-	// (plane.point.z * -plane.normal.z) +
-	// (start.x * plane.normal.x) +
-	// (start.y * plane.normal.y) +
-	// (start.z * plane.normal.z)
-
-	// (plane.normal.x * dir.x * t)) +
-	// (plane.normal.y * dir.y * t)) +
-	// (plane.normal.z * dir.z * t)) =
-	// (-plane.point.x * plane.normal.x) +
-	// (-plane.point.y * plane.normal.y) +
-	// (-plane.point.z * plane.normal.z) +
-	// (start.x * plane.normal.x) +
-	// (start.y * plane.normal.y) +
-	// (start.z * plane.normal.z)
-
-	// ...
-
-	// dir * t = start.point - start
-
-
-	// work out the value for t
-
-
-	// divide with plane.normal.xyz
-
-	// 
-
-	// check if point with factor of t is within the margin
+    float d = Dot(plane.normal, start);
+    float t = (d - Dot(plane.normal, start)) / Dot(plane.normal, dir);
+    
+    res = start + Normalize(dir) * t;
+    return true;
 }
 
 #pragma endregion // Ray

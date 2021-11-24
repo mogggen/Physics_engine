@@ -16,6 +16,5 @@ public:
 	MeshResource(Vertex vertices[], uint32_t verticesLength, uint32_t indices[], uint32_t indicesLength);
 	~MeshResource();
 	void Destroy();
-	Vertex* vertices;
 	void render();
 };

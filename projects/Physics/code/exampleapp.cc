@@ -9,8 +9,9 @@
 #include <fstream>
 #include <cstring>
 #include <ctime>
+#ifdef __linux__
 #include <unistd.h>
-
+#endif
 struct Actor;
 
 using namespace Display;

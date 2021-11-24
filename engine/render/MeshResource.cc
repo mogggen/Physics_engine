@@ -15,8 +15,6 @@ MeshResource::MeshResource(Vertex vertices[], uint32_t verticesLength, uint32_t 
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-	this->vertices = vertices;
 }
 
 void MeshResource::render()

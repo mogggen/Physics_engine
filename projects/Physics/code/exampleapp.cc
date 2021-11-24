@@ -112,9 +112,9 @@ namespace Example
 			shaderResource = std::make_shared<ShaderResource>();
 			shaderResource->getShaderResource(this->vertexShader, this->pixelShader, this->program);
 			
-			Actor temporary;
+			Actor temp;
 			
-			Actor* dummy = &temporary;
+			Actor* dummy = &temp;
 
 			//GraphicNode
 			node = std::make_shared<GraphicNode>(cube, texture, shaderResource, dummy);
@@ -135,7 +135,7 @@ namespace Example
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
 
-		const float g = -9.806e-4f;
+		const float g = -9.806e-3f;
 		node->getTexture()->LoadFromFile();
 
 		Camera cam(90, (float)width / height, 0.01f, 100.0f);
@@ -149,18 +149,18 @@ namespace Example
 		// a scene matrix to represent the world position relative to the camera
 		M4 scene;
 		V4 color(1, 1, 1, 1);
-		
+		uint frameIndex = 0;
 		while (this->window->IsOpen())
 		{
 			// set frame cap
 			glfwSetTime(1000.0 / 60);
 
+
 			// Implement gravity, without collison detection
 			node->actor->velocity = node->actor->velocity + node->actor->mass * g;
-			node->actor->position = node->actor->position + V4(-1, 1, -1) * node->actor->velocity;
-
-			Em = Em * Translate(node->actor->position); //Translate(Normalize(V4(float(d - a), float(e - q), float(w - s))) * -speed);
-			scene = cam.pv() * (Em * Evp) * Translate(V4()) * Scalar(V4(.1, .1, .1));
+			std::cout << "Gravity: " << node->actor->velocity << std::endl;
+			Em = Em * Translate(V4(0, -1, 0) * node->actor->velocity) * Translate(Normalize(V4(float(d - a), float(e - q), float(w - s))) * -speed);
+			scene = cam.pv() * (Em * Evp) * Scalar(V4(.1, .1, .1));
 
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			this->window->Update();
@@ -169,7 +169,8 @@ namespace Example
 			light.bindLight(shaderResource, cam.getPos());
 			node->DrawScene(scene, color);
 			this->window->SwapBuffers();
-			usleep(100000);
+			usleep(10000);
+			frameIndex++;
 		}
 	}
 

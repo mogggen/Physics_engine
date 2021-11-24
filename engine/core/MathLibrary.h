@@ -333,11 +333,6 @@ inline float V3::Length()
 	return sqrtf(x * x + y * y + z * z);
 }
 
-inline float Length(V4 vector)
-{
-	return vector.x * vector.x + vector.y * vector.y + vector.z * vector.z;
-}
-
 inline void V3::Normalize()
 {
 	float length = Length();
@@ -454,7 +449,7 @@ inline V3 Normalize(V3 vector)
 	return vector;
 }
 
-#pragma endregion
+#pragma endregion // Vector3
 
 #pragma region Vector4
 //	Vector operations: +, -, *, length, normalize, dot product, cross product
@@ -1199,10 +1194,6 @@ struct Quat
 	{
 		struct
 		{
-			V4 vector;
-		};
-		struct
-		{
 			float x, y, z, w;
 		};
 		struct
@@ -1244,7 +1235,7 @@ struct Plane
 	V3 point; // p2, p3
 	
 	inline Plane(V3 point, V3 normal);
-	bool pointIsOnPlane(V3 point, float margin);
+	bool pointIsOnPlane(const V3& point, const float margin=1.e-5f);
 };
 
 Plane::Plane(V3 point, V3 normal) : point(point), normal(normal)
@@ -1252,13 +1243,13 @@ Plane::Plane(V3 point, V3 normal) : point(point), normal(normal)
 
 }
 
-bool Plane::pointIsOnPlane(V3 point, float margin=1.e-5f)
+inline bool Plane::pointIsOnPlane(const V3& point, const float margin)
 {
-	// get plane equation
+	return Dot(normal, point - this->point) <= margin ||
+	Dot(normal, point - this->point) >= margin;
 }
 
 #pragma endregion // Plane
-
 
 #pragma region Ray
 
@@ -1275,7 +1266,7 @@ Ray::Ray(V3 start, V3 dir) : start(start), dir(dir)
 
 }
 
-bool Ray::Intersect(V3& res, const Plane plane)
+inline bool Ray::Intersect(V3& res, const Plane plane)
 {
     if (!Dot(plane.normal, dir)) return false;
 

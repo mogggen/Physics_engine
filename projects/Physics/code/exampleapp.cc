@@ -58,7 +58,7 @@ namespace Example
 		//assign ExampleApp variables
 		w = a = s = d = q = e = false;
 		window->GetSize(width, height);
-		Em = Evp = Translate(V4());
+		
 		window->SetKeyPressFunction([this](int32 keycode, int32 scancode, int32 action, int32 mods)
 		{
 			//deltatime
@@ -91,7 +91,8 @@ namespace Example
 			{
 				senseX = prevX + (0.002 * (x - width / 2));
 				senseY = prevY + (0.002 * (y - height / 2));
-				Evp = Rotation(V4(1, 0, 0), senseY) * Rotation(V4(0, 1, 0), senseX);
+				cubeProjectionViewTransform = Rotation(V4(1, 0, 0), senseY) * Rotation(V4(0, 1, 0), senseX);
+				fireHydrantProjectionViewTransform = Rotation(V4(1, 0, 0), senseY) * Rotation(V4(0, 1, 0), senseX);
 			}
 		});
 		
@@ -102,27 +103,57 @@ namespace Example
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
 			//MeshResource
-
-			cube = MeshResource::LoadObj("textures/fireHydrant.obj");
+			fireHydrantMesh = MeshResource::LoadObj("textures/fireHydrant.obj");
 
 			//TextureResource
-			std::shared_ptr<TextureResource> texture = std::make_shared<TextureResource>("textures/cubepic.png");
+			fireHydrantTexture = std::make_shared<TextureResource>("textures/cubepic.png");
 
-			//shaderObject
-			shaderResource = std::make_shared<ShaderResource>();
-			shaderResource->getShaderResource(this->vertexShader, this->pixelShader, this->program);
+			//shaderResource
+			fireHydrantScript = std::make_shared<ShaderResource>();
+			fireHydrantScript->getShaderResource(this->vertexShader, this->pixelShader, this->program);
 			
+			//Actor
 			Actor temp;
-			
-			Actor* dummy = &temp;
+			Actor* fireHydrantActor = &temp;
 
 			//GraphicNode
-			node = std::make_shared<GraphicNode>(cube, texture, shaderResource, dummy);
+			fireHydrant = std::make_shared<GraphicNode>(fireHydrantMesh, fireHydrantTexture, fireHydrantScript, fireHydrantActor);
+
+
+
+			//MeshResource
+			cubeMesh = MeshResource::LoadObj("textures/cube.obj");
+
+			cubeTexture = std::make_shared<TextureResource>("textures/red.png");
+			
+			//shaderResource
+			cubeScript = std::make_shared<ShaderResource>();
+			cubeScript->getShaderResource(this->vertexShader, this->pixelShader, this->program, "textures/vs.glsl", "textures/psNoTexture.glsl");
+			// note: bindTexture() still requires a texture, but just won't use it
+			
+			//Actor
+			Actor temp2;
+			Actor* cubeActor = &temp2;
+			
+			//GraphicNode
+			cube = std::make_shared<GraphicNode>(cubeMesh, fireHydrantTexture, cubeScript, cubeActor);
+
+
+
+			//MeshResource
+			quadMesh = MeshResource::LoadObj("textures/quad.obj");
+			
+			//Actor
+			Actor temp3;
+			Actor* quadActor = &temp3;
+			
+			//GraphicNode
+			quad = std::make_shared<GraphicNode>(quadMesh, cubeTexture, cubeScript, quadActor);
 
 			return true;
 		}
 		return false;
-	}
+}
 
 	//------------------------------------------------------------------------------
 	/**
@@ -136,7 +167,7 @@ namespace Example
 		glDepthFunc(GL_LEQUAL);
 
 		const float g = -9.806e-3f;
-		node->getTexture()->LoadFromFile();
+		fireHydrantTexture->LoadFromFile();
 
 		Camera cam(90, (float)width / height, 0.01f, 100.0f);
 		cam.setPos(V4(0, 0, -3));
@@ -145,29 +176,78 @@ namespace Example
 		Lightning light(V3(10, 10, 10), V3(1, 1, 1), .01f);
 		
 		float speed = .08f;
-
-		// a scene matrix to represent the world position relative to the camera
-		M4 scene;
-		V4 color(1, 1, 1, 1);
 		uint frameIndex = 0;
+
+		// set identies
+		fireHydrantWorldSpaceTransform = fireHydrantProjectionViewTransform = Translate(V4());
+		
+		cubeWorldSpaceTransform = cubeProjectionViewTransform = Translate(V4());
+
+		M4 quadWorldSpaceTransform[10];
+		M4 quadProjectionViewTransform[10];
+		for (size_t i = 0; i < 10; i++)
+		{
+			quadWorldSpaceTransform[i] = quadProjectionViewTransform[i] = Translate(V4());
+			quadWorldSpaceTransform[i] = Translate(V4(i * 10, 0, 0));
+		}
+
 		while (this->window->IsOpen())
 		{
 			// set frame cap
 			glfwSetTime(1000.0 / 60);
 
+			// Implement a gravitational acceleration on the fireHydrant
+			fireHydrant->actor->velocity = fireHydrant->actor->velocity + fireHydrant->actor->mass * g;
+			
+			// fireHydrant world space
+			fireHydrantWorldSpaceTransform = fireHydrantWorldSpaceTransform *
+			Translate(V4(0, -1, 0) * fireHydrant->actor->velocity) *
+			Translate(Normalize(V4(float(d - a), float(q - e), float(w - s))) * -speed);
 
-			// Implement gravity, without collison detection
-			node->actor->velocity = node->actor->velocity + node->actor->mass * g;
-			std::cout << "Gravity: " << node->actor->velocity << std::endl;
-			Em = Em * Translate(V4(0, -1, 0) * node->actor->velocity) * Translate(Normalize(V4(float(d - a), float(e - q), float(w - s))) * -speed);
-			scene = cam.pv() * (Em * Evp) * Scalar(V4(.1, .1, .1));
+			// fireHydrant view space
+			fireHydrantProjectionViewTransform = cam.pv() * fireHydrantWorldSpaceTransform * Scalar(V4(.1, .1, .1));
+
+			
+			// cube world space
+			cubeWorldSpaceTransform = cubeWorldSpaceTransform *
+			Translate(V4(0, -1, 0) * cube->actor->velocity) *
+			Translate(Normalize(V4(float(d - a), float(q - e), float(w - s))) * -speed);
+
+			// cube view space
+			cubeProjectionViewTransform = cam.pv() * cubeWorldSpaceTransform;
+
+
+			for (int i = 0; i < 10; i++)
+			{
+				// quad world space
+				quadWorldSpaceTransform[i] = quadWorldSpaceTransform[i] *
+				Translate(V4(0, 0, 0)) *
+				Translate(Normalize(V4(float(d - a), float(q - e), float(w - s))) * -speed);
+
+				quadProjectionViewTransform[i] = cam.pv() * quadWorldSpaceTransform[i];
+			}
 
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			this->window->Update();
 
-			shaderResource->setM4(cam.pv(), "m4ProjViewPos");
-			light.bindLight(shaderResource, cam.getPos());
-			node->DrawScene(scene, color);
+			fireHydrantScript->setM4(cam.pv(), "m4ProjViewPos");
+			cubeScript->setM4(cam.pv(), "m4ProjViewPos");
+
+			light.bindLight(fireHydrantScript, cam.getPos());
+			fireHydrant->DrawScene(fireHydrantProjectionViewTransform, fireHydrantColor);
+
+			light.bindLight(cubeScript, cam.getPos());
+			//cube->DrawScene(cubeProjectionViewTransform, cubeColor);
+
+			for (int i = 0; i < 10; i++)
+			{
+				if (i % 2 == 0)
+					cube->DrawScene(quadProjectionViewTransform[i], cubeColor);
+				else
+					cube->DrawScene(quadProjectionViewTransform[i], fireHydrantColor);
+			}
+			
+
 			this->window->SwapBuffers();
 			usleep(10000);
 			frameIndex++;

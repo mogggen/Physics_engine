@@ -7,7 +7,7 @@ GraphicNode::GraphicNode(std::shared_ptr<MeshResource> mesh, std::shared_ptr<Tex
 	
 }
 
-void GraphicNode::DrawScene(M4& mvp, V4& rgba)
+void GraphicNode::DrawScene(const M4& mvp, const V4& rgba)
 {
 	Texture->BindTexture();
 

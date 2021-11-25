@@ -37,19 +37,33 @@ namespace Example
 		float64 senseX = 0, senseY = 0;
 		bool w, a, s, d,
 			q, e, isRotate = false;
-		M4 Em;
-		M4 Evp;
+		
 		GLuint program;
 		GLuint vertexShader;
 		GLuint pixelShader;
 
-		std::shared_ptr<MeshResource> cube;
-		std::shared_ptr<ShaderResource> shaderResource;
-		std::shared_ptr<GraphicNode> node;
+		M4 fireHydrantWorldSpaceTransform;
+		M4 fireHydrantProjectionViewTransform;
+		V4 fireHydrantColor {1, 1, 1, 1};
+		std::shared_ptr<MeshResource> fireHydrantMesh;
+		std::shared_ptr<TextureResource> fireHydrantTexture;
+		std::shared_ptr<ShaderResource> fireHydrantScript;
+		std::shared_ptr<GraphicNode> fireHydrant;
 
-		std::shared_ptr<MeshResource> monkey;
-		std::shared_ptr<ShaderResource> shaderResourceSusanne;
-		std::shared_ptr<GraphicNode> susanne;
+		M4 cubeWorldSpaceTransform;
+		M4 cubeProjectionViewTransform;
+		V4 cubeColor {1, 0, 0, 1};
+
+		std::shared_ptr<MeshResource> cubeMesh;
+		std::shared_ptr<TextureResource> cubeTexture;
+		std::shared_ptr<ShaderResource> cubeScript;
+		std::shared_ptr<GraphicNode> cube;
+
+		// will have a entire array of these
+		std::shared_ptr<MeshResource> quadMesh;
+		std::shared_ptr<TextureResource> quadTexture;
+		std::shared_ptr<ShaderResource> quadScript;
+		std::shared_ptr<GraphicNode> quad;
 
 		Display::Window* window;
 	};

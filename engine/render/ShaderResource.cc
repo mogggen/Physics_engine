@@ -34,9 +34,9 @@ void ShaderResource::LoadShader(GLchar *vs, GLchar *ps, std::string vsPath, std:
 	this->ps = ps;
 }
 
-void ShaderResource::getShaderResource(GLuint vertexShader, GLuint pixelShader, GLuint program)
+void ShaderResource::getShaderResource(GLuint vertexShader, GLuint pixelShader, GLuint program, std::string vsPath, std::string psPath)
 {
-	LoadShader(vs, ps, "textures/vs.glsl", "textures/ps.glsl"); //TODO fix shader and byteoffset keep normals, but use constant color
+	LoadShader(vs, ps, vsPath, psPath);
 
 	// setup vertex shader
 	vertexShader = glCreateShader(GL_VERTEX_SHADER);

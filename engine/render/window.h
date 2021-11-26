@@ -28,6 +28,8 @@ public:
 	void GetSize(int32 & width, int32 & height);
 	/// set title of window
 	void SetTitle(const std::string& title);
+	
+	GLFWwindow* GetHandle();
 
 	/// open window
 	bool Open();
@@ -59,6 +61,7 @@ public:
 	void SetUiRender(const std::function<void()>& func);
 	/// set optional nanovg render function
 	void SetNanoVGRender(const std::function<void(NVGcontext *)> & func);
+
 
 private:
 
@@ -139,6 +142,14 @@ Window::SetTitle(const std::string& title)
 	{
 		this->Retitle();
 	}
+}
+
+//------------------------------------------------------------------------------
+/**
+*/
+inline GLFWwindow* Window::GetHandle()
+{
+	return window;
 }
 
 //------------------------------------------------------------------------------

@@ -36,7 +36,7 @@ namespace Example
 		float64 prevX = 0, prevY = 0;
 		float64 senseX = 0, senseY = 0;
 		bool w, a, s, d,
-			q, e, isRotate = false;
+			q, e, isPressed = false;
 		
 		GLuint program;
 		GLuint vertexShader;

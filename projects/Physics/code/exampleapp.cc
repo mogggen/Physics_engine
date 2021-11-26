@@ -77,17 +77,12 @@ namespace Example
 
 		window->SetMousePressFunction([this](int32 button, int32 action, int32 mods)
 		{
-			isRotate = button == GLFW_MOUSE_BUTTON_1 && action;
-			if (!isRotate)
-			{
-				prevX = senseX;
-				prevY = senseY;
-			}
+			isPressed = button == GLFW_MOUSE_BUTTON_1 && action;
 		});
 
 		window->SetMouseMoveFunction([this](float64 x, float64 y)
 		{
-			if (isRotate)
+			if (isPressed)
 			{
 				senseX = prevX + (0.002 * (x - width / 2));
 				senseY = prevY + (0.002 * (y - height / 2));
@@ -102,22 +97,22 @@ namespace Example
 			// set clear color to gray
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
-			//MeshResource
-			fireHydrantMesh = MeshResource::LoadObj("textures/fireHydrant.obj");
+			// //MeshResource
+			// fireHydrantMesh = MeshResource::LoadObj("textures/fireHydrant.obj");
 
-			//TextureResource
-			fireHydrantTexture = std::make_shared<TextureResource>("textures/cubepic.png");
+			// //TextureResource
+			// fireHydrantTexture = std::make_shared<TextureResource>("textures/cubepic.png");
 
-			//shaderResource
-			fireHydrantScript = std::make_shared<ShaderResource>();
-			fireHydrantScript->getShaderResource(this->vertexShader, this->pixelShader, this->program);
+			// //shaderResource
+			// fireHydrantScript = std::make_shared<ShaderResource>();
+			// fireHydrantScript->getShaderResource(this->vertexShader, this->pixelShader, this->program);
 			
-			//Actor
-			Actor temp;
-			Actor* fireHydrantActor = &temp;
+			// //Actor
+			// Actor temp;
+			// Actor* fireHydrantActor = &temp;
 
-			//GraphicNode
-			fireHydrant = std::make_shared<GraphicNode>(fireHydrantMesh, fireHydrantTexture, fireHydrantScript, fireHydrantActor);
+			// //GraphicNode
+			// fireHydrant = std::make_shared<GraphicNode>(fireHydrantMesh, fireHydrantTexture, fireHydrantScript, fireHydrantActor);
 
 
 
@@ -136,7 +131,7 @@ namespace Example
 			Actor* cubeActor = &temp2;
 			
 			//GraphicNode
-			cube = std::make_shared<GraphicNode>(cubeMesh, fireHydrantTexture, cubeScript, cubeActor);
+			cube = std::make_shared<GraphicNode>(cubeMesh, cubeTexture, cubeScript, cubeActor);
 
 
 
@@ -167,10 +162,10 @@ namespace Example
 		glDepthFunc(GL_LEQUAL);
 
 		const float g = -9.806e-3f;
-		fireHydrantTexture->LoadFromFile();
+		//fireHydrantTexture->LoadFromFile();
 
 		Camera cam(90, (float)width / height, 0.01f, 100.0f);
-		cam.setPos(V4(0, 0, -3));
+		cam.setPos(V4(0, 4, 13));
 		cam.setRot(V4(0, 1, 0), M_PI);
 		
 		Lightning light(V3(10, 10, 10), V3(1, 1, 1), .01f);
@@ -179,78 +174,111 @@ namespace Example
 		uint frameIndex = 0;
 
 		// set identies
-		fireHydrantWorldSpaceTransform = fireHydrantProjectionViewTransform = Translate(V4());
+		// fireHydrantWorldSpaceTransform = fireHydrantProjectionViewTransform = Translate(V4());
 		
 		cubeWorldSpaceTransform = cubeProjectionViewTransform = Translate(V4());
 
-		M4 quadWorldSpaceTransform[10];
-		M4 quadProjectionViewTransform[10];
+		M4 quadWorldSpaceTransform[100];
+		M4 quadProjectionViewTransform[100];
 		for (size_t i = 0; i < 10; i++)
 		{
-			quadWorldSpaceTransform[i] = quadProjectionViewTransform[i] = Translate(V4());
-			quadWorldSpaceTransform[i] = Translate(V4(i * 10, 0, 0));
+			for (size_t j = 0; j < 10; j++)
+			{
+				quadWorldSpaceTransform[i * 10 + j] = quadProjectionViewTransform[i] = Translate(V4());
+				quadWorldSpaceTransform[i * 10 + j] = Translate(V4(i * 2, j * 2, 0));	
+			}
 		}
+
+		
 
 		while (this->window->IsOpen())
 		{
+			//--------------------math section--------------------
+
+			// std::cout << "frame " << frameIndex << std::endl;
 			// set frame cap
-			glfwSetTime(1000.0 / 60);
+			// glfwSetTime(1000.0 / 60);
 
 			// Implement a gravitational acceleration on the fireHydrant
-			fireHydrant->actor->velocity = fireHydrant->actor->velocity + fireHydrant->actor->mass * g;
+			// fireHydrant->actor->velocity = fireHydrant->actor->velocity + fireHydrant->actor->mass * g;
 			
 			// fireHydrant world space
-			fireHydrantWorldSpaceTransform = fireHydrantWorldSpaceTransform *
-			Translate(V4(0, -1, 0) * fireHydrant->actor->velocity) *
-			Translate(Normalize(V4(float(d - a), float(q - e), float(w - s))) * -speed);
+			// fireHydrantWorldSpaceTransform = fireHydrantWorldSpaceTransform *
+			// Translate(V4(0, -1, 0) * fireHydrant->actor->velocity) *
+			// Translate(Normalize(V4(float(d - a), float(e - q), float(w - s))) * -speed);
 
 			// fireHydrant view space
-			fireHydrantProjectionViewTransform = cam.pv() * fireHydrantWorldSpaceTransform * Scalar(V4(.1, .1, .1));
+			// fireHydrantProjectionViewTransform = cam.pv() * fireHydrantWorldSpaceTransform * Scalar(V4(.1, .1, .1));
 
 			
 			// cube world space
-			cubeWorldSpaceTransform = cubeWorldSpaceTransform *
-			Translate(V4(0, -1, 0) * cube->actor->velocity) *
-			Translate(Normalize(V4(float(d - a), float(q - e), float(w - s))) * -speed);
+			// cubeWorldSpaceTransform = cubeWorldSpaceTransform *
+			// Translate(V4(0, -1, 0) * cube->actor->velocity) *
+			// Translate(Normalize(V4(float(d - a), float(q - e), float(w - s))) * -speed);
 
-			// cube view space
-			cubeProjectionViewTransform = cam.pv() * cubeWorldSpaceTransform;
+			// // cube view space
+			// cubeProjectionViewTransform = cam.pv() * cubeWorldSpaceTransform;
 
+			// equation
+			double mouseWorldX, mouseWorldY;
+			
+			if (isPressed)
+			{
+				glfwGetCursorPos(this->window->GetHandle(), &mouseWorldX, &mouseWorldY);
+				mouseWorldX = (mouseWorldX / this->width);
+				mouseWorldY = (mouseWorldY / this->width);
+				//std::cout << "x:" << mouseWorldX << " y:" << mouseWorldY << std::endl;
 
-			for (int i = 0; i < 10; i++)
+				//shot a ray
+				Ray r(cam.getPos(), V3(mouseWorldX, 0, mouseWorldY));
+				Plane p(V3(), V3(0, 0, -1));
+				V3 res;
+				if (r.Intersect(res, p))
+				{
+					std::cout << r.dir.x << r.dir.y << r.dir.z << std::endl;
+					// std::cout << "hit at" << res.x << "," << res.y << "," << res.z << std::endl;
+				}
+			}
+			cube->DrawScene(Translate(V4(0, 0, 5)) * Translate(Normalize(V4((d - a), (e - q), (w - s))) * -speed) /* Rotation(V4(0, 1, 0), mouseWorldY) * Rotation(V4(1, 0, 0), mouseWorldX) * Scalar(V4(0.1, 0.1, 10))*/, cubeColor);
+			Print(Translate(V4(0, 0, 5)) * Translate(Normalize(V4((d - a), (e - q), (w - s))) * -speed) /* Rotation(V4(0, 1, 0), mouseWorldY) * Rotation(V4(1, 0, 0), mouseWorldX) * Scalar(V4(0.1, 0.1, 10))*/ * Inverse(cam.pv()));
+
+			for (size_t i = 0; i < 100; i++)
 			{
 				// quad world space
 				quadWorldSpaceTransform[i] = quadWorldSpaceTransform[i] *
 				Translate(V4(0, 0, 0)) *
-				Translate(Normalize(V4(float(d - a), float(q - e), float(w - s))) * -speed);
+				Translate(Normalize(V4((d - a), (e - q), (w - s))) * -speed);
 
 				quadProjectionViewTransform[i] = cam.pv() * quadWorldSpaceTransform[i];
 			}
+			Print(quadProjectionViewTransform[4]);
 
+			std::cin.get();
+			//--------------------real-time render section--------------------
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			this->window->Update();
+			
 
-			fireHydrantScript->setM4(cam.pv(), "m4ProjViewPos");
+			// fireHydrantScript->setM4(cam.pv(), "m4ProjViewPos");
 			cubeScript->setM4(cam.pv(), "m4ProjViewPos");
 
-			light.bindLight(fireHydrantScript, cam.getPos());
-			fireHydrant->DrawScene(fireHydrantProjectionViewTransform, fireHydrantColor);
+			// light.bindLight(fireHydrantScript, cam.getPos());
+			// fireHydrant->DrawScene(fireHydrantProjectionViewTransform, fireHydrantColor);
 
 			light.bindLight(cubeScript, cam.getPos());
 			//cube->DrawScene(cubeProjectionViewTransform, cubeColor);
-
-			for (int i = 0; i < 10; i++)
+			
+			
+			
+			for (int i = 0; i < 100; i++)
 			{
-				if (i % 2 == 0)
-					cube->DrawScene(quadProjectionViewTransform[i], cubeColor);
-				else
-					cube->DrawScene(quadProjectionViewTransform[i], fireHydrantColor);
+				// cube->DrawScene(quadProjectionViewTransform[i], fireHydrantColor);
 			}
 			
+			// usleep(10000);
+			this->window->Update();
+			frameIndex++;
 
 			this->window->SwapBuffers();
-			usleep(10000);
-			frameIndex++;
 		}
 	}
 

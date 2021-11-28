@@ -1233,9 +1233,10 @@ struct Plane
 {
 	V3 normal;
 	V3 point; // p2, p3
+	static const float MARGIN = 1.e-5f;
 	
 	inline Plane(V3 point, V3 normal);
-	bool pointIsOnPlane(const V3& point, const float margin=1.e-5f);
+	bool pointIsOnPlane(const V3& point, const float margin=MARGIN);
 };
 
 Plane::Plane(V3 point, V3 normal) : point(point), normal(normal)
@@ -1246,7 +1247,7 @@ Plane::Plane(V3 point, V3 normal) : point(point), normal(normal)
 inline bool Plane::pointIsOnPlane(const V3& point, const float margin)
 {
 	return Dot(normal, point - this->point) <= margin ||
-	Dot(normal, point - this->point) >= margin;
+	Dot(normal, point - this->point) >= -margin;
 }
 
 #pragma endregion // Plane

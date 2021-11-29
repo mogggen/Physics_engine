@@ -7,6 +7,7 @@
 */
 //------------------------------------------------------------------------------
 #include "core/app.h"
+#include "imgui.h"
 #include "render/Vertex.h"
 #include "render/MeshResource.h"
 #include "render/Camera.h"

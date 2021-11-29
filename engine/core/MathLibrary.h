@@ -1233,7 +1233,7 @@ struct Plane
 {
 	V3 normal;
 	V3 point; // p2, p3
-	static const float MARGIN = 1.e-5f;
+	static constexpr float MARGIN = 1.e-5f;
 	
 	inline Plane(V3 point, V3 normal);
 	bool pointIsOnPlane(const V3& point, const float margin=MARGIN);

@@ -158,14 +158,25 @@ namespace Example
 	void
 		ExampleApp::Run()
 	{
+		ImGui::CreateContext();
+		ImGuiIO& io = ImGui::GetIO();
+
+		unsigned char *tex_pixels = NULL;
+		int tex_w, tex_h;
+		io.Fonts->GetTexDataAsRGBA32(&tex_pixels, &tex_w, &tex_h);
+
+		// static bool isOpen = true;
+		// ImGui::Begin("Hello World", &isOpen, ImGuiWindowFlags_AlwaysAutoResize);
+
+
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
+		
 
 		const float g = -9.806e-3f;
-		//fireHydrantTexture->LoadFromFile();
 
 		Camera cam(90, (float)width / height, 0.01f, 100.0f);
-		cam.setPos(V4(0, 4, 13));
+		cam.setPos(V4(0, 0, -3));
 		cam.setRot(V4(0, 1, 0), M_PI);
 		
 		Lightning light(V3(10, 10, 10), V3(1, 1, 1), .01f);
@@ -193,6 +204,13 @@ namespace Example
 
 		while (this->window->IsOpen())
 		{
+			//--------------------ImGui section--------------------
+			
+			bool show = true;
+			ImGui::Begin("Mega Cringe", &show, ImGuiWindowFlags_NoSavedSettings);
+			char *buf;
+			ImGui::InputTextMultiline("Mega wrong!", buf, 1024, ImVec2(-1.f, ImGui::GetTextLineHeight() * 22));
+
 			//--------------------math section--------------------
 
 			// std::cout << "frame " << frameIndex << std::endl;
@@ -240,7 +258,7 @@ namespace Example
 				}
 			}
 			cube->DrawScene(Translate(V4(0, 0, 5)) * Translate(Normalize(V4((d - a), (e - q), (w - s))) * -speed) /* Rotation(V4(0, 1, 0), mouseWorldY) * Rotation(V4(1, 0, 0), mouseWorldX) * Scalar(V4(0.1, 0.1, 10))*/, cubeColor);
-			Print(Translate(V4(0, 0, 5)) * Translate(Normalize(V4((d - a), (e - q), (w - s))) * -speed) /* Rotation(V4(0, 1, 0), mouseWorldY) * Rotation(V4(1, 0, 0), mouseWorldX) * Scalar(V4(0.1, 0.1, 10))*/ * Inverse(cam.pv()));
+			// Print(Translate(V4(0, 0, 5)) * Translate(Normalize(V4((d - a), (e - q), (w - s))) * -speed) /* Rotation(V4(0, 1, 0), mouseWorldY) * Rotation(V4(1, 0, 0), mouseWorldX) * Scalar(V4(0.1, 0.1, 10))*/ * Inverse(cam.pv()));
 
 			for (size_t i = 0; i < 100; i++)
 			{
@@ -251,9 +269,8 @@ namespace Example
 
 				quadProjectionViewTransform[i] = cam.pv() * quadWorldSpaceTransform[i];
 			}
-			Print(quadProjectionViewTransform[4]);
+			// Print(quadProjectionViewTransform[4]);
 
-			std::cin.get();
 			//--------------------real-time render section--------------------
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			
@@ -279,6 +296,7 @@ namespace Example
 			frameIndex++;
 
 			this->window->SwapBuffers();
+			ImGui::End();
 		}
 	}
 

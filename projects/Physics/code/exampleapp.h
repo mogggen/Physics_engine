@@ -37,6 +37,9 @@ namespace Example
 		void RenderUI();
 		
 		int width, height;
+		uint frameIndex = 0;
+		Plane* plane;
+
 		float64 prevX = 0, prevY = 0;
 		float64 senseX = 0, senseY = 0;
 		bool w, a, s, d,

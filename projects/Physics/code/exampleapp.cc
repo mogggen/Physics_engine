@@ -98,22 +98,22 @@ namespace Example
 			// set clear color to gray
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
-			// //MeshResource
-			// fireHydrantMesh = MeshResource::LoadObj("textures/fireHydrant.obj");
+			//MeshResource
+			fireHydrantMesh = MeshResource::LoadObj("textures/fireHydrant.obj");
 
-			// //TextureResource
-			// fireHydrantTexture = std::make_shared<TextureResource>("textures/cubepic.png");
+			//TextureResource
+			fireHydrantTexture = std::make_shared<TextureResource>("textures/cubepic.png");
 
-			// //shaderResource
-			// fireHydrantScript = std::make_shared<ShaderResource>();
-			// fireHydrantScript->getShaderResource(this->vertexShader, this->pixelShader, this->program);
+			//shaderResource
+			fireHydrantScript = std::make_shared<ShaderResource>();
+			fireHydrantScript->getShaderResource(this->vertexShader, this->pixelShader, this->program);
 			
-			// //Actor
-			// Actor temp;
-			// Actor* fireHydrantActor = &temp;
+			//Actor
+			Actor temp;
+			Actor* fireHydrantActor = &temp;
 
-			// //GraphicNode
-			// fireHydrant = std::make_shared<GraphicNode>(fireHydrantMesh, fireHydrantTexture, fireHydrantScript, fireHydrantActor);
+			//GraphicNode
+			fireHydrant = std::make_shared<GraphicNode>(fireHydrantMesh, fireHydrantTexture, fireHydrantScript, fireHydrantActor);
 
 
 
@@ -163,34 +163,22 @@ namespace Example
 	void
 		ExampleApp::Run()
 	{
-		ImGui::CreateContext();
-		ImGuiIO& io = ImGui::GetIO();
-
-		unsigned char *tex_pixels = NULL;
-		int tex_w, tex_h;
-		io.Fonts->GetTexDataAsRGBA32(&tex_pixels, &tex_w, &tex_h);
-
-		// static bool isOpen = true;
-		// ImGui::Begin("Hello World", &isOpen, ImGuiWindowFlags_AlwaysAutoResize);
-
-
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
 		
-
+		// gravity
 		const float g = -9.806e-3f;
 
 		Camera cam(90, (float)width / height, 0.01f, 100.0f);
-		cam.setPos(V4(0, 0, -3));
+		cam.setPos(V4(0, 4, 3));
 		cam.setRot(V4(0, 1, 0), M_PI);
 		
 		Lightning light(V3(10, 10, 10), V3(1, 1, 1), .01f);
 		
-		float speed = .08f;
-		uint frameIndex = 0;
+		float camSpeed = .08f;
 
 		// set identies
-		// fireHydrantWorldSpaceTransform = fireHydrantProjectionViewTransform = Translate(V4());
+		fireHydrantWorldSpaceTransform = fireHydrantProjectionViewTransform = Translate(V4());
 		
 		cubeWorldSpaceTransform = cubeProjectionViewTransform = Translate(V4());
 
@@ -214,30 +202,29 @@ namespace Example
 			
 
 			//--------------------math section--------------------
-
+			cam.setPos(cam.getPos() + Normalize(V4((d - a), (q - e), (w - s))) * -camSpeed);
+			plane = new Plane(V3(), V3(0, 0, -1));
 			// std::cout << "frame " << frameIndex << std::endl;
-			// set frame cap
-			// glfwSetTime(1000.0 / 60);
+
+			// fireHydrant->getTexture()->LoadFromFile();
 
 			// Implement a gravitational acceleration on the fireHydrant
 			// fireHydrant->actor->velocity = fireHydrant->actor->velocity + fireHydrant->actor->mass * g;
 			
 			// fireHydrant world space
 			// fireHydrantWorldSpaceTransform = fireHydrantWorldSpaceTransform *
-			// Translate(V4(0, -1, 0) * fireHydrant->actor->velocity) *
-			// Translate(Normalize(V4(float(d - a), float(e - q), float(w - s))) * -speed);
+			// Translate(V4(0, -1, 0) * fireHydrant->actor->velocity);
 
 			// fireHydrant view space
 			// fireHydrantProjectionViewTransform = cam.pv() * fireHydrantWorldSpaceTransform * Scalar(V4(.1, .1, .1));
 
 			
 			// cube world space
-			// cubeWorldSpaceTransform = cubeWorldSpaceTransform *
-			// Translate(V4(0, -1, 0) * cube->actor->velocity) *
-			// Translate(Normalize(V4(float(d - a), float(q - e), float(w - s))) * -speed);
+			cubeWorldSpaceTransform = cubeWorldSpaceTransform *
+			Translate(V4(0, 0, cos(frameIndex / 20.f)));
 
 			// // cube view space
-			// cubeProjectionViewTransform = cam.pv() * cubeWorldSpaceTransform;
+			cubeProjectionViewTransform = cam.pv() * cubeWorldSpaceTransform;
 
 			// equation
 			double mouseWorldX, mouseWorldY;
@@ -251,27 +238,19 @@ namespace Example
 
 				//shot a ray
 				Ray r(cam.getPos(), V3(mouseWorldX, 0, mouseWorldY));
-				Plane p(V3(), V3(0, 0, -1));
+				
 				V3 res;
-				if (r.Intersect(res, p))
+				if (r.Intersect(res, *plane))
 				{
 					std::cout << r.dir.x << r.dir.y << r.dir.z << std::endl;
 					// std::cout << "hit at" << res.x << "," << res.y << "," << res.z << std::endl;
 				}
 			}
-			cube->DrawScene(Translate(V4(0, 0, 5)) * Translate(Normalize(V4((d - a), (e - q), (w - s))) * -speed) /* Rotation(V4(0, 1, 0), mouseWorldY) * Rotation(V4(1, 0, 0), mouseWorldX) * Scalar(V4(0.1, 0.1, 10))*/, cubeColor);
-			// Print(Translate(V4(0, 0, 5)) * Translate(Normalize(V4((d - a), (e - q), (w - s))) * -speed) /* Rotation(V4(0, 1, 0), mouseWorldY) * Rotation(V4(1, 0, 0), mouseWorldX) * Scalar(V4(0.1, 0.1, 10))*/ * Inverse(cam.pv()));
 
 			for (size_t i = 0; i < 100; i++)
 			{
-				// quad world space
-				quadWorldSpaceTransform[i] = quadWorldSpaceTransform[i] *
-				Translate(V4(0, 0, 0)) *
-				Translate(Normalize(V4((d - a), (e - q), (w - s))) * -speed);
-
 				quadProjectionViewTransform[i] = cam.pv() * quadWorldSpaceTransform[i];
 			}
-			// Print(quadProjectionViewTransform[4]);
 
 			//--------------------real-time render section--------------------
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -280,17 +259,20 @@ namespace Example
 			// fireHydrantScript->setM4(cam.pv(), "m4ProjViewPos");
 			cubeScript->setM4(cam.pv(), "m4ProjViewPos");
 
-			// light.bindLight(fireHydrantScript, cam.getPos());
-			// fireHydrant->DrawScene(fireHydrantProjectionViewTransform, fireHydrantColor);
+			light.bindLight(fireHydrantScript, cam.getPos());
+			fireHydrant->DrawScene(fireHydrantProjectionViewTransform, fireHydrantColor);
 
 			light.bindLight(cubeScript, cam.getPos());
-			//cube->DrawScene(cubeProjectionViewTransform, cubeColor);
+			cube->DrawScene(cubeProjectionViewTransform, cubeColor);
 			
 			
 			
 			for (int i = 0; i < 100; i++)
 			{
-				// cube->DrawScene(quadProjectionViewTransform[i], fireHydrantColor);
+				if (plane->pointIsOnPlane(quadWorldSpaceTransform[i].toV3(), plane->MARGIN))
+				{
+					cube->DrawScene(quadProjectionViewTransform[i], fireHydrantColor);
+				}
 			}
 			
 			// usleep(10000);
@@ -305,6 +287,14 @@ namespace Example
 	{
 		bool show = true;
 		ImGui::Begin("Mega Cringe", &show, ImGuiWindowFlags_NoSavedSettings);
+		float cube[3];
+		for (int i = 0; i < 3; i++)
+		{
+			cube[i] = cubeWorldSpaceTransform[i][3];
+		}
+		ImGui::Text("cube: %.3f\t%.3f\t%.3f", cube[0], cube[1], cube[2]);
+		ImGui::SliderFloat("margin ", &plane->MARGIN, 1.e-7f, 1.e-4f);
+		ImGui::Text("frames: %d", frameIndex);
 
 		ImGui::End();
 	}

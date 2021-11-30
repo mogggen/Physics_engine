@@ -673,6 +673,8 @@ inline V4 Normalize(V4 vector)
  *		Transpose and inverse.
  */
 
+
+// data[rows][columns]
 struct M4
 {
 	V4 data[4];
@@ -681,6 +683,7 @@ struct M4
 
 	inline M4();
 	inline M4(V4 v[4]);
+	V3 toV3();
 
 	void Transpose();
 };
@@ -697,6 +700,15 @@ M4::M4(V4 v[4])
 {
 	for (size_t i = 0; i < 4; i++)
 		(*this)[i] = v[i];
+}
+
+inline V3 M4::toV3()
+{
+	for (size_t i = 0; i < 3; i++)
+	{
+		(*this)[i][3];
+	}
+	
 }
 
 inline V4 M4::operator[](size_t index) const
@@ -1233,10 +1245,10 @@ struct Plane
 {
 	V3 normal;
 	V3 point; // p2, p3
-	static constexpr float MARGIN = 1.e-5f;
+	float MARGIN = 1.e-5f;
 	
 	inline Plane(V3 point, V3 normal);
-	bool pointIsOnPlane(const V3& point, const float margin=MARGIN);
+	bool pointIsOnPlane(const V3& point, float margin);
 };
 
 Plane::Plane(V3 point, V3 normal) : point(point), normal(normal)
@@ -1244,7 +1256,7 @@ Plane::Plane(V3 point, V3 normal) : point(point), normal(normal)
 
 }
 
-inline bool Plane::pointIsOnPlane(const V3& point, const float margin)
+inline bool Plane::pointIsOnPlane(const V3& point, float margin)
 {
 	return Dot(normal, point - this->point) <= margin ||
 	Dot(normal, point - this->point) >= -margin;

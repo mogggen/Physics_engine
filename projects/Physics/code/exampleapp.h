@@ -7,7 +7,6 @@
 */
 //------------------------------------------------------------------------------
 #include "core/app.h"
-#include "imgui.h"
 #include "render/Vertex.h"
 #include "render/MeshResource.h"
 #include "render/Camera.h"
@@ -32,7 +31,11 @@ namespace Example
 		bool Open();
 		/// run app
 		void Run();
+
 	private:
+
+		void RenderUI();
+		
 		int width, height;
 		float64 prevX = 0, prevY = 0;
 		float64 senseX = 0, senseY = 0;

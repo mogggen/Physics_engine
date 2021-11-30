@@ -3,6 +3,7 @@
 // (C) 2015-2020 Individual contributors, see AUTHORS file
 //------------------------------------------------------------------------------
 #include "config.h"
+#include "imgui.h"
 #include "stb_image.h"
 #include "exampleapp.h"
 #include <iostream>
@@ -145,6 +146,10 @@ namespace Example
 			//GraphicNode
 			quad = std::make_shared<GraphicNode>(quadMesh, cubeTexture, cubeScript, quadActor);
 
+			this->window->SetUiRender([this]()
+			{
+				this->RenderUI();
+			});
 			return true;
 		}
 		return false;
@@ -206,10 +211,7 @@ namespace Example
 		{
 			//--------------------ImGui section--------------------
 			
-			bool show = true;
-			ImGui::Begin("Mega Cringe", &show, ImGuiWindowFlags_NoSavedSettings);
-			char *buf;
-			ImGui::InputTextMultiline("Mega wrong!", buf, 1024, ImVec2(-1.f, ImGui::GetTextLineHeight() * 22));
+			
 
 			//--------------------math section--------------------
 
@@ -296,8 +298,15 @@ namespace Example
 			frameIndex++;
 
 			this->window->SwapBuffers();
-			ImGui::End();
 		}
+	}
+
+	void ExampleApp::RenderUI()
+	{
+		bool show = true;
+		ImGui::Begin("Mega Cringe", &show, ImGuiWindowFlags_NoSavedSettings);
+
+		ImGui::End();
 	}
 
 } // namespace Example

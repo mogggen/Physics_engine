@@ -8,20 +8,23 @@
             "type": "shell",
             "command": "make",
             "args": [
-                "--directory", "${workspaceFolder}/build"
+                "--directory",
+                "${workspaceFolder}/build"
             ],
             "group": {
                 "kind": "build",
                 "isDefault": true
-              }
+            }
         },
         {
             "label": "Configure Debug",
             "type": "shell",
             "command": "cmake",
             "args": [
-                "-B", "${workspaceFolder}/build",
-                "-S", "${workspaceFolder}",
+                "-B",
+                "${workspaceFolder}/build",
+                "-S",
+                "${workspaceFolder}",
                 "-DCMAKE_BUILD_TYPE=Debug"
             ],
             "problemMatcher": []

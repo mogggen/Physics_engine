@@ -174,7 +174,7 @@ namespace Example
 		cam.setRot(V4(0, 1, 0), M_PI);
 		
 		Lightning light(V3(10, 10, 10), V3(1, 1, 1), .01f);
-		Debug::DrawLine(V3(10, 10, 10), V3(1, 1, 1), (V3(0, 1, 0)));
+		// Debug::DrawLine(V3(10, 10, 10), V3(1, 1, 1), (V3(0, 1, 0)));
 		float camSpeed = .08f;
 
 		// set identies

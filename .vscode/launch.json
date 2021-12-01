@@ -8,21 +8,20 @@
             "name": "(gdb) Launch \"physics\"",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/bin/physics",
+            "program": "${workspaceFolder}/bin/physics.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
-            "preLaunchTask": ["Configure Debug", "BuildAllTargets"],
-            "setupCommands": [
-                {
-                    "description": "Enable pretty-printing for gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                }
-            ]
+            "preLaunchTask": "Configure Debug",
+            "linux":
+            {
+                "program": "${workspaceFolder}/bin/physics",
+                "args": [],
+                "cmd": "${workspaceFolder}"
+            }
         }
     ]
 }

@@ -704,11 +704,22 @@ M4::M4(V4 v[4])
 
 inline V3 M4::toV3()
 {
+	V3 temp;
 	for (size_t i = 0; i < 3; i++)
 	{
-		(*this)[i][3];
+		temp[i] = (*this)[i][3];
 	}
-	
+	return temp;
+}
+
+inline V3 M4toV3(const M4& matrix)
+{
+	V3 temp;
+	for (size_t i = 0; i < 3; i++)
+	{
+		temp[i] = (matrix)[i][3];
+	}
+	return temp;
 }
 
 inline V4 M4::operator[](size_t index) const

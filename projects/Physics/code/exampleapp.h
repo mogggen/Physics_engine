@@ -2,7 +2,7 @@
 //------------------------------------------------------------------------------
 /**
 	Application class used for example application.
-	
+
 	(C) 2015-2020 Individual contributors, see AUTHORS file
 */
 //------------------------------------------------------------------------------
@@ -34,25 +34,24 @@ namespace Example
 		void Run();
 
 	private:
-
 		void RenderUI();
-		
+		uint64_t duration;
 		int width, height;
 		uint32_t frameIndex = 0;
-		Plane* plane;
+		Plane *plane;
 
 		float64 prevX = 0, prevY = 0;
 		float64 senseX = 0, senseY = 0;
 		bool w, a, s, d,
 			q, e, isPressed = false;
-		
+
 		GLuint program;
 		GLuint vertexShader;
 		GLuint pixelShader;
 
 		M4 fireHydrantWorldSpaceTransform;
 		M4 fireHydrantProjectionViewTransform;
-		V4 fireHydrantColor {1, 1, 1, 1};
+		V4 fireHydrantColor{1, 1, 1, 1};
 		std::shared_ptr<MeshResource> fireHydrantMesh;
 		std::shared_ptr<TextureResource> fireHydrantTexture;
 		std::shared_ptr<ShaderResource> fireHydrantScript;
@@ -60,7 +59,7 @@ namespace Example
 
 		M4 cubeWorldSpaceTransform;
 		M4 cubeProjectionViewTransform;
-		V4 cubeColor {1, 0, 0, 1};
+		V4 cubeColor{1, 0, 0, 1};
 
 		std::shared_ptr<MeshResource> cubeMesh;
 		std::shared_ptr<TextureResource> cubeTexture;
@@ -73,6 +72,6 @@ namespace Example
 		std::shared_ptr<ShaderResource> quadScript;
 		std::shared_ptr<GraphicNode> quad;
 
-		Display::Window* window;
+		Display::Window *window;
 	};
 } // namespace Example

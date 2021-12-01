@@ -15,10 +15,10 @@
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
-            "preLaunchTask": "Configure Debug",
             "linux":
             {
                 "program": "${workspaceFolder}/bin/physics",
+                "preLaunchTask": "BuildAllTargets",
                 "args": [],
                 "cmd": "${workspaceFolder}"
             }

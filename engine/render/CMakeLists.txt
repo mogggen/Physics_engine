@@ -29,6 +29,12 @@ SET(files_render_display
 	Actor.h
 	Actor.cc
 
+	Debug.cc
+	Debug.h
+
+	DebugPShader.glsl
+	DebugVShader.glsl
+
 	stb_image.h)
 SOURCE_GROUP("display" FILES ${files_render_display})
 

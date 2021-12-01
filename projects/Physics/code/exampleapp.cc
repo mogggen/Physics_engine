@@ -174,7 +174,7 @@ namespace Example
 		cam.setRot(V4(0, 1, 0), M_PI);
 		
 		Lightning light(V3(10, 10, 10), V3(1, 1, 1), .01f);
-		
+		Debug::DrawLine(V3(10, 10, 10), V3(1, 1, 1), (V3(0, 1, 0)));
 		float camSpeed = .08f;
 
 		// set identies
@@ -199,11 +199,10 @@ namespace Example
 		{
 			//--------------------ImGui section--------------------
 			
-			
 
 			//--------------------math section--------------------
 			cam.setPos(cam.getPos() + Normalize(V4((d - a), (q - e), (w - s))) * -camSpeed);
-			plane = new Plane(V3(), V3(0, 0, -1));
+			plane = new Plane(V3() * 0.5f, V3(0, 0, -1));
 			// std::cout << "frame " << frameIndex << std::endl;
 
 			// fireHydrant->getTexture()->LoadFromFile();

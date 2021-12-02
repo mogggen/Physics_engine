@@ -26,6 +26,6 @@ std::shared_ptr<MeshResource> GraphicNode::getMesh() { return Mesh; }
 std::shared_ptr<TextureResource> GraphicNode::getTexture() { return Texture; }
 std::shared_ptr<ShaderResource> GraphicNode::getShader() { return Shader; }
 
-void GraphicNode::setMesh(std::shared_ptr<MeshResource> Mesh) { Mesh = Mesh; }
+void GraphicNode::setMesh(std::shared_ptr<MeshResource> mesh) { Mesh = mesh; }
 void GraphicNode::setTexture(std::shared_ptr<TextureResource> texture) { Texture = texture; }
 void GraphicNode::setShader(std::shared_ptr<ShaderResource> shader) { Shader = shader; }

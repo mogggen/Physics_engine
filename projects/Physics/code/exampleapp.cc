@@ -92,6 +92,8 @@ namespace Example
 			// set clear color to gray
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
+
+
 			// MeshResource
 			fireHydrantMesh = MeshResource::LoadObj("textures/fireHydrant.obj");
 
@@ -161,7 +163,6 @@ namespace Example
 		cam.setRot(V4(0, 1, 0), M_PI);
 
 		Lightning light(V3(10, 10, 10), V3(1, 1, 1), .01f);
-		// Debug::DrawLine(V3(10, 10, 10), V3(1, 1, 1), (V3(0, 1, 0)));
 		float camSpeed = .08f;
 
 		// set identies
@@ -179,7 +180,7 @@ namespace Example
 				quadWorldSpaceTransform[i * 10 + j] = Translate(V4(i * 2, j * 2, 0));
 			}
 		}
-
+		plane = new Plane(V3(0, 0, -0), V3(0, 0, 1));
 		while (this->window->IsOpen())
 		{
 			//--------------------ImGui section--------------------
@@ -188,7 +189,7 @@ namespace Example
 
 			//--------------------math section--------------------
 			cam.setPos(cam.getPos() + Normalize(V4((d - a), (q - e), (w - s))) * -camSpeed);
-			plane = new Plane(V3(5, 4, 0), V3(0, 0, -1));
+			
 			// std::cout << "frame " << frameIndex << std::endl;
 
 			// fireHydrant->getTexture()->LoadFromFile();
@@ -199,7 +200,7 @@ namespace Example
 			// fireHydrant world space
 			// fireHydrantWorldSpaceTransform = fireHydrantWorldSpaceTransform *
 			// Translate(V4(0, -1, 0) * fireHydrant->actor->velocity);
-
+			
 			// fireHydrant view space
 			// fireHydrantProjectionViewTransform = cam.pv() * fireHydrantWorldSpaceTransform * Scalar(V4(.1, .1, .1));
 
@@ -221,13 +222,17 @@ namespace Example
 				// std::cout << "x:" << mouseWorldX << " y:" << mouseWorldY << std::endl;
 
 				// shot a ray
-				Ray r(cam.getPos(), V3(mouseWorldX, 0, mouseWorldY));
+				Ray r(cam.getPos(), V3(1, 0, sin(frameIndex / 100.f)));
 
 				V3 res;
 				if (r.Intersect(res, *plane))
 				{
 					std::cout << r.dir.x << r.dir.y << r.dir.z << std::endl;
-					// std::cout << "hit at" << res.x << "," << res.y << "," << res.z << std::endl;
+					std::cout << "hit at" << res.x << "," << res.y << "," << res.z << std::endl;
+				}
+				else
+				{
+					std::cout << "none intersecting" << std::endl;
 				}
 			}
 
@@ -250,8 +255,9 @@ namespace Example
 
 			for (int i = 0; i < 100; i++)
 			{
-				if (plane->pointIsOnPlane(quadWorldSpaceTransform[i].toV3(), plane->MARGIN))
+				if (plane->pointIsOnPlane(quadWorldSpaceTransform[i].toV3(), .0000001))
 				{
+					printf("true\n");
 					cube->DrawScene(quadProjectionViewTransform[i], fireHydrantColor);
 				}
 			}
@@ -276,7 +282,16 @@ namespace Example
 			cube[i] = cubeWorldSpaceTransform[i][3];
 		}
 		ImGui::Text("cube: %.3f\t%.3f\t%.3f", cube[0], cube[1], cube[2]);
-		ImGui::SliderFloat("margin ", &plane->MARGIN, 1.e-7f, 1.e-4f);
+		
+	
+		// ImGui::SliderFloat("x", &x, -5.f, 5.f);
+		// ImGui::SliderFloat("y", &y, -5.f, 5.f);
+		// ImGui::SliderFloat("z", &z, -5.f, 5.f);
+
+		// plane->normal = V3(x, y, z);
+		ImGui::Text("planeNormal: %.3f\t%.3f\t%.3f", plane->normal.x, plane->normal.y, plane->normal.z);
+
+
 		ImGui::Text("frames: %d %.0f", frameIndex, (float)1e6 / duration);
 
 		ImGui::End();

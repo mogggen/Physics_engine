@@ -14,7 +14,6 @@
 #include "render/ShaderResource.h"
 #include "render/GraphicNode.h"
 #include "render/window.h"
-#include "render/Debug.h"
 #include "core/Physics.h"
 #include "render/Actor.h"
 
@@ -39,6 +38,7 @@ namespace Example
 		int width, height;
 		uint32_t frameIndex = 0;
 		Plane *plane;
+		float x, y, z;
 
 		float64 prevX = 0, prevY = 0;
 		float64 senseX = 0, senseY = 0;

@@ -1,6 +1,7 @@
 ﻿//#include "config.h"
 #pragma once
 #include <cmath>
+#include <stdio.h>
 #ifndef M_PI
 #define M_PI 3.141592553584
 #endif
@@ -1255,7 +1256,7 @@ Quat::Quat(float x, float y, float z, float w) : x(x), y(y), z(z), w(w)
 struct Plane
 {
 	V3 normal;
-	V3 point; // p2, p3
+	V3 point;
 	float MARGIN = 1.e-5f;
 	
 	inline Plane(V3 point, V3 normal);

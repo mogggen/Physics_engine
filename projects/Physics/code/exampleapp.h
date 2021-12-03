@@ -14,6 +14,7 @@
 #include "render/ShaderResource.h"
 #include "render/GraphicNode.h"
 #include "render/window.h"
+#include "render/Debug.h"
 #include "core/Physics.h"
 #include "render/Actor.h"
 

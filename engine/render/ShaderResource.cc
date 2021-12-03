@@ -32,14 +32,9 @@ void ShaderResource::LoadShader(GLchar *vs, GLchar *ps, std::string vsPath, std:
 
 	this->vs = vs;
 	this->ps = ps;
-}
-
-void ShaderResource::getShaderResource(GLuint vertexShader, GLuint pixelShader, GLuint program, std::string vsPath, std::string psPath)
-{
-	LoadShader(vs, ps, vsPath, psPath);
 
 	// setup vertex shader
-	vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
 	GLint length = static_cast<GLint>(std::strlen(vs));
 	glShaderSource(vertexShader, 1, &vs, &length);
 	glCompileShader(vertexShader);
@@ -56,7 +51,7 @@ void ShaderResource::getShaderResource(GLuint vertexShader, GLuint pixelShader, 
 	}
 
 	// setup pixel shader
-	pixelShader = glCreateShader(GL_FRAGMENT_SHADER);
+	GLuint pixelShader = glCreateShader(GL_FRAGMENT_SHADER);
 	length = static_cast<GLint>(std::strlen(ps));
 	glShaderSource(pixelShader, 1, &ps, &length);
 	glCompileShader(pixelShader);

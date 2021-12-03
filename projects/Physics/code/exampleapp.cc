@@ -102,7 +102,7 @@ namespace Example
 
 			// shaderResource
 			fireHydrantScript = std::make_shared<ShaderResource>();
-			fireHydrantScript->getShaderResource(this->vertexShader, this->pixelShader, this->program);
+			fireHydrantScript->LoadShader(fireHydrantScript->vs, fireHydrantScript->ps, "textures/vs.glsl", "textures/ps.glsl");
 
 			// Actor
 			Actor temp;
@@ -118,7 +118,7 @@ namespace Example
 
 			// shaderResource
 			cubeScript = std::make_shared<ShaderResource>();
-			cubeScript->getShaderResource(this->vertexShader, this->pixelShader, this->program, "textures/vs.glsl", "textures/psNoTexture.glsl");
+			cubeScript->LoadShader(cubeScript->vs, cubeScript->ps, "textures/vs.glsl", "textures/psNoTexture.glsl");
 			// note: bindTexture() still requires a texture, but just won't use it
 
 			// Actor
@@ -163,6 +163,7 @@ namespace Example
 		cam.setRot(V4(0, 1, 0), M_PI);
 
 		Lightning light(V3(10, 10, 10), V3(1, 1, 1), .01f);
+		
 		float camSpeed = .08f;
 
 		// set identies
@@ -191,7 +192,7 @@ namespace Example
 			cam.setPos(cam.getPos() + Normalize(V4((d - a), (q - e), (w - s))) * -camSpeed);
 			
 			// std::cout << "frame " << frameIndex << std::endl;
-
+			Debug::DrawLine(V4(cos(frameIndex / 10.f),0, sin(frameIndex / 10.f)), V4(0, -1, 0), (V4(0, 1, 0, 1)));
 			// fireHydrant->getTexture()->LoadFromFile();
 
 			// Implement a gravitational acceleration on the fireHydrant
@@ -266,6 +267,7 @@ namespace Example
 			this->window->Update();
 			frameIndex++;
 
+			Debug::Render(cam.pv());
 			this->window->SwapBuffers();
 			auto finish = std::chrono::system_clock::now();
 			duration = std::chrono::duration_cast<std::chrono::microseconds>(finish - start).count();

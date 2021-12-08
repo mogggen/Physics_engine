@@ -29,29 +29,123 @@ namespace Debug
         buf->vertices[buf->verticesAmount++] = vert;
     }
 
-     void DrawAABB(const MeshResource mesh, V4 color)
+    void DrawBB(const MeshResource& mesh, V4 color, M4 modelMatrix)
+    {
+         const float left = mesh.left;
+         const float bottom = mesh.bottom;
+         const float front = mesh.front;
+
+         const float right = mesh.right;
+         const float top = mesh.top;
+         const float back = mesh.back;
+         
+         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(left, top, front, 1), color});
+         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(left, top, back, 1), color});
+         
+         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(right, top, front, 1), color});
+         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(right, top, back, 1), color});
+
+         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(left, top, front, 1), color});
+         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(right, top, front, 1), color});
+
+         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(left, top, back, 1), color });
+         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(right, top, back, 1), color });
+
+
+         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(left, bottom, front, 1), color });
+         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(left, bottom, back, 1), color });
+
+         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(right, bottom, front, 1), color });
+         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(right, bottom, back, 1), color });
+
+         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(left, bottom, front, 1), color });
+         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(right, bottom, front, 1), color });
+
+         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(left, bottom, back, 1), color });
+         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(right, bottom, back, 1), color });
+
+
+         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(left, top, front, 1), color });
+         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(left, bottom, front, 1), color });
+
+         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(right, top, front, 1), color });
+         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(right, bottom, front, 1), color });
+
+         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(left, top, back, 1), color });
+         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(left, bottom, back, 1), color });
+
+         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(right, top, back, 1), color });
+         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(right, bottom, back, 1), color });
+    }
+
+    void DrawAABB(const MeshResource& mesh, V4 color, M4 modelMatrix)
      {
-         //
-         // top |\
-         //     |_\
+		 float data[6] = { mesh.left, mesh.right, mesh.bottom, mesh.top, mesh.back, mesh.front };
+		 V3 current = (Transpose(modelMatrix) * V4(data[0], data[2], data[4], 1)).toV3();
+          float left = current.x;
+          float bottom = current.y;
+          float front = current.z;
 
-         const float& left = mesh.left;
-         const float& bottom = mesh.bottom;
-         const float& front = mesh.front;
+          float right = current.x;
+          float top = current.y;
+          float back = current.z;
 
-         const float& right = mesh.right;
-         const float& top = mesh.top;
-         const float& back = mesh.back;
+         
+         for (size_t i = 1; i < 8; i++)
+         {
+             V3 current = (Transpose(modelMatrix) * V4(data[i / 4], data[2 + (i / 2) % 2], data[4 + i % 2], 1)).toV3();
+             if (current.x < left)
+                 left = current.x;
+             if (current.y < bottom)
+                 bottom = current.y;
+             if (current.z < front)
+                 front = current.z;
 
-         PushVertex(&triBuf, Vertex{V3(left, top, front), color});
-         PushVertex(&triBuf, Vertex{V3(left, top, back), color});
-         PushVertex(&triBuf, Vertex{V3(right, top, back), color});
-         //     \‾|
-         // top  \|
-         //
-         PushVertex(&triBuf, Vertex{V3(left, top, front), color});
-         PushVertex(&triBuf, Vertex{V3(right, top, front), color});
-         PushVertex(&triBuf, Vertex{V3(right, top, back), color});
+             if (current.x > right)
+                 right = current.x;
+             if (current.y > top)
+                 top = current.y;
+             if (current.z > back)
+                 back = current.z;
+         }
+         
+         PushVertex(&lineBuf, Vertex{V4(left, top, front, 1), color });
+         PushVertex(&lineBuf, Vertex{V4(left, top, back, 1), color });
+
+         PushVertex(&lineBuf, Vertex{V4(right, top, front, 1), color });
+         PushVertex(&lineBuf, Vertex{V4(right, top, back, 1), color });
+
+         PushVertex(&lineBuf, Vertex{V4(left, top, front, 1), color });
+         PushVertex(&lineBuf, Vertex{V4(right, top, front, 1), color });
+
+         PushVertex(&lineBuf, Vertex{V4(left, top, back, 1), color });
+         PushVertex(&lineBuf, Vertex{V4(right, top, back, 1), color });
+
+
+         PushVertex(&lineBuf, Vertex{V4(left, bottom, front, 1), color });
+         PushVertex(&lineBuf, Vertex{V4(left, bottom, back, 1), color });
+
+         PushVertex(&lineBuf, Vertex{V4(right, bottom, front, 1), color });
+         PushVertex(&lineBuf, Vertex{V4(right, bottom, back, 1), color });
+
+         PushVertex(&lineBuf, Vertex{V4(left, bottom, front, 1), color });
+         PushVertex(&lineBuf, Vertex{V4(right, bottom, front, 1), color });
+
+         PushVertex(&lineBuf, Vertex{V4(left, bottom, back, 1), color });
+         PushVertex(&lineBuf, Vertex{V4(right, bottom, back, 1), color });
+
+
+         PushVertex(&lineBuf, Vertex{V4(left, top, front, 1), color });
+         PushVertex(&lineBuf, Vertex{V4(left, bottom, front, 1), color });
+
+         PushVertex(&lineBuf, Vertex{V4(right, top, front, 1), color });
+         PushVertex(&lineBuf, Vertex{V4(right, bottom, front, 1), color });
+
+         PushVertex(&lineBuf, Vertex{V4(left, top, back, 1), color });
+         PushVertex(&lineBuf, Vertex{V4(left, bottom, back, 1), color });
+
+         PushVertex(&lineBuf, Vertex{V4(right, top, back, 1), color });
+         PushVertex(&lineBuf, Vertex{V4(right, bottom, back, 1), color });
      }
 
     void DrawLine(V4 start, V4 end, V4 color)
@@ -63,7 +157,7 @@ namespace Debug
     void Render(M4 cameraVPMatrix)
     {
         // Rendering debug triangles
-        if (triBuf.vbo != 0)
+        /*if (triBuf.vbo != 0)
         {
             glBindBuffer(GL_ARRAY_BUFFER, triBuf.vbo);
         }
@@ -83,7 +177,7 @@ namespace Debug
         glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)(sizeof(float) * 4));
         glDrawArrays(GL_TRIANGLES, 0, triBuf.verticesAmount);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
-        triBuf.verticesAmount = 0;
+        triBuf.verticesAmount = 0;*/
 
         // Rendering debug lines
         if (lineBuf.vbo != 0)
@@ -98,7 +192,7 @@ namespace Debug
             glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * MAX_SIZE, nullptr, GL_DYNAMIC_DRAW);
         }
         lineBuf.sr.bindShaderResource();
-        lineBuf.sr.setM4(cameraVPMatrix, "matrix");
+        lineBuf.sr.setM4(cameraVPMatrix.data, "matrix");
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(Vertex) * lineBuf.verticesAmount, lineBuf.vertices);
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);

@@ -6,6 +6,7 @@
 namespace Debug
 {
     void Render(M4 cameraVPMatrix);
-    void DrawAABB(const MeshResource mesh, V4 color);
+    void DrawAABB(const MeshResource& mesh, V4 color, M4 modelMatrix);
+    void DrawBB(const MeshResource& mesh, V4 color, M4 modelMatrix);
     void DrawLine(V4 start, V4 end, V4 color);
 }

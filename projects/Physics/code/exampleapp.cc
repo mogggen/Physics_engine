@@ -164,7 +164,7 @@ namespace Example
 
 		Lightning light(V3(10, 10, 10), V3(1, 1, 1), .01f);
 
-		float camSpeed = .08f;
+		float camSpeed = .8f;
 
 		// set identies
 		fireHydrantWorldSpaceTransform = fireHydrantProjectionViewTransform = Translate(V4());
@@ -175,7 +175,7 @@ namespace Example
 
 		M4 quadWorldSpaceTransform[100];
 		M4 quadProjectionViewTransform[100];
-		for (size_t i = 0; i < 0; i++)
+		for (size_t i = 0; i < 10; i++)
 		{
 			for (size_t j = 0; j < 10; j++)
 			{
@@ -199,15 +199,18 @@ namespace Example
 			cam.setPos(cam.getPos() + Normalize(V4((d - a), (q - e), (w - s))) * -camSpeed);
 
 			// std::cout << "frame " << frameIndex << std::endl;
-			Debug::DrawLine(V4(cos(frameIndex / 10.f), 0, sin(frameIndex / 10.f)), V4(0, -1, 0), (V4(0, 1, 0, 1)));
 			
-			//Debug::DrawAABB(*fireHydrantMesh, V4(0, 1, 1, 1)); this breaks everything
-
+			Debug::DrawBB(*fireHydrant->getMesh(), V4(0, 1, 1, 1), fireHydrantWorldSpaceTransform);
+			Debug::DrawAABB(*fireHydrant->getMesh(), V4(1, 0, 0, 1), fireHydrantWorldSpaceTransform);
+			Print(fireHydrantWorldSpaceTransform);
 			//Implement a gravitational acceleration on the fireHydrant
 			fireHydrant->actor->velocity = fireHydrant->actor->velocity + fireHydrant->actor->mass * g;
 
 			//fireHydrant world space
-			fireHydrantWorldSpaceTransform = fireHydrantWorldSpaceTransform/* *
+			fireHydrantWorldSpaceTransform = Rotation(V4(0, 0, 1), -0.012f) * Rotation(V4(0, 1, 0), 0.004f) * fireHydrantWorldSpaceTransform
+			
+			// effect of gravity
+			/* *
 			Translate(V4(0, -1, 0) * fireHydrant->actor->velocity)*/;
 
 			//fireHydrant view space
@@ -262,11 +265,11 @@ namespace Example
 			light.bindLight(cubeScript, cam.getPos());
 			cube->DrawScene(cubeProjectionViewTransform, cubeColor);
 
-			for (int i = 0; i < 6; i++)
+			for (int i = 0; i < 100; i++)
 			{
 				if (true || plane->pointIsOnPlane(quadWorldSpaceTransform[i].toV3(), .0000001))
 				{
-					cube->DrawScene(quadProjectionViewTransform[i], fireHydrantColor);
+					//cube->DrawScene(quadProjectionViewTransform[i], fireHydrantColor);
 				}
 			}
 

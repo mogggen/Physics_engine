@@ -270,15 +270,32 @@ bool MeshResource::findCenterOfMass()
 
 bool MeshResource::findbounds()
 {
-	for (size_t i = 0; i < positions.size(); i++)
+	// can't be less than the minimum value of 'undefined', so let's not, mate?
+	left = right = positions[0].x;
+	bottom = top = positions[0].y;
+	front = back = positions[0].z;
+
+	// I should actually do this for all 6 of them but.. nah
+
+	for (size_t i = 1; i < positions.size(); i++)
 	{
-		if (positions[i].x < left) left = positions[i].x;
-		if (positions[i].y < bottom) bottom = positions[i].y;
-		if (positions[i].z < front) front = positions[i].z;
+		if (positions[i].x < left)
+			left = positions[i].x;
+
+		if (positions[i].y < bottom)
+			bottom = positions[i].y;
+
+		if (positions[i].z < front)
+			front = positions[i].z;
 		
-		if (positions[i].x > right) right = positions[i].x;
-		if (positions[i].y > top) top = positions[i].y;
-		if (positions[i].z > back) back = positions[i].z;
+		if (positions[i].x > right)
+			right = positions[i].x;
+
+		if (positions[i].y > top)
+			top = positions[i].y;
+
+		if (positions[i].z > back)
+			back = positions[i].z;
 	}
 	return true;
 }

@@ -11,7 +11,6 @@ struct ShaderResource
 
 	public:
 	~ShaderResource();
-	void getShaderResource(GLuint vs, GLuint ps, GLuint program, std::string vsPath="textures/vs.glsl", std::string psPath="textures/ps.glsl");
 	void LoadShader(GLchar* vs, GLchar* ps, std::string vsPath, std::string psPath);
 	void bindShaderResource();
 	

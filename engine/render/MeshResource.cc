@@ -3,6 +3,11 @@
 #include <stdio.h>
 #include <inttypes.h>
 
+MeshResource::MeshResource()
+{
+
+}
+
 MeshResource::MeshResource(Vertex vertices[], uint32_t verticesLength, uint32_t indices[], uint32_t indicesLength) : indices(indicesLength)
 {
 	glGenBuffers(1, &this->vertexBuffer);
@@ -249,11 +254,86 @@ std::shared_ptr<MeshResource> MeshResource::Cube()
 	return std::make_shared<MeshResource>(vertices, sizeof(vertices) / sizeof(Vertex), indices, sizeof(indices) / sizeof(uint64_t));
 }
 
+//Model Space
+bool MeshResource::findCenterOfMass()
+{
+	size_t i = 0;
+	V4 sumPositions = V4();
+
+	for (; i < positions.size(); i++)
+	{
+		sumPositions = positions[i];
+	}
+	centerOfMass = sumPositions * (1.f / ++i);
+	return true;
+}
+
+bool MeshResource::findbounds()
+{
+	for (size_t i = 0; i < positions.size(); i++)
+	{
+		if (positions[i].x < left) left = positions[i].x;
+		if (positions[i].y < bottom) bottom = positions[i].y;
+		if (positions[i].z < front) front = positions[i].z;
+		
+		if (positions[i].x > right) right = positions[i].x;
+		if (positions[i].y > top) top = positions[i].y;
+		if (positions[i].z > back) back = positions[i].z;
+	}
+	return true;
+}
+
+// because this can't be done in the constructor :D
+std::vector<V3> MeshResource::LoadVerticesFromFile(const char *pathToFile)
+{
+	char buf[1024];
+	FILE* fs;
+#ifndef __linux__
+	fopen_s(&fs, pathToFile, "r"); // textures/sphere.obj
+#else
+	fs = fopen64(pathToFile, "r"); // "textures/sphere.obj"
+#endif
+
+	unsigned long long verticesUsed = 0ull;
+	std::vector<V3> coords;
+
+	if (fs)
+	{
+		while (true)
+		{
+			int foo = fscanf(fs, "%1024s", buf); // reads one word at a time, seperate by a space or newline, and places it at buf[0] with a trailing '\0'
+			if (foo <= 0)
+			{
+				break;
+			}
+
+			if (buf[0] == 'v' && buf[1] == '\0')
+			{
+				V3 nextCoordinate;
+				if (fscanf(fs, "%f %f %f", &nextCoordinate.x, &nextCoordinate.y, &nextCoordinate.z) == 3)
+				{
+					coords.push_back(nextCoordinate);
+				}
+				else
+				{
+					std::cerr << "missing arguments in vertex, expected 3" << std::endl;
+				}
+			}
+		}
+	}
+	else
+	{
+		printf("file not found with path \"./%s\"\n", pathToFile);
+	}
+	fclose(fs);
+	return coords;
+}
+
 std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 {
 	char buf[1024];
 	FILE *fs;
-#ifndef __linux
+#ifndef __linux__
 	fopen_s(&fs, pathToFile, "r"); // textures/sphere.obj
 #else
 	fs = fopen64(pathToFile, "r"); // "textures/sphere.obj"

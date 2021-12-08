@@ -44,7 +44,7 @@ namespace Example
 		{
 			V4 v = m[i];
 			std::cout << '(';
-			for (char i = 0; i < 4; i++)
+			for (size_t i = 0; i < 4; i++)
 				std::cout << v.data[i] << (i == 3 ? ")\n" : ", ");
 		}
 	}
@@ -92,13 +92,13 @@ namespace Example
 			// set clear color to gray
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
-
-
 			// MeshResource
 			fireHydrantMesh = MeshResource::LoadObj("textures/fireHydrant.obj");
+			fireHydrantMesh->positions = MeshResource::LoadVerticesFromFile("textures/fireHydrant.obj");
 
 			// TextureResource
 			fireHydrantTexture = std::make_shared<TextureResource>("textures/cubepic.png");
+			fireHydrantTexture->LoadFromFile();
 
 			// shaderResource
 			fireHydrantScript = std::make_shared<ShaderResource>();
@@ -158,29 +158,36 @@ namespace Example
 		// gravity
 		const float g = -9.806e-3f;
 
-		Camera cam(90, (float)width / height, 0.01f, 100.0f);
+		Camera cam(90, (float)width / height, 0.01f, 1000.0f);
 		cam.setPos(V4(0, 4, 3));
 		cam.setRot(V4(0, 1, 0), M_PI);
 
 		Lightning light(V3(10, 10, 10), V3(1, 1, 1), .01f);
-		
+
 		float camSpeed = .08f;
 
 		// set identies
 		fireHydrantWorldSpaceTransform = fireHydrantProjectionViewTransform = Translate(V4());
+		fireHydrantMesh->findbounds();
 		
+
 		cubeWorldSpaceTransform = cubeProjectionViewTransform = Translate(V4());
 
 		M4 quadWorldSpaceTransform[100];
 		M4 quadProjectionViewTransform[100];
-		for (size_t i = 0; i < 10; i++)
+		for (size_t i = 0; i < 0; i++)
 		{
 			for (size_t j = 0; j < 10; j++)
 			{
-				quadWorldSpaceTransform[i * 10 + j] = quadProjectionViewTransform[i] = Translate(V4());
+				quadProjectionViewTransform[i * 10 + j] = Translate(V4());
 				quadWorldSpaceTransform[i * 10 + j] = Translate(V4(i * 2, j * 2, 0));
-			}
+			}			
 		}
+
+		//printf("%f %f %f\n", x, y, z);
+		
+
+
 		plane = new Plane(V3(0, 0, -0), V3(0, 0, 1));
 		while (this->window->IsOpen())
 		{
@@ -190,24 +197,25 @@ namespace Example
 
 			//--------------------math section--------------------
 			cam.setPos(cam.getPos() + Normalize(V4((d - a), (q - e), (w - s))) * -camSpeed);
-			
+
 			// std::cout << "frame " << frameIndex << std::endl;
-			Debug::DrawLine(V4(cos(frameIndex / 10.f),0, sin(frameIndex / 10.f)), V4(0, -1, 0), (V4(0, 1, 0, 1)));
-			// fireHydrant->getTexture()->LoadFromFile();
-
-			// Implement a gravitational acceleration on the fireHydrant
-			// fireHydrant->actor->velocity = fireHydrant->actor->velocity + fireHydrant->actor->mass * g;
-
-			// fireHydrant world space
-			// fireHydrantWorldSpaceTransform = fireHydrantWorldSpaceTransform *
-			// Translate(V4(0, -1, 0) * fireHydrant->actor->velocity);
+			Debug::DrawLine(V4(cos(frameIndex / 10.f), 0, sin(frameIndex / 10.f)), V4(0, -1, 0), (V4(0, 1, 0, 1)));
 			
-			// fireHydrant view space
-			// fireHydrantProjectionViewTransform = cam.pv() * fireHydrantWorldSpaceTransform * Scalar(V4(.1, .1, .1));
+			//Debug::DrawAABB(*fireHydrantMesh, V4(0, 1, 1, 1)); this breaks everything
+
+			//Implement a gravitational acceleration on the fireHydrant
+			fireHydrant->actor->velocity = fireHydrant->actor->velocity + fireHydrant->actor->mass * g;
+
+			//fireHydrant world space
+			fireHydrantWorldSpaceTransform = fireHydrantWorldSpaceTransform/* *
+			Translate(V4(0, -1, 0) * fireHydrant->actor->velocity)*/;
+
+			//fireHydrant view space
+			fireHydrantProjectionViewTransform = cam.pv() * fireHydrantWorldSpaceTransform/* * Scalar(V4(.1, .1, .1))*/;
 
 			// cube world space
 			cubeWorldSpaceTransform = cubeWorldSpaceTransform *
-									  Translate(V4(0, 0, cos(frameIndex / 20.f)));
+										Translate(V4(0, 0, cos(frameIndex / 20.f)));
 
 			// // cube view space
 			cubeProjectionViewTransform = cam.pv() * cubeWorldSpaceTransform;
@@ -245,7 +253,7 @@ namespace Example
 			//--------------------real-time render section--------------------
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			// fireHydrantScript->setM4(cam.pv(), "m4ProjViewPos");
+			fireHydrantScript->setM4(cam.pv(), "m4ProjViewPos");
 			cubeScript->setM4(cam.pv(), "m4ProjViewPos");
 
 			light.bindLight(fireHydrantScript, cam.getPos());
@@ -254,11 +262,10 @@ namespace Example
 			light.bindLight(cubeScript, cam.getPos());
 			cube->DrawScene(cubeProjectionViewTransform, cubeColor);
 
-			for (int i = 0; i < 100; i++)
+			for (int i = 0; i < 6; i++)
 			{
-				if (plane->pointIsOnPlane(quadWorldSpaceTransform[i].toV3(), .0000001))
+				if (true || plane->pointIsOnPlane(quadWorldSpaceTransform[i].toV3(), .0000001))
 				{
-					printf("true\n");
 					cube->DrawScene(quadProjectionViewTransform[i], fireHydrantColor);
 				}
 			}
@@ -270,7 +277,9 @@ namespace Example
 			Debug::Render(cam.pv());
 			this->window->SwapBuffers();
 			auto finish = std::chrono::system_clock::now();
+#ifdef __linux__
 			duration = std::chrono::duration_cast<std::chrono::microseconds>(finish - start).count();
+#endif
 		}
 	}
 
@@ -284,15 +293,13 @@ namespace Example
 			cube[i] = cubeWorldSpaceTransform[i][3];
 		}
 		ImGui::Text("cube: %.3f\t%.3f\t%.3f", cube[0], cube[1], cube[2]);
-		
-	
-		// ImGui::SliderFloat("x", &x, -5.f, 5.f);
-		// ImGui::SliderFloat("y", &y, -5.f, 5.f);
-		// ImGui::SliderFloat("z", &z, -5.f, 5.f);
+
+		ImGui::SliderFloat("x", &x, -5.f, 5.f);
+		ImGui::SliderFloat("y", &y, -5.f, 5.f);
+		ImGui::SliderFloat("z", &z, -5.f, 5.f);
 
 		// plane->normal = V3(x, y, z);
 		ImGui::Text("planeNormal: %.3f\t%.3f\t%.3f", plane->normal.x, plane->normal.y, plane->normal.z);
-
 
 		ImGui::Text("frames: %d %.0f", frameIndex, (float)1e6 / duration);
 

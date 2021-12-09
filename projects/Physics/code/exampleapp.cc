@@ -93,8 +93,8 @@ namespace Example
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
 			// MeshResource
-			fireHydrantMesh = MeshResource::LoadObj("textures/fireHydrant.obj");
-			fireHydrantMesh->positions = MeshResource::LoadVerticesFromFile("textures/fireHydrant.obj");
+			fireHydrantMesh = MeshResource::LoadObj("textures/sphere.obj");
+			fireHydrantMesh->positions = MeshResource::LoadVerticesFromFile("textures/sphere.obj");
 
 			// TextureResource
 			fireHydrantTexture = std::make_shared<TextureResource>("textures/cubepic.png");
@@ -201,9 +201,10 @@ namespace Example
 
 			// std::cout << "frame " << frameIndex << std::endl;
 			
-			Debug::DrawBB(*fireHydrant->getMesh(), V4(0, 1, 1, 1), fireHydrantWorldSpaceTransform);
+			Debug::DrawLine(V4(V3(), 1), cam.getPos() + V3(mouseDirX - this->width / 2, mouseDirY - this->height / 2, 50.f), V4(1, 1, 1, 1));
+			// Debug::DrawBB(*fireHydrant->getMesh(), V4(0, 1, 1, 1), fireHydrantWorldSpaceTransform);
 			Debug::DrawAABB(*fireHydrant->getMesh(), V4(1, 0, 0, 1), fireHydrantWorldSpaceTransform);
-			Print(fireHydrantWorldSpaceTransform);
+			
 			//Implement a gravitational acceleration on the fireHydrant
 			fireHydrant->actor->velocity = fireHydrant->actor->velocity + fireHydrant->actor->mass * g;
 
@@ -218,13 +219,13 @@ namespace Example
 			fireHydrantProjectionViewTransform = cam.pv() * fireHydrantWorldSpaceTransform/* * Scalar(V4(.1, .1, .1))*/;
 
 			// cube world space
-			cubeWorldSpaceTransform = cubeWorldSpaceTransform *
-										Translate(V4(0, 0, cos(frameIndex / 20.f)));
+			// cubeWorldSpaceTransform = cubeWorldSpaceTransform *
+			// 							Translate(V4(0, 0, cos(frameIndex / 20.f)));
 
 			// // cube view space
-			cubeProjectionViewTransform = cam.pv() * cubeWorldSpaceTransform;
+			// cubeProjectionViewTransform = cam.pv() * cubeWorldSpaceTransform;
 
-			Ray r(cam.getPos(), V3(mouseDirX, mouseDirY, 30.f));
+			Ray r(cam.getPos(), (cam.pv() * V4(mouseDirX, mouseDirY, 30.f)).toV3());
 			if (isPressed)
 			{
 				glfwGetCursorPos(this->window->GetHandle(), &mouseDirX, &mouseDirY);
@@ -236,8 +237,8 @@ namespace Example
 				V3 res;
 				if (r.Intersect(res, *plane))
 				{
-					std::cout << r.dir.x << r.dir.y << r.dir.z << std::endl;
-					std::cout << "hit at" << res.x << "," << res.y << "," << res.z << std::endl;
+					// std::cout << r.dir.x << r.dir.y << r.dir.z << std::endl;
+					// std::cout << "hit at" << res.x << "," << res.y << "," << res.z << std::endl;
 				}
 				else
 				{
@@ -254,27 +255,28 @@ namespace Example
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			fireHydrantScript->setM4(cam.pv(), "m4ProjViewPos");
-			cubeScript->setM4(cam.pv(), "m4ProjViewPos");
+			// cubeScript->setM4(cam.pv(), "m4ProjViewPos");
 
 			light.bindLight(fireHydrantScript, cam.getPos());
 			fireHydrant->DrawScene(fireHydrantProjectionViewTransform, fireHydrantColor);
 
 			light.bindLight(cubeScript, cam.getPos());
-			cube->DrawScene(cubeProjectionViewTransform, cubeColor);
+			// cube->DrawScene(cubeProjectionViewTransform, cubeColor);
 
-			for (int i = 0; i < 100; i++)
-			{
-				if (true || plane->pointIsOnPlane(quadWorldSpaceTransform[i].toV3(), .0000001))
-				{
-					cube->DrawScene(quadProjectionViewTransform[i], fireHydrantColor);
-				}
-			}
+			// for (int i = 0; i < 100; i++)
+			// {
+			// 	if (plane->pointIsOnPlane(quadWorldSpaceTransform[i].toV3(), .0000001))
+			// 	{
+			// 		cube->DrawScene(quadProjectionViewTransform[i], fireHydrantColor);
+			// 	}
+			// }
 
 			// usleep(10000);
 			this->window->Update();
 			frameIndex++;
 
 			Debug::Render(cam.pv());
+			// Debug::Render(cam.pv() * Translate(V4(cam.getPos(), 1)));
 			this->window->SwapBuffers();
 			auto finish = std::chrono::system_clock::now();
 #ifdef __linux__

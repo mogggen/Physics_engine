@@ -168,6 +168,7 @@ namespace Example
 
 		// set identies
 		fireHydrantWorldSpaceTransform = fireHydrantProjectionViewTransform = Translate(V4());
+
 		fireHydrantMesh->findbounds();
 		
 
@@ -223,18 +224,14 @@ namespace Example
 			// // cube view space
 			cubeProjectionViewTransform = cam.pv() * cubeWorldSpaceTransform;
 
-			// equation
-			double mouseWorldX, mouseWorldY;
-
+			Ray r(cam.getPos(), V3(mouseDirX, mouseDirY, 30.f));
 			if (isPressed)
 			{
-				glfwGetCursorPos(this->window->GetHandle(), &mouseWorldX, &mouseWorldY);
-				mouseWorldX = (mouseWorldX / this->width);
-				mouseWorldY = (mouseWorldY / this->width);
-				// std::cout << "x:" << mouseWorldX << " y:" << mouseWorldY << std::endl;
+				glfwGetCursorPos(this->window->GetHandle(), &mouseDirX, &mouseDirY);
+				mouseDirX = mouseDirX; // left -1 right 1.5
+				mouseDirY = mouseDirY; // top -1 bottom 3
 
 				// shot a ray
-				Ray r(cam.getPos(), V3(1, 0, sin(frameIndex / 100.f)));
 
 				V3 res;
 				if (r.Intersect(res, *plane))
@@ -269,7 +266,7 @@ namespace Example
 			{
 				if (true || plane->pointIsOnPlane(quadWorldSpaceTransform[i].toV3(), .0000001))
 				{
-					//cube->DrawScene(quadProjectionViewTransform[i], fireHydrantColor);
+					cube->DrawScene(quadProjectionViewTransform[i], fireHydrantColor);
 				}
 			}
 
@@ -297,15 +294,15 @@ namespace Example
 		}
 		ImGui::Text("cube: %.3f\t%.3f\t%.3f", cube[0], cube[1], cube[2]);
 
-		ImGui::SliderFloat("x", &x, -5.f, 5.f);
-		ImGui::SliderFloat("y", &y, -5.f, 5.f);
-		ImGui::SliderFloat("z", &z, -5.f, 5.f);
+		// ImGui::SliderFloat("x", &x, -5.f, 5.f);
+		// ImGui::SliderFloat("y", &y, -5.f, 5.f);
+		// ImGui::SliderFloat("z", &z, -5.f, 5.f);
 
 		// plane->normal = V3(x, y, z);
 		ImGui::Text("planeNormal: %.3f\t%.3f\t%.3f", plane->normal.x, plane->normal.y, plane->normal.z);
 
-		ImGui::Text("frames: %d %.0f", frameIndex, (float)1e6 / duration);
-
+		ImGui::Text("frames: %d", 1e6 / duration);
+		ImGui::Text("Resolution: %.3f %.3f", mouseDirX, mouseDirY);
 		ImGui::End();
 	}
 

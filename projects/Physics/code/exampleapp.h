@@ -40,6 +40,8 @@ namespace Example
 		uint32_t frameIndex = 0;
 		Plane *plane;
 		float x, y, z;
+		V3 camPos;
+		double mouseDirX, mouseDirY;
 
 		float64 prevX = 0, prevY = 0;
 		float64 senseX = 0, senseY = 0;

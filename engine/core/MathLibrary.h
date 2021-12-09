@@ -1270,8 +1270,9 @@ Plane::Plane(V3 point, V3 normal) : point(point), normal(normal)
 
 inline bool Plane::pointIsOnPlane(const V3& point, float margin)
 {
-	return Dot(normal, point - this->point) <= margin ||
-	Dot(normal, point - this->point) >= -margin;
+	float result = Dot(normal, point - this->point);
+	return result <= margin ||
+	result >= -margin;
 }
 
 #pragma endregion // Plane
@@ -1280,25 +1281,25 @@ inline bool Plane::pointIsOnPlane(const V3& point, float margin)
 
 struct Ray
 {
-	V3 start;
+	V3 origin;
 	V3 dir;
-	inline Ray(V3 start, V3 dir);
+	inline Ray(V3 origin, V3 dir);
 	bool Intersect(V3& res, const Plane plane);
 };
 
-Ray::Ray(V3 start, V3 dir) : start(start), dir(dir)
+Ray::Ray(V3 origin, V3 dir) : origin(origin), dir(dir)
 {
-
+	
 }
 
 inline bool Ray::Intersect(V3& res, const Plane plane)
 {
     if (!Dot(plane.normal, dir)) return false;
 
-    float d = Dot(plane.normal, start);
-    float t = (d - Dot(plane.normal, start)) / Dot(plane.normal, dir);
+    float d = Dot(plane.normal, origin);
+    float t = (d - Dot(plane.normal, origin)) / Dot(plane.normal, dir);
     
-    res = start + Normalize(dir) * t;
+    res = origin + Normalize(dir) * t;
     return true;
 }
 

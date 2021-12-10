@@ -1285,6 +1285,7 @@ struct Ray
 	V3 dir;
 	inline Ray(V3 origin, V3 dir);
 	bool Intersect(V3& res, const Plane plane);
+	bool Intersect(V3& res, const Plane plane, const V3& end);
 };
 
 Ray::Ray(V3 origin, V3 dir) : origin(origin), dir(dir)
@@ -1294,13 +1295,30 @@ Ray::Ray(V3 origin, V3 dir) : origin(origin), dir(dir)
 
 inline bool Ray::Intersect(V3& res, const Plane plane)
 {
-    if (!Dot(plane.normal, dir)) return false;
+    if (Dot(plane.normal, dir) == 0.f) return false;
 
     float d = Dot(plane.normal, origin);
     float t = (d - Dot(plane.normal, origin)) / Dot(plane.normal, dir);
     
     res = origin + Normalize(dir) * t;
     return true;
+}
+
+inline bool Ray::Intersect(V3& res, Plane plane, const V3& end)
+{
+	// n - plane normal
+	// c - any point in the plane
+	// x0 - the beginning of our line
+	// x1 - the end of our line
+
+	V3 v = end - origin;
+	V3 w = plane.point - origin;
+
+	float k = w.Dot(plane.normal)/v.Dot(plane.normal);
+
+	res = origin + k * v;
+
+	return k >= 0 && k <= 1;
 }
 
 #pragma endregion // Ray

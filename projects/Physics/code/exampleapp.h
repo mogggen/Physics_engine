@@ -41,7 +41,6 @@ namespace Example
 		const float g = -9.806e-3f;
 		Camera cam;
 		uint32_t frameIndex = 0;
-		Plane *plane;
 		float x, y, z;
 		V3 camPos;
 		double mouseDirX, mouseDirY;

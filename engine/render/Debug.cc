@@ -154,10 +154,21 @@ namespace Debug
         PushVertex(&lineBuf, Vertex{end, color});
     }
 
+    void DrawSquare(V4 center, float size, V4 color)
+    {
+        PushVertex(&triBuf, Vertex{center + V3(-size/2, 0, -size/2), color});
+        PushVertex(&triBuf, Vertex{center + V3(-size/2, 0, size/2), color});
+        PushVertex(&triBuf, Vertex{center + V3(size/2, 0, size/2), color});
+
+        PushVertex(&triBuf, Vertex{center + V3(-size/2, 0, -size/2), color});
+        PushVertex(&triBuf, Vertex{center + V3(size/2, 0, -size/2), color});
+        PushVertex(&triBuf, Vertex{center + V3(size/2, 0, size/2), color});
+    }
+
     void Render(M4 cameraVPMatrix)
     {
         // Rendering debug triangles
-        /*if (triBuf.vbo != 0)
+        if (triBuf.vbo != 0)
         {
             glBindBuffer(GL_ARRAY_BUFFER, triBuf.vbo);
         }
@@ -177,7 +188,7 @@ namespace Debug
         glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)(sizeof(float) * 4));
         glDrawArrays(GL_TRIANGLES, 0, triBuf.verticesAmount);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
-        triBuf.verticesAmount = 0;*/
+        triBuf.verticesAmount = 0;
 
         // Rendering debug lines
         if (lineBuf.vbo != 0)

@@ -157,12 +157,13 @@ namespace Example
 
 		// gravity
 		cam = Camera(90, (float)width / height, 0.01f, 1000.0f);
-		cam.setPos(V4(0, 4, 3));
+		cam.setPos(V4(0, 0, 0));
 		cam.setRot(V4(0, 1, 0), M_PI);
+		cam.setRot(V4(1, 0, 0), M_PI / 4);
 
 		Lightning light(V3(10, 10, 10), V3(1, 1, 1), .01f);
 
-		float camSpeed = .8f;
+		float camSpeed = .08f;
 
 		// set identies
 		fireHydrantWorldSpaceTransform = fireHydrantProjectionViewTransform = Translate(V4());
@@ -185,9 +186,6 @@ namespace Example
 
 		//printf("%f %f %f\n", x, y, z);
 		
-
-
-		plane = new Plane(V3(0, 0, -0), V3(0, 0, 1));
 		while (this->window->IsOpen())
 		{
 			//--------------------ImGui section--------------------
@@ -195,27 +193,73 @@ namespace Example
 			auto start = std::chrono::high_resolution_clock::now();
 
 			//--------------------math section--------------------
+			
 			cam.setPos(cam.getPos() + Normalize(V4((d - a), (q - e), (w - s))) * -camSpeed);
 			
 			V4 normalizedDeviceCoordinates(mouseDirX / width * 2 - 1, 1 - mouseDirY / height * 2, -1, 1);
 			V4 mousePickingWorldSpace = Inverse(cam.pv()) * normalizedDeviceCoordinates;
 			
-			Debug::DrawLine(cam.getPos(), mousePickingWorldSpace, V4(1, 1, 1, 1));
-			// Debug::DrawBB(*fireHydrant->getMesh(), V4(0, 1, 1, 1), fireHydrantWorldSpaceTransform);
+			Debug::DrawLine(V4(cam.getPos(), 1), mousePickingWorldSpace, V4(1, 1, 1, 1));
+			//Debug::DrawBB(*fireHydrant->getMesh(), V4(0, 1, 1, 1), fireHydrantWorldSpaceTransform);
 			Debug::DrawAABB(*fireHydrant->getMesh(), V4(1, 0, 0, 1), fireHydrantWorldSpaceTransform);
+
+			Plane YZPlane(V3(fireHydrantMesh->left, fireHydrantMesh->bottom, fireHydrantMesh->front), Normalize(V3(fireHydrantMesh->left, 0, 0)));
+			Plane XZPlane(V3(fireHydrantMesh->left, fireHydrantMesh->bottom, fireHydrantMesh->front), Normalize(V3(0, fireHydrantMesh->bottom, 0)));
+			Plane XYPlane(V3(fireHydrantMesh->left, fireHydrantMesh->bottom, fireHydrantMesh->front), Normalize(V3(0, 0, fireHydrantMesh->front)));
 			
+			// Plane YZ2Plane(V3(fireHydrantMesh->right, fireHydrantMesh->top, fireHydrantMesh->back), Normalize(V3(fireHydrantMesh->right, 0, 0)));
+			// Plane XZ2Plane(V3(fireHydrantMesh->right, fireHydrantMesh->top, fireHydrantMesh->back), Normalize(V3(0, fireHydrantMesh->top, 0)));
+			// Plane XY2Plane(V3(fireHydrantMesh->right, fireHydrantMesh->top, fireHydrantMesh->back), Normalize(V3(0, 0, fireHydrantMesh->back)));
+
+			if (isPressed)
+			{
+				glfwGetCursorPos(this->window->GetHandle(), &mouseDirX, &mouseDirY);
+			}
+			// shot a ray
+			Ray r(cam.getPos(), cam.getPos() - mousePickingWorldSpace.toV3());
+			V3 res;
+			// beginX
+			if (r.Intersect(res, XZPlane, mousePickingWorldSpace.toV3()))
+			{
+				Debug::DrawLine(V4(res - V3(0, 1, 0), 1), V4(res + (V3(0, 1, 0)), 1), V4(0, 0, 1, 1));
+				Debug::DrawSquare(V4(res.x, res.y, res.z));
+				// printf("%.3f %.3f %.3f\n", res.x, res.y, res.z);
+			}
+			// if (r.Intersect(res, YZPlane, mousePickingWorldSpace.toV3()))
+			// {
+			// 	Debug::DrawLine(V4(res - V3(10, 0, 0), 1), V4(res + (V3(10, 0, 0)), 1), V4(0, 1, 0, 1));
+			// }
+			// if (r.Intersect(res, XYPlane, mousePickingWorldSpace.toV3()))
+			// {
+			// 	Debug::DrawLine(V4(res - V3(0, 0, 10), 1), V4(res + (V3(0, 0, 10)), 1), V4(1, 0, 0, 1));
+			// }
+
+			// if (r.Intersect(res, XZ2Plane, mousePickingWorldSpace.toV3()))
+			// {
+			// 	Debug::DrawLine(V4(res - V3(0, 10, 0), 1), V4(res + (V3(0, 10, 0)), 1), V4(0, 0, 1, 1));
+			// }
+			// if (r.Intersect(res, YZ2Plane, mousePickingWorldSpace.toV3()))
+			// {
+			// 	Debug::DrawLine(V4(res - V3(10, 0, 0), 1), V4(res + (V3(10, 0, 0)), 1), V4(0, 1, 0, 1));
+			// }
+			// if (r.Intersect(res, XY2Plane, mousePickingWorldSpace.toV3()))
+			// {
+			// 	Debug::DrawLine(V4(res - V3(0, 0, 10), 1), V4(res + (V3(0, 0, 10)), 1), V4(1, 0, 0, 1));
+			// }
+			
+
 			//Implement a gravitational acceleration on the fireHydrant
-			fireHydrant->actor->velocity = fireHydrant->actor->velocity + fireHydrant->actor->mass * g;
+			//fireHydrant->actor->velocity = fireHydrant->actor->velocity + fireHydrant->actor->mass * g;
 
 			//fireHydrant world space
-			fireHydrantWorldSpaceTransform = Rotation(V4(0, 0, 1), -0.012f) * Rotation(V4(0, 1, 0), 0.004f) * fireHydrantWorldSpaceTransform
+			//fireHydrantWorldSpaceTransform = Rotation(V4(0, 0, 1), -0.012f) * Rotation(V4(0, 1, 0), 0.004f) * fireHydrantWorldSpaceTransform
 			
 			// effect of gravity
 			/* *
 			Translate(V4(0, -1, 0) * fireHydrant->actor->velocity)*/;
 
 			//fireHydrant view space
-			fireHydrantProjectionViewTransform = cam.pv() * fireHydrantWorldSpaceTransform/* * Scalar(V4(.1, .1, .1))*/;
+			//fireHydrantProjectionViewTransform = cam.pv() * fireHydrantWorldSpaceTransform/* * Scalar(V4(.1, .1, .1))*/;
 
 			// cube world space
 			// cubeWorldSpaceTransform = cubeWorldSpaceTransform *
@@ -224,26 +268,7 @@ namespace Example
 			// // cube view space
 			// cubeProjectionViewTransform = cam.pv() * cubeWorldSpaceTransform;
 
-			Ray r(cam.getPos(), (cam.pv() * V4(mouseDirX, mouseDirY, 30.f)).toV3());
-			if (isPressed)
-			{
-				glfwGetCursorPos(this->window->GetHandle(), &mouseDirX, &mouseDirY);
-				mouseDirX = mouseDirX; // left -1 right 1
-				mouseDirY = mouseDirY; // top -1 bottom 1
-
-				// shot a ray
-
-				V3 res;
-				if (r.Intersect(res, *plane))
-				{
-					// std::cout << r.dir.x << r.dir.y << r.dir.z << std::endl;
-					// std::cout << "hit at" << res.x << "," << res.y << "," << res.z << std::endl;
-				}
-				else
-				{
-					std::cout << "none intersecting" << std::endl;
-				}
-			}
+			
 
 			for (size_t i = 0; i < 100; i++)
 			{
@@ -256,10 +281,10 @@ namespace Example
 			fireHydrantScript->setM4(cam.pv(), "m4ProjViewPos");
 			// cubeScript->setM4(cam.pv(), "m4ProjViewPos");
 
-			light.bindLight(fireHydrantScript, cam.getPos());
-			fireHydrant->DrawScene(fireHydrantProjectionViewTransform, fireHydrantColor);
+			//light.bindLight(fireHydrantScript, cam.getPos());
+			//fireHydrant->DrawScene(fireHydrantProjectionViewTransform, fireHydrantColor);
 
-			light.bindLight(cubeScript, cam.getPos());
+			//light.bindLight(cubeScript, cam.getPos());
 			// cube->DrawScene(cubeProjectionViewTransform, cubeColor);
 
 			// for (int i = 0; i < 100; i++)

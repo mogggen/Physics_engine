@@ -8,6 +8,7 @@ class Camera
 	V4 dir;
 	float rad = 0.f;
 public:
+	Camera();
 	Camera(float fov, float ratio, float n, float f);
 	V3 getPos();
 	void setPos(V4 pos);

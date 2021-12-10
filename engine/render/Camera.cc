@@ -1,6 +1,11 @@
 #include "config.h"
 #include "render/Camera.h"
 
+Camera::Camera()
+{
+	
+}
+
 Camera::Camera(float fov, float aspect, float n, float f) : fov(fov), aspect(aspect), n(n), f(f)
 {
 	pos = V4(0, 0, 0);

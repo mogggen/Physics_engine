@@ -156,9 +156,7 @@ namespace Example
 		glDepthFunc(GL_LEQUAL);
 
 		// gravity
-		const float g = -9.806e-3f;
-
-		Camera cam(90, (float)width / height, 0.01f, 1000.0f);
+		cam = Camera(90, (float)width / height, 0.01f, 1000.0f);
 		cam.setPos(V4(0, 4, 3));
 		cam.setRot(V4(0, 1, 0), M_PI);
 
@@ -198,10 +196,11 @@ namespace Example
 
 			//--------------------math section--------------------
 			cam.setPos(cam.getPos() + Normalize(V4((d - a), (q - e), (w - s))) * -camSpeed);
-
-			// std::cout << "frame " << frameIndex << std::endl;
 			
-			Debug::DrawLine(V4(V3(), 1), cam.getPos() + V3(mouseDirX - this->width / 2, mouseDirY - this->height / 2, 50.f), V4(1, 1, 1, 1));
+			V4 normalizedDeviceCoordinates(mouseDirX / width * 2 - 1, 1 - mouseDirY / height * 2, -1, 1);
+			V4 mousePickingWorldSpace = Inverse(cam.pv()) * normalizedDeviceCoordinates;
+			
+			Debug::DrawLine(cam.getPos(), mousePickingWorldSpace, V4(1, 1, 1, 1));
 			// Debug::DrawBB(*fireHydrant->getMesh(), V4(0, 1, 1, 1), fireHydrantWorldSpaceTransform);
 			Debug::DrawAABB(*fireHydrant->getMesh(), V4(1, 0, 0, 1), fireHydrantWorldSpaceTransform);
 			
@@ -229,8 +228,8 @@ namespace Example
 			if (isPressed)
 			{
 				glfwGetCursorPos(this->window->GetHandle(), &mouseDirX, &mouseDirY);
-				mouseDirX = mouseDirX; // left -1 right 1.5
-				mouseDirY = mouseDirY; // top -1 bottom 3
+				mouseDirX = mouseDirX; // left -1 right 1
+				mouseDirY = mouseDirY; // top -1 bottom 1
 
 				// shot a ray
 
@@ -289,22 +288,7 @@ namespace Example
 	{
 		bool show = true;
 		ImGui::Begin("Mega Cringe", &show, ImGuiWindowFlags_NoSavedSettings);
-		float cube[3];
-		for (int i = 0; i < 3; i++)
-		{
-			cube[i] = cubeWorldSpaceTransform[i][3];
-		}
-		ImGui::Text("cube: %.3f\t%.3f\t%.3f", cube[0], cube[1], cube[2]);
-
-		// ImGui::SliderFloat("x", &x, -5.f, 5.f);
-		// ImGui::SliderFloat("y", &y, -5.f, 5.f);
-		// ImGui::SliderFloat("z", &z, -5.f, 5.f);
-
-		// plane->normal = V3(x, y, z);
-		ImGui::Text("planeNormal: %.3f\t%.3f\t%.3f", plane->normal.x, plane->normal.y, plane->normal.z);
-
-		ImGui::Text("frames: %d", 1e6 / duration);
-		ImGui::Text("Resolution: %.3f %.3f", mouseDirX, mouseDirY);
+		ImGui::Text("%dx%d %.0f fps", width, height, 1e6f / duration);
 		ImGui::End();
 	}
 

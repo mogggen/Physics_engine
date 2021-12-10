@@ -36,7 +36,10 @@ namespace Example
 	private:
 		void RenderUI();
 		uint64_t duration;
+
 		int width, height;
+		const float g = -9.806e-3f;
+		Camera cam;
 		uint32_t frameIndex = 0;
 		Plane *plane;
 		float x, y, z;

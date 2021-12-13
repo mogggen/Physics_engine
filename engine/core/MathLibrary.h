@@ -216,7 +216,7 @@ inline V2 Normalize(V2 vector)
 		vector[i] /= length;
 	return vector;
 }
-#pragma endregion
+#pragma endregion // V2
 
 #pragma region Vector3
 //	Vector operations: +, -, *, length, normalize, dot product, cross product
@@ -450,7 +450,7 @@ inline V3 Normalize(V3 vector)
 	return vector;
 }
 
-#pragma endregion // Vector3
+#pragma endregion // V3
 
 #pragma region Vector4
 //	Vector operations: +, -, *, length, normalize, dot product, cross product
@@ -503,7 +503,7 @@ V4::V4(V3 vec, float w = 0) : x(vec.x), y(vec.y), z(vec.z), w(w) {}
 
 inline V3 V4::toV3()
 {
-	return V3(this->x, this->y, this->z);
+	return V3(x, y, z);
 }
 
 //	operator methods
@@ -665,7 +665,7 @@ inline V4 Normalize(V4 vector)
 	return vector;
 }
 
-#pragma endregion
+#pragma endregion // V4
 
 #pragma region Matrix
 /* 3. Matrix operations:

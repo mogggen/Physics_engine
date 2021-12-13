@@ -171,7 +171,8 @@ namespace Example
 		fireHydrantMesh->findbounds();
 		
 
-		cubeWorldSpaceTransform = cubeProjectionViewTransform = Translate(V4());
+		cubeWorldSpaceTransform = Translate(V4(0, 0, 4, 1));
+		cubeProjectionViewTransform = Translate(V4());
 
 		M4 quadWorldSpaceTransform[100];
 		M4 quadProjectionViewTransform[100];
@@ -179,74 +180,43 @@ namespace Example
 		{
 			for (size_t j = 0; j < 10; j++)
 			{
+				quadWorldSpaceTransform[i * 10 + j] = Translate(V4(-0.9 + i * 0.2, -1, -0.9 + j * 0.2, 1));
 				quadProjectionViewTransform[i * 10 + j] = Translate(V4());
-				quadWorldSpaceTransform[i * 10 + j] = Translate(V4(i * 2, j * 2, 0));
 			}			
 		}
-
-		//printf("%f %f %f\n", x, y, z);
 		
 		while (this->window->IsOpen())
 		{
+			auto startTimer = std::chrono::high_resolution_clock::now();
 			//--------------------ImGui section--------------------
 
-			auto start = std::chrono::high_resolution_clock::now();
 
 			//--------------------math section--------------------
+			cam.setPos(cam.getPos() + Normalize(V3((d - a), (q - e), (w - s))) * -camSpeed);
+			V3 rayOrigin = cam.getPos() * -1.f;
 			
-			cam.setPos(cam.getPos() + Normalize(V4((d - a), (q - e), (w - s))) * -camSpeed);
-			
-			V4 normalizedDeviceCoordinates(mouseDirX / width * 2 - 1, 1 - mouseDirY / height * 2, -1, 1);
+			V4 normalizedDeviceCoordinates(mouseDirX / width * 2 - 1, 1 - mouseDirY / height * 2, 1, 1);
 			V4 mousePickingWorldSpace = Inverse(cam.pv()) * normalizedDeviceCoordinates;
+			//printf("rayOrigin %.3f %.3f %.3f mousePickingWorldSpace %.3f %.3f %.3f\n", rayOrigin.x, rayOrigin.y, rayOrigin.z, mousePickingWorldSpace.x, mousePickingWorldSpace.y, mousePickingWorldSpace.z);
 			
-			Debug::DrawLine(V4(cam.getPos(), 1), mousePickingWorldSpace, V4(1, 1, 1, 1));
+			Debug::DrawLine(V4(rayOrigin, 1), mousePickingWorldSpace, V4(1, 1, 1, 1));
 			//Debug::DrawBB(*fireHydrant->getMesh(), V4(0, 1, 1, 1), fireHydrantWorldSpaceTransform);
 			Debug::DrawAABB(*fireHydrant->getMesh(), V4(1, 0, 0, 1), fireHydrantWorldSpaceTransform);
 
-			Plane YZPlane(V3(fireHydrantMesh->left, fireHydrantMesh->bottom, fireHydrantMesh->front), Normalize(V3(fireHydrantMesh->left, 0, 0)));
-			Plane XZPlane(V3(fireHydrantMesh->left, fireHydrantMesh->bottom, fireHydrantMesh->front), Normalize(V3(0, fireHydrantMesh->bottom, 0)));
-			Plane XYPlane(V3(fireHydrantMesh->left, fireHydrantMesh->bottom, fireHydrantMesh->front), Normalize(V3(0, 0, fireHydrantMesh->front)));
-			
-			// Plane YZ2Plane(V3(fireHydrantMesh->right, fireHydrantMesh->top, fireHydrantMesh->back), Normalize(V3(fireHydrantMesh->right, 0, 0)));
-			// Plane XZ2Plane(V3(fireHydrantMesh->right, fireHydrantMesh->top, fireHydrantMesh->back), Normalize(V3(0, fireHydrantMesh->top, 0)));
-			// Plane XY2Plane(V3(fireHydrantMesh->right, fireHydrantMesh->top, fireHydrantMesh->back), Normalize(V3(0, 0, fireHydrantMesh->back)));
+			Plane XZ2Plane(V3(0, -.0f, 0), V3(0, fireHydrantMesh->bottom, 0));
 
-			if (isPressed)
+
+			V3 res;
+			if (isPressed) 
 			{
 				glfwGetCursorPos(this->window->GetHandle(), &mouseDirX, &mouseDirY);
+				// shot a ray
+				Ray r(rayOrigin, rayOrigin - mousePickingWorldSpace.toV3());
+				if (r.Intersect(res, XZ2Plane, mousePickingWorldSpace.toV3()))
+				{
+					Debug::DrawLine(V4(res - V3(0, 3, 0), 1), V4(res - V3(0, 0, 0), 1), V4(0, 0, 1, 1));
+				}
 			}
-			// shot a ray
-			Ray r(cam.getPos(), cam.getPos() - mousePickingWorldSpace.toV3());
-			V3 res;
-			// beginX
-			if (r.Intersect(res, XZPlane, mousePickingWorldSpace.toV3()))
-			{
-				Debug::DrawLine(V4(res - V3(0, 1, 0), 1), V4(res + (V3(0, 1, 0)), 1), V4(0, 0, 1, 1));
-				Debug::DrawSquare(V4(res.x, res.y, res.z));
-				// printf("%.3f %.3f %.3f\n", res.x, res.y, res.z);
-			}
-			// if (r.Intersect(res, YZPlane, mousePickingWorldSpace.toV3()))
-			// {
-			// 	Debug::DrawLine(V4(res - V3(10, 0, 0), 1), V4(res + (V3(10, 0, 0)), 1), V4(0, 1, 0, 1));
-			// }
-			// if (r.Intersect(res, XYPlane, mousePickingWorldSpace.toV3()))
-			// {
-			// 	Debug::DrawLine(V4(res - V3(0, 0, 10), 1), V4(res + (V3(0, 0, 10)), 1), V4(1, 0, 0, 1));
-			// }
-
-			// if (r.Intersect(res, XZ2Plane, mousePickingWorldSpace.toV3()))
-			// {
-			// 	Debug::DrawLine(V4(res - V3(0, 10, 0), 1), V4(res + (V3(0, 10, 0)), 1), V4(0, 0, 1, 1));
-			// }
-			// if (r.Intersect(res, YZ2Plane, mousePickingWorldSpace.toV3()))
-			// {
-			// 	Debug::DrawLine(V4(res - V3(10, 0, 0), 1), V4(res + (V3(10, 0, 0)), 1), V4(0, 1, 0, 1));
-			// }
-			// if (r.Intersect(res, XY2Plane, mousePickingWorldSpace.toV3()))
-			// {
-			// 	Debug::DrawLine(V4(res - V3(0, 0, 10), 1), V4(res + (V3(0, 0, 10)), 1), V4(1, 0, 0, 1));
-			// }
-			
 
 			//Implement a gravitational acceleration on the fireHydrant
 			//fireHydrant->actor->velocity = fireHydrant->actor->velocity + fireHydrant->actor->mass * g;
@@ -262,49 +232,48 @@ namespace Example
 			//fireHydrantProjectionViewTransform = cam.pv() * fireHydrantWorldSpaceTransform/* * Scalar(V4(.1, .1, .1))*/;
 
 			// cube world space
-			// cubeWorldSpaceTransform = cubeWorldSpaceTransform *
-			// 							Translate(V4(0, 0, cos(frameIndex / 20.f)));
+			cubeWorldSpaceTransform = cubeWorldSpaceTransform * Translate(V4((d - a), (q - e), (w - s), 1) * camSpeed);
 
-			// // cube view space
-			// cubeProjectionViewTransform = cam.pv() * cubeWorldSpaceTransform;
+			// cube view space
+			cubeProjectionViewTransform = cam.pv() * cubeWorldSpaceTransform;
 
 			
 
 			for (size_t i = 0; i < 100; i++)
 			{
-				quadProjectionViewTransform[i] = cam.pv() * quadWorldSpaceTransform[i];
+				quadProjectionViewTransform[i] = cam.pv() * quadWorldSpaceTransform[i] * Scalar(V4(0.1, 0.001, 0.1));
 			}
 
 			//--------------------real-time render section--------------------
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			fireHydrantScript->setM4(cam.pv(), "m4ProjViewPos");
-			// cubeScript->setM4(cam.pv(), "m4ProjViewPos");
+			//fireHydrantScript->setM4(cam.pv(), "m4ProjViewPos");
+			cubeScript->setM4(cam.pv(), "m4ProjViewPos");
 
-			//light.bindLight(fireHydrantScript, cam.getPos());
+			light.bindLight(fireHydrantScript, cam.getPos());
 			//fireHydrant->DrawScene(fireHydrantProjectionViewTransform, fireHydrantColor);
 
-			//light.bindLight(cubeScript, cam.getPos());
-			// cube->DrawScene(cubeProjectionViewTransform, cubeColor);
+			light.bindLight(cubeScript, cam.getPos());
+			cube->DrawScene(cubeProjectionViewTransform, cubeColor);
 
-			// for (int i = 0; i < 100; i++)
-			// {
-			// 	if (plane->pointIsOnPlane(quadWorldSpaceTransform[i].toV3(), .0000001))
-			// 	{
-			// 		cube->DrawScene(quadProjectionViewTransform[i], fireHydrantColor);
-			// 	}
-			// }
+			for (int i = 0; i < 100; i++)
+			{
+				V3 distToIntersect = V3(res.x - quadWorldSpaceTransform[i].toV3().x, 0, res.z - quadWorldSpaceTransform[i].toV3().z);
+				if (abs(distToIntersect.x) < .1f && abs(distToIntersect.z) < .1f)
+				{
+					printf("hit (%d, %d)\n", i % 10, i / 10);
+				}
+				cube->DrawScene(quadProjectionViewTransform[i], fireHydrantColor * (abs(distToIntersect.x) < .1f && abs(distToIntersect.z) < .1f ? 1 : 0));
+			}
 
-			// usleep(10000);
 			this->window->Update();
 			frameIndex++;
 
 			Debug::Render(cam.pv());
-			// Debug::Render(cam.pv() * Translate(V4(cam.getPos(), 1)));
 			this->window->SwapBuffers();
-			auto finish = std::chrono::system_clock::now();
+			auto finishTimer = std::chrono::system_clock::now();
 #ifdef __linux__
-			duration = std::chrono::duration_cast<std::chrono::microseconds>(finish - start).count();
+			duration = std::chrono::duration_cast<std::chrono::microseconds>(finishTimer - startTimer).count();
 #endif
 		}
 	}

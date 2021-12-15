@@ -25,8 +25,8 @@ public:
 	float back;
 
 	static std::shared_ptr<MeshResource> Cube();
-	bool findCenterOfMass();
-	bool findbounds();
+	void findCenterOfMass();
+	void findbounds();
 	static std::vector<V3> LoadVerticesFromFile(const char *pathToFile);
 	static std::shared_ptr<MeshResource> LoadObj(const char *pathToFile);
 	MeshResource();

@@ -6,7 +6,6 @@
 #define M_PI 3.141592553584
 #endif
 
-
 #pragma region Vector2
 //	Vector operations: +, -, *, length, normalize
 
@@ -33,6 +32,7 @@ struct V2
 
 	void operator+=(V2 right);
 	void operator-=(V2 right);
+	V2 operator-();
 	void operator*=(V2 right);
 	void operator*=(float right);
 	void operator/=(V2 right);
@@ -62,6 +62,15 @@ inline void V2::operator-=(V2 right)
 {
 	for (size_t i = 0; i < 2; i++)
 		data[i] -= right[i];
+}
+
+inline V2 V2::operator-()
+{
+	for (size_t i = 0; i < 2; i++)
+	{
+		data[i] = -data[i];
+	}
+	return *this;	
 }
 
 inline void V2::operator*=(V2 right)
@@ -112,7 +121,6 @@ inline float V2::Length2()
 {
 	return x * x + y * y;
 }
-	
 
 inline void V2::Normalize()
 {
@@ -249,6 +257,7 @@ struct V3
 
 	void operator+=(V3 right);
 	void operator-=(V3 right);
+	V3 operator-();
 	void operator*=(V3 right);
 	void operator*=(float right);
 	void operator/=(V3 right);
@@ -283,6 +292,13 @@ inline void V3::operator-=(V3 right)
 		data[i] -= right[i];
 }
 
+inline V3 V3::operator-()
+{
+	for (size_t i = 0; i < 3; i++)
+		data[i] = -data[i];
+	return *this;
+}
+
 inline void V3::operator*=(V3 right)
 {
 	for (size_t i = 0; i < 3; i++)
@@ -298,17 +314,13 @@ inline void V3::operator*=(float right)
 inline void V3::operator/=(V3 right)
 {
 	for (size_t i = 0; i < 3; i++)
-	{
 		data[i] /= right[i];
-	}
 }
 
 inline void V3::operator/=(float right)
 {
 	for (size_t i = 0; i < 3; i++)
-	{
 		data[i] /= right;
-	}
 }
 
 inline float V3::Dot(V3 right)
@@ -338,8 +350,8 @@ inline void V3::Normalize()
 {
 	float length = Length();
 	if (length)
-	for (size_t i = 0; i < 3; i++)
-		data[i] /= length;
+		for (size_t i = 0; i < 3; i++)
+			data[i] /= length;
 }
 
 //	operator functions
@@ -381,27 +393,21 @@ inline V3 operator*(float left, V3 right)
 inline V3 operator/(V3 left, V3 right)
 {
 	for (size_t i = 0; i < 3; i++)
-	{
 		left[i] /= right[i];
-	}
 	return left;
 }
 
 inline V3 operator/(V3 left, float right)
 {
 	for (size_t i = 0; i < 3; i++)
-	{
 		left[i] /= right;
-	}
 	return left;
 }
 
 inline V3 operator/(float left, V3 right)
 {
 	for (size_t i = 0; i < 3; i++)
-	{
 		right[i] /= left;
-	}
 	return right;
 }
 
@@ -479,6 +485,7 @@ struct V4
 
 	void operator+=(V4 right);
 	void operator-=(V4 right);
+	V4 operator-();
 	void operator*=(V4 right);
 	void operator*=(float right);
 	void operator/=(V4 right);
@@ -517,6 +524,13 @@ inline void V4::operator-=(V4 right)
 {
 	for (size_t i = 0; i < 4; i++)
 		data[i] -= right[i];
+}
+
+inline V4 V4::operator-()
+{
+	for (size_t i = 0; i < 4; i++)
+		data[i] = -data[i];
+	return *this;
 }
 
 inline void V4::operator*=(V4 right)
@@ -674,7 +688,6 @@ inline V4 Normalize(V4 vector)
  *		Transpose and inverse.
  */
 
-
 // data[rows][columns]
 struct M4
 {
@@ -707,19 +720,15 @@ inline V3 M4::toV3()
 {
 	V3 temp;
 	for (size_t i = 0; i < 3; i++)
-	{
 		temp[i] = (*this)[i][3];
-	}
 	return temp;
 }
 
-inline V3 M4toV3(const M4& matrix)
+inline V3 M4toV3(const M4 &matrix)
 {
 	V3 temp;
 	for (size_t i = 0; i < 3; i++)
-	{
 		temp[i] = (matrix)[i][3];
-	}
 	return temp;
 }
 
@@ -786,13 +795,11 @@ inline M4 Inverse(M4 matrix)
 
 	size_t k = 0;
 	for (size_t i = 0; i < 4; i++)
-	{
 		for (size_t j = 0; j < 4; j++)
 		{
 			m[k] = matrix[i][j];
 			k++;
 		}
-	}
 	float det;
 
 	/*
@@ -946,9 +953,7 @@ inline M4 Inverse(M4 matrix)
 
 	else
 		for (size_t i = 0; i < 16; i++)
-		{
 			matrix[i / 4][i % 4] /= det;
-		}
 	return matrix;
 }
 
@@ -959,13 +964,11 @@ inline void Inverse(M4 &matrix)
 
 	size_t k = 0;
 	for (size_t i = 0; i < 4; i++)
-	{
 		for (size_t j = 0; j < 4; j++)
 		{
 			m[k] = matrix[i][j];
 			k++;
 		}
-	}
 	float det;
 
 	/*
@@ -1119,13 +1122,11 @@ inline void Inverse(M4 &matrix)
 
 	else
 		for (size_t i = 0; i < 16; i++)
-		{
 			matrix[i / 4][i % 4] /= det;
-		}
 }
 
 // Line with direction of line and rotation around axis by theta radians
-inline M4 Rotation(V4 line, float theta)
+inline M4 Rotation(V3 line, float theta)
 {
 	line.Normalize();
 	M4 temp;
@@ -1213,66 +1214,78 @@ inline M4 projection(float fov, float aspect, float n, float f)
 
 struct Quat
 {
-	float scalar;
-	union
-	{
-		struct
-		{
-			float x, y, z, w;
-		};
-		struct
-		{
-			float data[4];
-		};
-	};
+	float w;
+	V3 v;
+			
+	Quat() {};
+	inline Quat(const V4 &n, float rad);
+	Quat Inverse();
+	Quat operator*(const Quat& rhs);
+	V3 operator*(const V3& right);
 
-	inline Quat();
-	inline Quat(float x, float y, float z, float w);
-
-	// to Euler angles
-
-	// http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-17-quaternions/
 };
 
-Quat::Quat()
+
+Quat::Quat(const V4 &n, float rad)
 {
-	x = 0;
-	y = 0;
-	z = 0;
-	w = 0;
+	w = cosf(rad * .5f);
+
+	v.x = n.x * sinf(rad * .5f);
+	v.y = n.y * sinf(rad * .5f);
+	v.z = n.z * sinf(rad * .5f);
 }
 
-Quat::Quat(float x, float y, float z, float w) : x(x), y(y), z(z), w(w)
+inline Quat Quat::Inverse()
 {
-
+	Quat q;
+	q.w = w;
+	q.v = -v;
+	return q;
 }
+
+inline Quat Quat::operator*(const Quat& right)
+{
+	Quat r;
+
+	r.w = w*right.w + v.Dot(right.v);
+	r.v = v * right.w + right.v * w + Cross(v, right.v);
+
+	return r;
+}
+
+inline V3 Quat::operator*(const V3& right)
+{
+	Quat p;
+	p.w = 0;
+	p.v = right;
+	V3 vcV = Cross(v, right);
+	return right + vcV * (2 * w) + Cross(v, vcV) * 2;
+}
+
 
 #pragma endregion // Quaternions
 
-
 #pragma region Plane
-
 
 struct Plane
 {
 	V3 normal;
 	V3 point;
 	float MARGIN = 1.e-5f;
-	
+
 	inline Plane(V3 point, V3 normal);
-	bool pointIsOnPlane(const V3& point, float margin);
+	bool pointIsOnPlane(const V3 &point, float margin);
 };
 
 Plane::Plane(V3 point, V3 normal) : point(point), normal(normal)
 {
-
 }
 
-inline bool Plane::pointIsOnPlane(const V3& point, float margin)
+inline bool Plane::pointIsOnPlane(const V3 &point, float margin)
 {
 	float result = Dot(normal, point - this->point);
 	return result <= margin ||
-	result >= -margin;
+		   result >= -margin;
 }
 
 #pragma endregion // Plane
@@ -1284,39 +1297,34 @@ struct Ray
 	V3 origin;
 	V3 dir;
 	inline Ray(V3 origin, V3 dir);
-	bool Intersect(V3& res, const Plane plane);
-	bool Intersect(V3& res, const Plane plane, const V3& end);
+	bool Intersect(V3 &res, const Plane plane);
+	bool Intersect(V3 &res, const Plane plane, const V3 &end);
 };
 
 Ray::Ray(V3 origin, V3 dir) : origin(origin), dir(dir)
 {
-	
 }
 
-inline bool Ray::Intersect(V3& res, const Plane plane)
+inline bool Ray::Intersect(V3 &res, const Plane plane)
 {
-    if (Dot(plane.normal, dir) == 0.f) return false;
+	if (Dot(plane.normal, dir) == 0.f)
+		return false;
 
-    float d = Dot(plane.normal, origin);
-    float t = (d - Dot(plane.normal, origin)) / Dot(plane.normal, dir);
-    
-    res = origin + Normalize(dir) * t;
-    return true;
+	float d = Dot(plane.normal, origin);
+	float t = (d - Dot(plane.normal, origin)) / Dot(plane.normal, dir);
+
+	res = origin + Normalize(dir) * t;
+	return true;
 }
 
-inline bool Ray::Intersect(V3& res, Plane plane, const V3& end)
+inline bool Ray::Intersect(V3 &res, Plane plane, const V3 &end)
 {
-	// n - plane normal
-	// c - any point in the plane
-	// x0 - the beginning of our line
-	// x1 - the end of our line
+	V3 rayDir = end - origin;
+	V3 dirTowardsPlane = plane.point - origin;
 
-	V3 v = end - origin;
-	V3 w = plane.point - origin;
+	float k = dirTowardsPlane.Dot(plane.normal) / rayDir.Dot(plane.normal);
 
-	float k = w.Dot(plane.normal)/v.Dot(plane.normal);
-
-	res = origin + k * v;
+	res = origin + k * rayDir;
 
 	return k >= 0 && k <= 1;
 }

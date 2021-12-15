@@ -9,7 +9,7 @@ Camera::Camera()
 Camera::Camera(float fov, float aspect, float n, float f) : fov(fov), aspect(aspect), n(n), f(f)
 {
 	pos = V4(0, 0, 0);
-	dir = V4(0, 1, 0);
+	dir = V3(0, 1, 0);
 }
 
 V3 Camera::getPos()
@@ -22,13 +22,17 @@ void Camera::setPos(V4 pos)
 	this->pos = pos;
 }
 
-void Camera::setRot(V4 dir, float rad)
+void Camera::setRot(V3 dir, float rad)
 {
-	this->dir = dir;
-	this->rad = rad;
+	rotation = Rotation(dir, rad);
+}
+
+void Camera::setRot(M4 rotMat)
+{
+	rotation = rotMat;
 }
 
 M4 Camera::pv()
 {
-	return projection(fov, aspect, n, f) * Rotation(dir, rad) * Translate(pos);
+	return projection(fov, aspect, n, f) * rotation * Translate(pos);
 }

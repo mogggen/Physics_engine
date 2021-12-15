@@ -75,16 +75,16 @@ namespace Example
 			} });
 
 		window->SetMousePressFunction([this](int32 button, int32 action, int32 mods)
-									  { isPressed = button == GLFW_MOUSE_BUTTON_1 && action; });
+									  { isPressed = button == GLFW_MOUSE_BUTTON_1 && action;
+									  	isLeftPressed = button == GLFW_MOUSE_BUTTON_2 && action;});
 
 		window->SetMouseMoveFunction([this](float64 x, float64 y)
 									 {
-			if (isPressed)
+			if (isLeftPressed)
 			{
-				senseX = prevX + (0.002 * (x - width / 2));
-				senseY = prevY + (0.002 * (y - height / 2));
-				cubeProjectionViewTransform = Rotation(V4(1, 0, 0), senseY) * Rotation(V4(0, 1, 0), senseX);
-				fireHydrantProjectionViewTransform = Rotation(V4(1, 0, 0), senseY) * Rotation(V4(0, 1, 0), senseX);
+				senseX = prevX + 0.002 * (x - width / 2);
+				senseY = prevY + 0.002 * (y - height / 2);
+				cam.setRot(Rotation(V3(0, 1, 0), M_PI) * Rotation(V3(1, 0, 0), senseY) * Rotation(V3(0, 1, 0), senseX));
 			} });
 
 		if (this->window->Open())
@@ -158,20 +158,25 @@ namespace Example
 		// gravity
 		cam = Camera(90, (float)width / height, 0.01f, 1000.0f);
 		cam.setPos(V4(0, 0, 0));
-		cam.setRot(V4(0, 1, 0), M_PI);
-		cam.setRot(V4(1, 0, 0), M_PI / 4);
+		cam.setRot(V3(0, 1, 0), M_PI);
+		// cam.setRot(V4(1, 0, 0), M_PI / 4);
+
+		V4 start[499];
+		V4 dirSize[499];
+		size_t countLines = 0;
 
 		Lightning light(V3(10, 10, 10), V3(1, 1, 1), .01f);
 
 		float camSpeed = .08f;
 
 		// set identies
-		fireHydrantWorldSpaceTransform = fireHydrantProjectionViewTransform = Translate(V4());
+		fireHydrantWorldSpaceTransform = Translate(V4());
+		fireHydrantProjectionViewTransform = Translate(V4());
 
 		fireHydrantMesh->findbounds();
 		
 
-		cubeWorldSpaceTransform = Translate(V4(0, 0, 4, 1));
+		cubeWorldSpaceTransform = Translate(V4(0, -1, 0, 1));
 		cubeProjectionViewTransform = Translate(V4());
 
 		M4 quadWorldSpaceTransform[100];
@@ -193,17 +198,20 @@ namespace Example
 
 			//--------------------math section--------------------
 			cam.setPos(cam.getPos() + Normalize(V3((d - a), (q - e), (w - s))) * -camSpeed);
-			V3 rayOrigin = cam.getPos() * -1.f;
+			V3 rayOrigin = cam.getPos() * 1.f;
 			
-			V4 normalizedDeviceCoordinates(mouseDirX / width * 2 - 1, 1 - mouseDirY / height * 2, 1, 1);
-			V4 mousePickingWorldSpace = Inverse(cam.pv()) * normalizedDeviceCoordinates;
+			
 			//printf("rayOrigin %.3f %.3f %.3f mousePickingWorldSpace %.3f %.3f %.3f\n", rayOrigin.x, rayOrigin.y, rayOrigin.z, mousePickingWorldSpace.x, mousePickingWorldSpace.y, mousePickingWorldSpace.z);
 			
-			Debug::DrawLine(V4(rayOrigin, 1), mousePickingWorldSpace, V4(1, 1, 1, 1));
+			for (size_t i = 0; i < countLines; i++)
+			{
+				Debug::DrawLine(start[i], dirSize[i], 1.f, V4(1, 1, 1, 1));
+			}
+			
 			//Debug::DrawBB(*fireHydrant->getMesh(), V4(0, 1, 1, 1), fireHydrantWorldSpaceTransform);
 			Debug::DrawAABB(*fireHydrant->getMesh(), V4(1, 0, 0, 1), fireHydrantWorldSpaceTransform);
 
-			Plane XZ2Plane(V3(0, -.0f, 0), V3(0, fireHydrantMesh->bottom, 0));
+			Plane XZ2Plane(V3(0, fireHydrantMesh->bottom, 0), V3(0, fireHydrantMesh->bottom, 0));
 
 
 			V3 res;
@@ -211,7 +219,17 @@ namespace Example
 			{
 				glfwGetCursorPos(this->window->GetHandle(), &mouseDirX, &mouseDirY);
 				// shot a ray
-				Ray r(rayOrigin, rayOrigin - mousePickingWorldSpace.toV3());
+				V4 normalizedDeviceCoordinates(mouseDirX / width * 2 - 1, 1 - mouseDirY / height * 2, 1, 1);
+				V4 mousePickingWorldSpace = Inverse(cam.pv()) * normalizedDeviceCoordinates;
+				Ray r(rayOrigin, mousePickingWorldSpace.toV3() - rayOrigin);
+				
+				if (countLines < 0.499)
+				{
+					start[countLines] = V4(rayOrigin, 1);
+					dirSize[countLines++] = mousePickingWorldSpace.toV3() - rayOrigin;
+				}
+
+
 				if (r.Intersect(res, XZ2Plane, mousePickingWorldSpace.toV3()))
 				{
 					Debug::DrawLine(V4(res - V3(0, 3, 0), 1), V4(res - V3(0, 0, 0), 1), V4(0, 0, 1, 1));
@@ -232,10 +250,10 @@ namespace Example
 			//fireHydrantProjectionViewTransform = cam.pv() * fireHydrantWorldSpaceTransform/* * Scalar(V4(.1, .1, .1))*/;
 
 			// cube world space
-			cubeWorldSpaceTransform = cubeWorldSpaceTransform * Translate(V4((d - a), (q - e), (w - s), 1) * camSpeed);
+			cubeWorldSpaceTransform = Translate(V4(res.x, res.y, res.z, 1));
 
 			// cube view space
-			cubeProjectionViewTransform = cam.pv() * cubeWorldSpaceTransform;
+			cubeProjectionViewTransform = cam.pv() * cubeWorldSpaceTransform * Scalar(V4(.1, .1, .1));
 
 			
 
@@ -251,19 +269,19 @@ namespace Example
 			cubeScript->setM4(cam.pv(), "m4ProjViewPos");
 
 			light.bindLight(fireHydrantScript, cam.getPos());
-			//fireHydrant->DrawScene(fireHydrantProjectionViewTransform, fireHydrantColor);
-
 			light.bindLight(cubeScript, cam.getPos());
+
+			//fireHydrant->DrawScene(fireHydrantProjectionViewTransform, fireHydrantColor);
 			cube->DrawScene(cubeProjectionViewTransform, cubeColor);
 
 			for (int i = 0; i < 100; i++)
 			{
-				V3 distToIntersect = V3(res.x - quadWorldSpaceTransform[i].toV3().x, 0, res.z - quadWorldSpaceTransform[i].toV3().z);
-				if (abs(distToIntersect.x) < .1f && abs(distToIntersect.z) < .1f)
+				V3 distToIntersect = V3(res.x - quadWorldSpaceTransform[i].toV3().x, res.y - quadWorldSpaceTransform[i].toV3().y, res.z - quadWorldSpaceTransform[i].toV3().z);
+				if (abs(distToIntersect.x) < .1f && abs(distToIntersect.y) < .1f && abs(distToIntersect.z) < .1f)
 				{
 					printf("hit (%d, %d)\n", i % 10, i / 10);
 				}
-				cube->DrawScene(quadProjectionViewTransform[i], fireHydrantColor * (abs(distToIntersect.x) < .1f && abs(distToIntersect.z) < .1f ? 1 : 0));
+				cube->DrawScene(quadProjectionViewTransform[i], fireHydrantColor * (abs(distToIntersect.x) < .1f && abs(distToIntersect.y) < 1.f && abs(distToIntersect.z) < .1f ? 1 : 0));
 			}
 
 			this->window->Update();

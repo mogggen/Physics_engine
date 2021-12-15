@@ -9,5 +9,6 @@ namespace Debug
     void DrawAABB(const MeshResource& mesh, V4 color, M4 modelMatrix);
     void DrawBB(const MeshResource& mesh, V4 color, M4 modelMatrix);
     void DrawLine(V4 start, V4 end, V4 color);
+    void DrawLine(V4 start, V4 dir, float size, V4 color);
     void DrawSquare(V4, float size=1.f, V4 color=V4(1, 1, 1, 1));
 }

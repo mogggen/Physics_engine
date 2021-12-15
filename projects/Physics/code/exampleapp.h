@@ -48,7 +48,7 @@ namespace Example
 		float64 prevX = 0, prevY = 0;
 		float64 senseX = 0, senseY = 0;
 		bool w, a, s, d,
-			q, e, isPressed = false;
+			q, e, isPressed = false, isLeftPressed = false;
 
 		GLuint program;
 		GLuint vertexShader;

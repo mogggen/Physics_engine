@@ -15,7 +15,7 @@ namespace Debug
     };
     struct DebugRenderBuffer
     {
-        GLuint vbo = 0;
+        GLuint vertexBuffer = 0;
         int verticesAmount = 0;
         Vertex vertices[MAX_SIZE];
         ShaderResource sr;
@@ -154,6 +154,12 @@ namespace Debug
         PushVertex(&lineBuf, Vertex{ end, color });
     }
 
+    void DrawLine(V4 start, V4 dir, float size, V4 color)
+    {
+        PushVertex(&lineBuf, Vertex{ start, color});
+        PushVertex(&lineBuf, Vertex{ dir * size, color});
+    }
+
     void DrawSquare(V4 center, float size, V4 color)
     {
         PushVertex(&triBuf, Vertex{ center + V3(-size / 2, 0, -size / 2), color });
@@ -168,15 +174,15 @@ namespace Debug
     void Render(M4 cameraVPMatrix)
     {
         // Rendering debug triangles
-        if (triBuf.vbo != 0)
+        if (triBuf.vertexBuffer != 0)
         {
-            glBindBuffer(GL_ARRAY_BUFFER, triBuf.vbo);
+            glBindBuffer(GL_ARRAY_BUFFER, triBuf.vertexBuffer);
         }
         else
         {
             triBuf.sr.LoadShader(triBuf.sr.vs, triBuf.sr.ps, "engine/render/DebugVShader.glsl", "engine/render/DebugPShader.glsl");
-            glGenBuffers(1, &triBuf.vbo);
-            glBindBuffer(GL_ARRAY_BUFFER, triBuf.vbo);
+            glGenBuffers(1, &triBuf.vertexBuffer);
+            glBindBuffer(GL_ARRAY_BUFFER, triBuf.vertexBuffer);
             glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * MAX_SIZE, nullptr, GL_DYNAMIC_DRAW);
         }
         triBuf.sr.bindShaderResource();
@@ -191,15 +197,15 @@ namespace Debug
         triBuf.verticesAmount = 0;
 
         // Rendering debug lines
-        if (lineBuf.vbo != 0)
+        if (lineBuf.vertexBuffer != 0)
         {
-            glBindBuffer(GL_ARRAY_BUFFER, lineBuf.vbo);
+            glBindBuffer(GL_ARRAY_BUFFER, lineBuf.vertexBuffer);
         }
         else
         {
             lineBuf.sr.LoadShader(lineBuf.sr.vs, lineBuf.sr.ps, "engine/render/DebugVShader.glsl", "engine/render/DebugPShader.glsl");
-            glGenBuffers(1, &lineBuf.vbo);
-            glBindBuffer(GL_ARRAY_BUFFER, lineBuf.vbo);
+            glGenBuffers(1, &lineBuf.vertexBuffer);
+            glBindBuffer(GL_ARRAY_BUFFER, lineBuf.vertexBuffer);
             glBufferData(GL_ARRAY_BUFFER, sizeof(Vertex) * MAX_SIZE, nullptr, GL_DYNAMIC_DRAW);
         }
         lineBuf.sr.bindShaderResource();

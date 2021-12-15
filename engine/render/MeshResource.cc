@@ -255,7 +255,7 @@ std::shared_ptr<MeshResource> MeshResource::Cube()
 }
 
 //Model Space
-bool MeshResource::findCenterOfMass()
+void MeshResource::findCenterOfMass()
 {
 	size_t i = 0;
 	V4 sumPositions = V4();
@@ -265,10 +265,9 @@ bool MeshResource::findCenterOfMass()
 		sumPositions = positions[i];
 	}
 	centerOfMass = sumPositions * (1.f / ++i);
-	return true;
 }
 
-bool MeshResource::findbounds()
+void MeshResource::findbounds()
 {
 	// can't be less than the minimum value of 'undefined', so let's not, mate?
 	left = right = positions[0].x;
@@ -297,7 +296,6 @@ bool MeshResource::findbounds()
 		if (positions[i].z > back)
 			back = positions[i].z;
 	}
-	return true;
 }
 
 // because this can't be done in the constructor :D

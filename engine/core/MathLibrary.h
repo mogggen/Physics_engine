@@ -1269,19 +1269,20 @@ inline V3 Quat::operator*(const V3& right)
 
 struct Plane
 {
-	V3 normal;
-	V3 point;
+	V4 point;
+	V4 normal;
 	float MARGIN = 1.e-5f;
 
-	inline Plane(V3 point, V3 normal);
-	bool pointIsOnPlane(const V3 &point, float margin);
+	inline Plane(V4 point, V4 normal);
+	bool pointIsOnPlane(const V4 &point, float margin);
 };
 
-Plane::Plane(V3 point, V3 normal) : point(point), normal(normal)
+Plane::Plane(V4 point, V4 normal) : point(point), normal(normal)
 {
+
 }
 
-inline bool Plane::pointIsOnPlane(const V3 &point, float margin)
+inline bool Plane::pointIsOnPlane(const V4 &point, float margin)
 {
 	float result = Dot(normal, point - this->point);
 	return result <= margin ||
@@ -1294,37 +1295,27 @@ inline bool Plane::pointIsOnPlane(const V3 &point, float margin)
 
 struct Ray
 {
-	V3 origin;
-	V3 dir;
-	inline Ray(V3 origin, V3 dir);
-	bool Intersect(V3 &res, const Plane plane);
-	bool Intersect(V3 &res, const Plane plane, const V3 &end);
+	V4 origin;
+	V4 dir;
+	inline Ray(V4 origin, V4 dir);
+	bool Intersect(V4 &res, const Plane plane, const V4 &end);
 };
 
-Ray::Ray(V3 origin, V3 dir) : origin(origin), dir(dir)
+Ray::Ray(V4 origin, V4 dir) : origin(origin), dir(dir)
 {
 }
 
-inline bool Ray::Intersect(V3 &res, const Plane plane)
+inline bool Ray::Intersect(V4 &res, Plane plane, const V4 &end)
 {
-	if (Dot(plane.normal, dir) == 0.f)
-		return false;
-
-	float d = Dot(plane.normal, origin);
-	float t = (d - Dot(plane.normal, origin)) / Dot(plane.normal, dir);
-
-	res = origin + Normalize(dir) * t;
-	return true;
-}
-
-inline bool Ray::Intersect(V3 &res, Plane plane, const V3 &end)
-{
-	V3 rayDir = end - origin;
-	V3 dirTowardsPlane = plane.point - origin;
+	V4 rayDir = end - origin;
+	rayDir.w = 0;
+	V4 dirTowardsPlane = plane.point - origin;
+	dirTowardsPlane.w = 0;
 
 	float k = dirTowardsPlane.Dot(plane.normal) / rayDir.Dot(plane.normal);
 
 	res = origin + k * rayDir;
+	res.w = 1;
 
 	return k >= 0 && k <= 1;
 }

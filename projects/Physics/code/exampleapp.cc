@@ -198,7 +198,7 @@ namespace Example
 
 			//--------------------math section--------------------
 			cam.setPos(cam.getPos() + Normalize(V3((d - a), (q - e), (w - s))) * -camSpeed);
-			V3 rayOrigin = cam.getPos() * 1.f;
+			V4 rayOrigin = V4(cam.getPos() * -1.f, 1);
 			
 			
 			//printf("rayOrigin %.3f %.3f %.3f mousePickingWorldSpace %.3f %.3f %.3f\n", rayOrigin.x, rayOrigin.y, rayOrigin.z, mousePickingWorldSpace.x, mousePickingWorldSpace.y, mousePickingWorldSpace.z);
@@ -211,28 +211,29 @@ namespace Example
 			//Debug::DrawBB(*fireHydrant->getMesh(), V4(0, 1, 1, 1), fireHydrantWorldSpaceTransform);
 			Debug::DrawAABB(*fireHydrant->getMesh(), V4(1, 0, 0, 1), fireHydrantWorldSpaceTransform);
 
-			Plane XZ2Plane(V3(0, fireHydrantMesh->bottom, 0), V3(0, fireHydrantMesh->bottom, 0));
+			Plane XZ2Plane(V4(0, fireHydrantMesh->bottom, 0, 1), V4(0, fireHydrantMesh->bottom, 0, 0));
 
 
-			V3 res;
+			V4 res;
 			if (isPressed) 
 			{
 				glfwGetCursorPos(this->window->GetHandle(), &mouseDirX, &mouseDirY);
 				// shot a ray
 				V4 normalizedDeviceCoordinates(mouseDirX / width * 2 - 1, 1 - mouseDirY / height * 2, 1, 1);
 				V4 mousePickingWorldSpace = Inverse(cam.pv()) * normalizedDeviceCoordinates;
-				Ray r(rayOrigin, mousePickingWorldSpace.toV3() - rayOrigin);
+				Ray r(rayOrigin, mousePickingWorldSpace - rayOrigin);
 				
-				if (countLines < 0.499)
+				if (countLines < 499)
 				{
-					start[countLines] = V4(rayOrigin, 1);
+					start[countLines] = rayOrigin;
 					dirSize[countLines++] = mousePickingWorldSpace.toV3() - rayOrigin;
 				}
+				else countLines = 0;
 
 
-				if (r.Intersect(res, XZ2Plane, mousePickingWorldSpace.toV3()))
+				if (r.Intersect(res, XZ2Plane, mousePickingWorldSpace))
 				{
-					Debug::DrawLine(V4(res - V3(0, 3, 0), 1), V4(res - V3(0, 0, 0), 1), V4(0, 0, 1, 1));
+					Debug::DrawLine(res - V4(0, 3, 0), res, V4(0, 0, 1, 1));
 				}
 			}
 

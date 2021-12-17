@@ -697,9 +697,19 @@ struct M4
 
 	inline M4();
 	inline M4(V4 v[4]);
+	inline M4(V4 v0,V4 v1,V4 v2,V4 v3);
 	V3 toV3();
 
+	static M4 identity() { return M4{
+		V4{1,0,0,0},
+		V4{0,1,0,0},
+		V4{0,0,1,0},
+		V4{0,0,0,1}
+	};};
+
 	void Transpose();
+
+	void Inverse();
 };
 
 M4::M4()
@@ -714,6 +724,14 @@ M4::M4(V4 v[4])
 {
 	for (size_t i = 0; i < 4; i++)
 		(*this)[i] = v[i];
+}
+
+M4::M4(V4 v0,V4 v1,V4 v2,V4 v3)
+{
+	(*this)[0] = v0;
+	(*this)[1] = v1;
+	(*this)[2] = v2;
+	(*this)[3] = v3;
 }
 
 inline V3 M4::toV3()
@@ -777,7 +795,7 @@ inline M4 Transpose(M4 matrix)
 	{
 		if (i / 4 == i % 4)
 			continue;
-		matrix[i / 4][i % 4] = temp[i / 4][i % 4];
+		matrix[i / 4][i % 4] = temp[i % 4][i / 4];
 	}
 	return matrix;
 }
@@ -957,7 +975,7 @@ inline M4 Inverse(M4 matrix)
 	return matrix;
 }
 
-inline void Inverse(M4 &matrix)
+inline void M4::Inverse()
 {
 	// to hold the matrix values
 	float m[16];
@@ -966,7 +984,7 @@ inline void Inverse(M4 &matrix)
 	for (size_t i = 0; i < 4; i++)
 		for (size_t j = 0; j < 4; j++)
 		{
-			m[k] = matrix[i][j];
+			m[k] = (*this)[i][j];
 			k++;
 		}
 	float det;
@@ -984,7 +1002,7 @@ inline void Inverse(M4 &matrix)
 	*/
 
 	// coloum 0/3
-	matrix[0][0] =
+	(*this)[0][0] =
 		m[5] * m[10] * m[15] -
 		m[5] * m[11] * m[14] -
 		m[9] * m[6] * m[15] +
@@ -992,7 +1010,7 @@ inline void Inverse(M4 &matrix)
 		m[13] * m[6] * m[11] -
 		m[13] * m[7] * m[10];
 
-	matrix[1][0] =
+	(*this)[1][0] =
 		-m[4] * m[10] * m[15] +
 		m[4] * m[11] * m[14] +
 		m[8] * m[6] * m[15] -
@@ -1000,7 +1018,7 @@ inline void Inverse(M4 &matrix)
 		m[12] * m[6] * m[11] +
 		m[12] * m[7] * m[10];
 
-	matrix[2][0] =
+	(*this)[2][0] =
 		m[4] * m[9] * m[15] -
 		m[4] * m[11] * m[13] -
 		m[8] * m[5] * m[15] +
@@ -1008,7 +1026,7 @@ inline void Inverse(M4 &matrix)
 		m[12] * m[5] * m[11] -
 		m[12] * m[7] * m[9];
 
-	matrix[3][0] =
+	(*this)[3][0] =
 		-m[4] * m[9] * m[14] +
 		m[4] * m[10] * m[13] +
 		m[8] * m[5] * m[14] -
@@ -1017,7 +1035,7 @@ inline void Inverse(M4 &matrix)
 		m[12] * m[6] * m[9];
 
 	// column 1/3
-	matrix[0][1] =
+	(*this)[0][1] =
 		-m[1] * m[10] * m[15] +
 		m[1] * m[11] * m[14] +
 		m[9] * m[2] * m[15] -
@@ -1025,7 +1043,7 @@ inline void Inverse(M4 &matrix)
 		m[13] * m[2] * m[11] +
 		m[13] * m[3] * m[10];
 
-	matrix[1][1] =
+	(*this)[1][1] =
 		m[0] * m[10] * m[15] -
 		m[0] * m[11] * m[14] -
 		m[8] * m[2] * m[15] +
@@ -1033,7 +1051,7 @@ inline void Inverse(M4 &matrix)
 		m[12] * m[2] * m[11] -
 		m[12] * m[3] * m[10];
 
-	matrix[2][1] =
+	(*this)[2][1] =
 		-m[0] * m[9] * m[15] +
 		m[0] * m[11] * m[13] +
 		m[8] * m[1] * m[15] -
@@ -1041,7 +1059,7 @@ inline void Inverse(M4 &matrix)
 		m[12] * m[1] * m[11] +
 		m[12] * m[3] * m[9];
 
-	matrix[3][1] =
+	(*this)[3][1] =
 		m[0] * m[9] * m[14] -
 		m[0] * m[10] * m[13] -
 		m[8] * m[1] * m[14] +
@@ -1050,7 +1068,7 @@ inline void Inverse(M4 &matrix)
 		m[12] * m[2] * m[9];
 
 	// column 2/3
-	matrix[0][2] =
+	(*this)[0][2] =
 		m[1] * m[6] * m[15] -
 		m[1] * m[7] * m[14] -
 		m[5] * m[2] * m[15] +
@@ -1058,7 +1076,7 @@ inline void Inverse(M4 &matrix)
 		m[13] * m[2] * m[7] -
 		m[13] * m[3] * m[6];
 
-	matrix[1][2] =
+	(*this)[1][2] =
 		-m[0] * m[6] * m[15] +
 		m[0] * m[7] * m[14] +
 		m[4] * m[2] * m[15] -
@@ -1066,7 +1084,7 @@ inline void Inverse(M4 &matrix)
 		m[12] * m[2] * m[7] +
 		m[12] * m[3] * m[6];
 
-	matrix[2][2] =
+	(*this)[2][2] =
 		m[0] * m[5] * m[15] -
 		m[0] * m[7] * m[13] -
 		m[4] * m[1] * m[15] +
@@ -1074,7 +1092,7 @@ inline void Inverse(M4 &matrix)
 		m[12] * m[1] * m[7] -
 		m[12] * m[3] * m[5];
 
-	matrix[3][2] =
+	(*this)[3][2] =
 		-m[0] * m[5] * m[14] +
 		m[0] * m[6] * m[13] +
 		m[4] * m[1] * m[14] -
@@ -1083,7 +1101,7 @@ inline void Inverse(M4 &matrix)
 		m[12] * m[2] * m[5];
 
 	// column 3/3
-	matrix[0][3] =
+	(*this)[0][3] =
 		-m[1] * m[6] * m[11] +
 		m[1] * m[7] * m[10] +
 		m[5] * m[2] * m[11] -
@@ -1091,7 +1109,7 @@ inline void Inverse(M4 &matrix)
 		m[9] * m[2] * m[7] +
 		m[9] * m[3] * m[6];
 
-	matrix[1][3] =
+	(*this)[1][3] =
 		m[0] * m[6] * m[11] -
 		m[0] * m[7] * m[10] -
 		m[4] * m[2] * m[11] +
@@ -1099,7 +1117,7 @@ inline void Inverse(M4 &matrix)
 		m[8] * m[2] * m[7] -
 		m[8] * m[3] * m[6];
 
-	matrix[2][3] =
+	(*this)[2][3] =
 		-m[0] * m[5] * m[11] +
 		m[0] * m[7] * m[9] +
 		m[4] * m[1] * m[11] -
@@ -1107,7 +1125,7 @@ inline void Inverse(M4 &matrix)
 		m[8] * m[1] * m[7] +
 		m[8] * m[3] * m[5];
 
-	matrix[3][3] =
+	(*this)[3][3] =
 		m[0] * m[5] * m[10] -
 		m[0] * m[6] * m[9] -
 		m[4] * m[1] * m[10] +
@@ -1115,14 +1133,14 @@ inline void Inverse(M4 &matrix)
 		m[8] * m[1] * m[6] -
 		m[8] * m[2] * m[5];
 
-	det = m[0] * matrix[0][0] + m[1] * matrix[1][0] + m[2] * matrix[2][0] + m[3] * matrix[3][0];
+	det = m[0] * (*this)[0][0] + m[1] * (*this)[1][0] + m[2] * (*this)[2][0] + m[3] * (*this)[3][0];
 
 	if (det == 0)
-		matrix = M4();
+		(*this) = M4();
 
 	else
 		for (size_t i = 0; i < 16; i++)
-			matrix[i / 4][i % 4] /= det;
+			(*this)[i / 4][i % 4] /= det;
 }
 
 // Line with direction of line and rotation around axis by theta radians
@@ -1298,23 +1316,45 @@ struct Ray
 	V4 origin;
 	V4 dir;
 	inline Ray(V4 origin, V4 dir);
-	bool Intersect(V4 &res, const Plane plane, const V4 &end);
+	bool Intersect(V4 &res, const Plane &plane);
 };
 
 Ray::Ray(V4 origin, V4 dir) : origin(origin), dir(dir)
 {
 }
 
-inline bool Ray::Intersect(V4 &res, Plane plane, const V4 &end)
+// inline bool Ray::Intersect(V4 &res, const Plane &plane)
+// {
+// 	if (Dot(plane.normal, dir) == 0.f)
+// 		return false;
+
+// 	float d = Dot(plane.normal, origin);
+// 	float t = (d - Dot(plane.normal, origin)) / Dot(plane.normal, dir);
+
+// 	res = origin + Normalize(dir) * t;
+// 	return true;
+// }
+
+// bool intersectPlane(const V3 &n, const V3 &p0, const V3 &l0, const V3 &l, float &t) 
+// { 
+//     // assuming vectors are all normalized
+//     float denom = Dot(n, l); 
+//     if (denom > 1e-6) { 
+//         V3 p0l0 = p0 - l0; 
+//         t = Dot(p0l0, n) / denom; 
+//         return (t >= 0); 
+//     } 
+ 
+//     return false; 
+// } 
+
+inline bool Ray::Intersect(V4 &res, const Plane &plane)
 {
-	V4 rayDir = end - origin;
-	rayDir.w = 0;
 	V4 dirTowardsPlane = plane.point - origin;
-	dirTowardsPlane.w = 0;
 
-	float k = dirTowardsPlane.Dot(plane.normal) / rayDir.Dot(plane.normal);
+	float k = dirTowardsPlane.Dot(plane.normal) / dir.Dot(plane.normal);
 
-	res = origin + k * rayDir;
+	res = origin + k * dir;
 	res.w = 1;
 
 	return k >= 0 && k <= 1;

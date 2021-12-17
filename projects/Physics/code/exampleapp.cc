@@ -157,8 +157,7 @@ namespace Example
 
 		// gravity
 		cam = Camera(90, (float)width / height, 0.01f, 1000.0f);
-		cam.setPos(V4(0, 0, 0));
-		cam.setRot(V3(0, 1, 0), M_PI);
+		//cam.setRot(V3(0, 1, 0), 0);
 		// cam.setRot(V4(1, 0, 0), M_PI / 4);
 
 		V4 start[499];
@@ -197,8 +196,11 @@ namespace Example
 
 
 			//--------------------math section--------------------
-			cam.setPos(cam.getPos() + Normalize(V3((d - a), (q - e), (w - s))) * -camSpeed);
-			V4 rayOrigin = V4(cam.getPos() * -1.f, 1);
+			V4 move = Normalize(V4((d - a), (e - q), (w - s), 0.0f));
+			V4 translation = cam.getPos() * -1.f;
+			V4 tm = translation + move * -camSpeed;
+			cam.setTranslation(tm);
+			V4 rayOrigin = V4(cam.getPos(), 1);
 			
 			
 			//printf("rayOrigin %.3f %.3f %.3f mousePickingWorldSpace %.3f %.3f %.3f\n", rayOrigin.x, rayOrigin.y, rayOrigin.z, mousePickingWorldSpace.x, mousePickingWorldSpace.y, mousePickingWorldSpace.z);
@@ -212,7 +214,9 @@ namespace Example
 			Debug::DrawAABB(*fireHydrant->getMesh(), V4(1, 0, 0, 1), fireHydrantWorldSpaceTransform);
 
 			Plane XZ2Plane(V4(0, fireHydrantMesh->bottom, 0, 1), V4(0, fireHydrantMesh->bottom, 0, 0));
-
+			Debug::DrawLine(V4(0, 0, 0, 1), V4(1, 0, 0, 1), V4(1, 0, 0, 0));
+			Debug::DrawLine(V4(0, 0, 0, 1), V4(0, 1, 0, 1), V4(0, 1, 0, 0));
+			Debug::DrawLine(V4(0, 0, 0, 1), V4(0, 0, 1, 1), V4(0, 0, 1, 0));
 
 			V4 res;
 			if (isPressed) 
@@ -223,7 +227,7 @@ namespace Example
 				V4 mousePickingWorldSpace = Inverse(cam.pv()) * normalizedDeviceCoordinates;
 				Ray r(rayOrigin, mousePickingWorldSpace - rayOrigin);
 				
-				if (countLines < 499)
+				if (countLines < 493)
 				{
 					start[countLines] = rayOrigin;
 					dirSize[countLines++] = mousePickingWorldSpace.toV3() - rayOrigin;
@@ -231,7 +235,7 @@ namespace Example
 				else countLines = 0;
 
 
-				if (r.Intersect(res, XZ2Plane, mousePickingWorldSpace))
+				if (r.Intersect(res, XZ2Plane))
 				{
 					Debug::DrawLine(res - V4(0, 3, 0), res, V4(0, 0, 1, 1));
 				}

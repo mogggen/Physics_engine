@@ -42,7 +42,6 @@ namespace Example
 		Camera cam;
 		uint32_t frameIndex = 0;
 		float x, y, z;
-		V3 camPos;
 		double mouseDirX, mouseDirY;
 
 		float64 prevX = 0, prevY = 0;

@@ -25,11 +25,11 @@ void main()
 
 	vec3 norm = normalize(normalOut);
 
-	float diff = max(dot(norm, lightDir), 0.0);
-	vec3 diffuse = diff * lightColor;
+	float diffkoef = max(dot(norm, lightDir), 0.0);
+	vec3 diffuse = diffkoef * lightColor;
 
-	float spec = pow(max(dot(norm, halfwayDir), 0.0), 64);
-	vec3 specular = lightColor * spec * specularIntensity;
+	float speckoef = pow(max(dot(norm, halfwayDir), 0.0), 64);
+	vec3 specular = lightColor * speckoef * specularIntensity;
 
 
 	Color = texture(textureArray, texturesOut) * (vec4(0.3) + colorOut * 0.7) * vec4(ambientlight + diffuse + specular, 1);

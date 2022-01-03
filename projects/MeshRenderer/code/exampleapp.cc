@@ -137,13 +137,13 @@ namespace Example
 		while (this->window->IsOpen())
 		{
 			Em = Em * Translate(Normalize(V4(float(d - a), float(e - q), float(w - s))) * speed);
-			scene = cam.pv() * (Em * Evp) * Translate(V4Zero) * Scalar(V4(.1, .1, .1)); // scaling because i can
+			scene = cam.pv() * (Em * Evp) * Scalar(V4(.1, .1, .1)); // scaling because i can
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			this->window->Update();
 
-			shaderResource->setM4(cam.pv(), "m4ProjViewPos");
+			shaderResource->setM4(cam.pv(), "projViewMat");
 			light.bindLight(shaderResource, cam.getPos());
-			node->DrawScene(scene, color);
+			node->DrawScene(Em, color);
 			this->window->SwapBuffers();
 		}
 	}

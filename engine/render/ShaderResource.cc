@@ -120,7 +120,7 @@ void ShaderResource::setV4(V4 vecIn, std::string parameterName)
 void ShaderResource::setM4(M4 matIn, std::string parameterName)
 {
 	glUseProgram(program);
-	glUniformMatrix4fv(glGetUniformLocation(program, parameterName.c_str()), 1, GL_FALSE, (float32*)&(matIn));
+	glUniformMatrix4fv(glGetUniformLocation(program, parameterName.c_str()), 1, GL_TRUE, (float32*)&(matIn));
 }
 
 void ShaderResource::bindShaderResource()

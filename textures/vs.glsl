@@ -10,17 +10,17 @@ layout(location=1) out vec2 texturesOut;
 layout(location=2) out vec3 fragPosOut;
 layout(location=3) out vec3 normalOut;
 
-uniform mat4 m4ProjViewPos;
-uniform mat4 m4Pos;
+uniform mat4 projViewMat;
+uniform mat4 worldMat;
 uniform vec4 colorVector;
 uniform sampler2D textureArray;
 
 void main()
 {
-	gl_Position = m4Pos * vec4(posIn, 1);
+	gl_Position = projViewMat * worldMat * vec4(posIn, 1);
 
 	colorOut = colorVector * colorIn;
 	texturesOut = texturesIn;
-	fragPosOut = (m4Pos * vec4(posIn, 1)).xyz;
-	normalOut = mat3(transpose(inverse(m4Pos))) * normalIn;
+	fragPosOut = (worldMat * vec4(posIn, 1)).xyz;
+	normalOut = mat3(inverse(worldMat)) * normalIn;
 }

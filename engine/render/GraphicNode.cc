@@ -7,14 +7,14 @@ GraphicNode::GraphicNode(std::shared_ptr<MeshResource> geometry, std::shared_ptr
 	Transform = Translate(V4());
 }
 
-void GraphicNode::DrawScene(M4& mvp, V4& rgba)
+void GraphicNode::DrawScene(const M4& model, const V4& rgba)
 {
 	Texture->BindTexture();
 
 	glUseProgram(this->Shader->program);
 
 	//Set matrix
-	glUniformMatrix4fv(glGetUniformLocation(Shader->program, "m4Pos"), 1, GL_TRUE, (float*)&mvp);
+	glUniformMatrix4fv(glGetUniformLocation(Shader->program, "worldMat"), 1, GL_TRUE, (float*)&model);
 
 	//set colorVector
 	glUniform4fv(glGetUniformLocation(Shader->program, "colorVector"), 1, (float*)&rgba);

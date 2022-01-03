@@ -736,6 +736,7 @@ inline M4 Transpose(M4 matrix)
 	M4 temp;
 	for (size_t i = 0; i < 16; i++)
 	{
+		if (i % 4 == i / 4) continue;
 		temp[i / 4][i % 4] = matrix[i % 4][i / 4];
 	}
 	return temp;

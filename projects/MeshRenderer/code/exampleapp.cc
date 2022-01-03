@@ -70,10 +70,12 @@ namespace Example
 
 		window->SetMouseMoveFunction([this](float64 x, float64 y)
 		{
-				printf("%f\n", x);
-				senseX = (0.002 * (x - width / 2));
-				senseY = (0.002 * (y - height / 2));
+			if (isRotate)
+			{
+				senseX = prevX + (0.002 * (x - width / 2));
+				senseY = prevY + (0.002 * (y - height / 2));
 				Evp = Rotation(V4(1, 0, 0), senseY) * Rotation(V4(0, 1, 0), senseX);
+			}
 		});
 		
 
@@ -123,7 +125,7 @@ namespace Example
 		glDepthFunc(GL_LEQUAL);
 		node->getTexture()->LoadFromFile();
 		Camera cam(90, (float)width / height, 0.01f, 100.0f);
-		cam.setPos(V4(0, 0, -3));
+		cam.setPos(V4(0, 0, 3));
 		cam.setRot(V4(0, 1, 0), M_PI);
 		Lightning light(V3(10, 10, 10), V3(1, 1, 1), .01f);
 		

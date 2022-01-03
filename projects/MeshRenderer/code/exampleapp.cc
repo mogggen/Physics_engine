@@ -70,12 +70,10 @@ namespace Example
 
 		window->SetMouseMoveFunction([this](float64 x, float64 y)
 		{
-			if (isRotate)
-			{
-				senseX = prevX + (0.002 * (x - width / 2));
-				senseY = prevY + (0.002 * (y - height / 2));
+				printf("%f\n", x);
+				senseX = (0.002 * (x - width / 2));
+				senseY = (0.002 * (y - height / 2));
 				Evp = Rotation(V4(1, 0, 0), senseY) * Rotation(V4(0, 1, 0), senseX);
-			}
 		});
 		
 
@@ -143,7 +141,7 @@ namespace Example
 
 			shaderResource->setM4(cam.pv(), "projViewMat");
 			light.bindLight(shaderResource, cam.getPos());
-			node->DrawScene(Em, color);
+			node->DrawScene(Inverse(cam.pv()) * scene, color);
 			this->window->SwapBuffers();
 		}
 	}

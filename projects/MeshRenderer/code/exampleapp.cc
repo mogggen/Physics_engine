@@ -39,43 +39,35 @@ namespace Example
 		this->window = new Display::Window;
 
 		//assign ExampleApp variables
-		w = a = s = d = q = e = false;
+		one = two = three = four = five = six = seven = eight = false;
 		window->GetSize(width, height);
-		Em = Evp = Translate(V4());
+		Em = Translate(V4());
 		window->SetKeyPressFunction([this](int32 keycode, int32 scancode, int32 action, int32 mods)
 		{
 			//deltatime
 			switch (keycode)
 			{
 			case GLFW_KEY_ESCAPE: window->Close(); break;
-			case GLFW_KEY_W: w = action; break;
-			case GLFW_KEY_S: s = action; break;
-			case GLFW_KEY_A: a = action; break;
-			case GLFW_KEY_D: d = action; break;
+			case GLFW_KEY_1: one = action; break;
+			case GLFW_KEY_2: two = action; break;
+			case GLFW_KEY_3: three = action; break;
+			case GLFW_KEY_4: four = action; break;
+			case GLFW_KEY_5: five = action; break;
+			case GLFW_KEY_6: six = action; break;
+			case GLFW_KEY_7: seven = action; break;
+			case GLFW_KEY_8: eight = action; break;
 
-			case GLFW_KEY_Q: q = action; break;
-			case GLFW_KEY_E: e = action; break;
+			case GLFW_KEY_ENTER: enter = action; break;
 			}
 		});
 
 		window->SetMousePressFunction([this](int32 button, int32 action, int32 mods)
 		{
-			isRotate = button == GLFW_MOUSE_BUTTON_1 && action;
-			if (!isRotate)
-			{
-				prevX = senseX;
-				prevY = senseY;
-			}
+
 		});
 
 		window->SetMouseMoveFunction([this](float64 x, float64 y)
 		{
-			if (isRotate)
-			{
-				senseX = prevX + (0.002 * (x - width / 2));
-				senseY = prevY + (0.002 * (y - height / 2));
-				Evp = Rotation(V4(1, 0, 0), senseY) * Rotation(V4(0, 1, 0), senseX);
-			}
 		});
 		
 
@@ -86,7 +78,7 @@ namespace Example
 
 			//MeshResource
 
-			cube = MeshResource::LoadObj("textures/fireHydrant.obj");
+			cube = MeshResource::LoadObj("textures/roulette.obj");
 
 			//TextureResource
 			std::shared_ptr<TextureResource> texture = std::make_shared<TextureResource>("textures/cubepic.png");
@@ -106,6 +98,16 @@ namespace Example
 	//------------------------------------------------------------------------------
 	/**
 	*/
+
+	void RotUp(M4& model, char value, float angularVelocity=0.08f)
+	{
+		Rotation(V4(1, 0, 0, 0), angularVelocity);
+	}
+
+	void RotDown(M4& model, char value, float angularVelocity=0.08f)
+	{
+		Rotation(V4(1, 0, 0, 0), -angularVelocity);
+	}
 
 	void Print(M4 m)
 	{
@@ -131,19 +133,27 @@ namespace Example
 		
 		float speed = .08f;
 
-		M4 scene;
 		V4 color(1, 1, 1, 1);
+
+		srand((unsigned int)time(NULL));
+		M4 canvasModels[8];
+		char canvasValues[8];
 		
+		for (size_t i = 0; i < 8; i++)
+		{
+			canvasValues[i] = (char)rand() % sizeof(char);
+			canvasModels[i] = cam.pv() * Translate(V4(0, 0, 0, 1));
+		}
+		
+
 		while (this->window->IsOpen())
 		{
-			Em = Em * Translate(Normalize(V4(float(d - a), float(e - q), float(w - s))) * speed);
-			scene = cam.pv() * (Em * Evp) * Scalar(V4(.1, .1, .1)); // scaling because i can
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			this->window->Update();
 
 			shaderResource->setM4(cam.pv(), "projViewMat");
 			light.bindLight(shaderResource, cam.getPos());
-			node->DrawScene(Inverse(cam.pv()) * scene, color);
+			node->DrawScene(Inverse(cam.pv()), color);
 			this->window->SwapBuffers();
 		}
 	}

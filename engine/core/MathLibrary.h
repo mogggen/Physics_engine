@@ -3,7 +3,7 @@
 #include <cmath>
 #include <stdio.h>
 #ifndef M_PI
-#define M_PI 3.141592553584
+#define M_PI 3.1415926741f
 #endif
 
 #pragma region Vector2
@@ -1215,7 +1215,7 @@ inline M4 projection(float fov, float aspect, float n, float f)
 {
 	M4 temp;
 	// solution
-	float d = tanf(2 * M_PI - fov * (M_PI / 180) / 2);
+	float d = tanf(fov * (M_PI / 180.f) * .5f);
 
 	temp[0][0] = d / aspect;
 	temp[1][1] = d;

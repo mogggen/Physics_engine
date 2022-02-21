@@ -193,15 +193,14 @@ namespace Example
 		{
 			auto startTimer = std::chrono::high_resolution_clock::now();
 			//--------------------ImGui section--------------------
+			printf("%.3f %.3f %.3f\n", cam.getPos().x, cam.getPos().y, cam.getPos().z);// inverted world space
 
 
 			//--------------------math section--------------------
-			V4 move = Normalize(V4((d - a), (e - q), (w - s), 0.0f));
-			V4 translation = cam.getPos() * -1.f;
-			V4 tm = translation + move * -camSpeed;
-			cam.setTranslation(tm);
-			V4 rayOrigin = V4(cam.getPos(), 1);
-			
+			cam.setPos(cam.getPos() + Normalize(V3((d - a), (q - e), (w - s))) * -camSpeed);
+			V3 rayOrigin1 = cam.getPos() * -1.f + V3(0.f, -2.f, -1.f);
+			V3 rayOrigin2 = cam.getPos() * -1.f + V3(0.f, -2.f, 0.f);
+			V3 rayOrigin3 = cam.getPos() * -1.f + V3(0.f, -2.f, 1.f);
 			
 			//printf("rayOrigin %.3f %.3f %.3f mousePickingWorldSpace %.3f %.3f %.3f\n", rayOrigin.x, rayOrigin.y, rayOrigin.z, mousePickingWorldSpace.x, mousePickingWorldSpace.y, mousePickingWorldSpace.z);
 			
@@ -213,12 +212,14 @@ namespace Example
 			//Debug::DrawBB(*fireHydrant->getMesh(), V4(0, 1, 1, 1), fireHydrantWorldSpaceTransform);
 			Debug::DrawAABB(*fireHydrant->getMesh(), V4(1, 0, 0, 1), fireHydrantWorldSpaceTransform);
 
-			Plane XZ2Plane(V4(0, fireHydrantMesh->bottom, 0, 1), V4(0, fireHydrantMesh->bottom, 0, 0));
-			Debug::DrawLine(V4(0, 0, 0, 1), V4(1, 0, 0, 1), V4(1, 0, 0, 0));
-			Debug::DrawLine(V4(0, 0, 0, 1), V4(0, 1, 0, 1), V4(0, 1, 0, 0));
-			Debug::DrawLine(V4(0, 0, 0, 1), V4(0, 0, 1, 1), V4(0, 0, 1, 0));
+			Plane XZ2Plane(V3(0, fireHydrantMesh->bottom, 0), V3(0, fireHydrantMesh->bottom, 0));
+			Debug::DrawLine(V4(0, 0, 0, 1), V4(1, 0, 0, 1), V4(1, 0, 0, 1));
+			Debug::DrawLine(V4(0, 0, 0, 1), V4(0, 1, 0, 1), V4(0, 1, 0, 1));
+			Debug::DrawLine(V4(0, 0, 0, 1), V4(0, 0, 1, 1), V4(0, 0, 1, 1));
 
-			V4 res;
+			V3 res;
+			V3 res2;
+			V3 res3;
 			if (isPressed) 
 			{
 				glfwGetCursorPos(this->window->GetHandle(), &mouseDirX, &mouseDirY);
@@ -233,11 +234,23 @@ namespace Example
 					dirSize[countLines++] = mousePickingWorldSpace.toV3() - rayOrigin;
 				}
 				else countLines = 0;
+				Ray r(rayOrigin1, mousePickingWorldSpace.toV3() - rayOrigin1);
+				Ray r2(rayOrigin2, mousePickingWorldSpace.toV3() - rayOrigin2);
+				Ray r3(rayOrigin3, mousePickingWorldSpace.toV3() - rayOrigin3);
 
+				
 
 				if (r.Intersect(res, XZ2Plane))
 				{
 					Debug::DrawLine(res - V4(0, 3, 0), res, V4(0, 0, 1, 1));
+				}
+				if (r2.Intersect(res2, XZ2Plane, mousePickingWorldSpace.toV3()))
+				{
+					Debug::DrawLine(V4(res2 - V3(0, 3, 0), 1), V4(res2 - V3(0, 0, 0), 1), V4(0, 0, 1, 1));
+				}
+				if (r3.Intersect(res3, XZ2Plane, mousePickingWorldSpace.toV3()))
+				{
+					Debug::DrawLine(V4(res3 - V3(0, 3, 0), 1), V4(res3 - V3(0, 0, 0), 1), V4(0, 0, 1, 1));
 				}
 			}
 
@@ -254,11 +267,7 @@ namespace Example
 			//fireHydrant view space
 			//fireHydrantProjectionViewTransform = cam.pv() * fireHydrantWorldSpaceTransform/* * Scalar(V4(.1, .1, .1))*/;
 
-			// cube world space
-			cubeWorldSpaceTransform = Translate(V4(res.x, res.y, res.z, 1));
-
-			// cube view space
-			cubeProjectionViewTransform = cam.pv() * cubeWorldSpaceTransform * Scalar(V4(.1, .1, .1));
+			
 
 			
 
@@ -277,6 +286,17 @@ namespace Example
 			light.bindLight(cubeScript, cam.getPos());
 
 			//fireHydrant->DrawScene(fireHydrantProjectionViewTransform, fireHydrantColor);
+			
+			cubeWorldSpaceTransform = Translate(V4(res.x, res.y, res.z, 1));
+			cubeProjectionViewTransform = cam.pv() * cubeWorldSpaceTransform * Scalar(V4(.1, .1, .1));
+			cube->DrawScene(cubeProjectionViewTransform, cubeColor);
+
+			cubeWorldSpaceTransform = Translate(V4(res2.x, res2.y, res2.z, 1));
+			cubeProjectionViewTransform = cam.pv() * cubeWorldSpaceTransform * Scalar(V4(.1, .1, .1));
+			cube->DrawScene(cubeProjectionViewTransform, cubeColor);
+
+			cubeWorldSpaceTransform = Translate(V4(res3.x, res3.y, res3.z, 1));
+			cubeProjectionViewTransform = cam.pv() * cubeWorldSpaceTransform * Scalar(V4(.1, .1, .1));
 			cube->DrawScene(cubeProjectionViewTransform, cubeColor);
 
 			for (int i = 0; i < 100; i++)
@@ -284,7 +304,7 @@ namespace Example
 				V3 distToIntersect = V3(res.x - quadWorldSpaceTransform[i].toV3().x, res.y - quadWorldSpaceTransform[i].toV3().y, res.z - quadWorldSpaceTransform[i].toV3().z);
 				if (abs(distToIntersect.x) < .1f && abs(distToIntersect.y) < .1f && abs(distToIntersect.z) < .1f)
 				{
-					printf("hit (%d, %d)\n", i % 10, i / 10);
+					//printf("hit (%d, %d)\n", i % 10, i / 10);
 				}
 				cube->DrawScene(quadProjectionViewTransform[i], fireHydrantColor * (abs(distToIntersect.x) < .1f && abs(distToIntersect.y) < 1.f && abs(distToIntersect.z) < .1f ? 1 : 0));
 			}

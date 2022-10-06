@@ -35,7 +35,8 @@ SET(files_render_display
 	DebugPShader.glsl
 	DebugVShader.glsl
 
-	stb_image.h)
+	stb_image.h
+	stb_image_write.h)
 SOURCE_GROUP("display" FILES ${files_render_display})
 
 

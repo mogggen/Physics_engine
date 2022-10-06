@@ -31,6 +31,8 @@ struct V2
 	inline V2();
 	inline V2(float x, float y);
 
+	bool operator==(V2 right);
+	bool operator!=(V2 right);
 	void operator+=(V2 right);
 	void operator-=(V2 right);
 	void operator*=(V2 right);
@@ -52,6 +54,16 @@ V2::V2() : x(0), y(0) {}
 V2::V2(float x, float y) : x(x), y(y) {}
 
 //	operator methods
+inline bool V2::operator==(V2 right)
+{
+	return (*this).x == right.x && (*this).y == right.y;
+}
+
+inline bool V2::operator!=(V2 right)
+{
+	return (*this).x != right.x || (*this).y != right.y;
+}
+
 inline void V2::operator+=(V2 right)
 {
 	for (size_t i = 0; i < 2; i++)
@@ -247,6 +259,8 @@ struct V3
 	inline V3(float x, float y, float z);
 	inline V3(V2, float z);
 
+	bool operator==(V3 right);
+	bool operator!=(V3 right);
 	void operator+=(V3 right);
 	void operator-=(V3 right);
 	void operator*=(V3 right);
@@ -271,6 +285,16 @@ V3::V3(float x, float y, float z) : x(x), y(y), z(z) {}
 V3::V3(V2 vec, float z) : x(vec.x), y(vec.y), z(z) {}
 
 //	operator methods
+inline bool V3::operator==(V3 right)
+{
+	return (*this).x == right.x && (*this).y == right.y && (*this).z == right.z;
+}
+
+inline bool V3::operator!=(V3 right)
+{
+	return (*this).x != right.x || (*this).y != right.y || (*this).z != right.z;
+}
+
 inline void V3::operator+=(V3 right)
 {
 	for (size_t i = 0; i < 3; i++)

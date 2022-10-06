@@ -8,11 +8,14 @@
 #include "exampleapp.h"
 #include <iostream>
 #include <fstream>
+#include <ctime>
 #include <cstring>
 #include <chrono>
 #ifdef __linux__
 #include <unistd.h>
 #endif
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "render/stb_image_write.h"
 struct Actor;
 
 using namespace Display;
@@ -38,6 +41,77 @@ namespace Example
 	/**
 	 */
 
+	float sign(const V2& p, const V2& a, const V2& b)
+	{
+		return (p.x - b.x) * (a.y - b.y) - (a.x - b.x) * (p.y - b.y);
+	}
+
+	bool isInTriangle(const V2& p, const V2& a, const V2& b, const V2& c)
+	{
+		float d1, d2, d3;
+		bool has_neg, has_pos;
+
+		d1 = sign(p, a, b);
+		d2 = sign(p, b, c);
+		d3 = sign(p, c, a);
+
+		has_neg = (d1 < 0) || (d2 < 0) || (d3 < 0);
+		has_pos = (d1 > 0) || (d2 > 0) || (d3 > 0);
+
+		return !(has_neg && has_pos);
+	}
+
+	V3 getBarycentricCoord(const V2& p, const V2& a, const V2& b, const V2& c)
+	{
+		float L1 = ((p.y - c.y) * (b.x - c.x) + (p.x - c.x) * (c.y - b.y)) /
+			((a.y - c.y) * (b.x - c.x) + (a.x - c.x) * (c.y - b.y));
+
+		float L2 = ((p.x - L1 * a.x - c.x + L1 * c.x) / (b.x - c.x));
+
+		float L3 = 1 - L1 - L2;
+
+		return V3(L1, L2, L3);
+	}
+
+	// resulting barycentric coordinate p
+	// texel coordinates for a-c
+	V2 UVmapping(const V3& bp, const V2& ta, const V2& tb, const V2& tc)
+	{
+		return V2(ta * bp.x + tb * bp.y + tc * bp.z);
+	}
+
+	V3 getPixelColorFromUV(const unsigned char *texture, const int& w, const int& h, const V2& texel)
+	{
+		int pixelX = texel.u * w;
+		int pixelY = texel.v * h;
+		int index = pixelX + pixelY * w;
+		if (index + 2 < w * h * 3)
+			return V3(texture[index * 3], texture[index * 3 + 1], texture[index * 3 + 2]);
+		return V3(-1, -1, -1);
+	}
+
+	//V3 barycentricToCartesian(const V3& barycentric, const V2& p0, const V2& p1, const V2& p2)
+	//{
+	//	return barycentric.x * p0 + barycentric.y * p1 + barycentric.z * p2;
+	//}
+
+	const float getFitSlope(const float& input_start, const float& input_end, const float& output_start, const float& output_end)
+	{
+		return 1.0 * (output_end - output_start) / (input_end - input_start);
+	}
+
+	//float Fit(const float& input, const float& input_start, const float& output_start, const float& slope)
+	//{
+	//	return output_start + slope * (input - input_start);
+	//}
+
+	//int SaveImage(const std::vector<char>& pixels, int w = 1024, int h = 1024)
+	//{
+	//	stbi_flip_vertically_on_write(1);
+	//	int res = stbi_write_png("res.png", w, h, 3, &pixels[0], w * 3 * (int)sizeof(pixels[0]));
+	//	return res;
+	//}
+
 	void Print(M4 m)
 	{
 		for (size_t i = 0; i < 4; i++)
@@ -55,12 +129,11 @@ namespace Example
 		App::Open();
 		this->window = new Display::Window;
 
-		// assign ExampleApp variables
 		w = a = s = d = q = e = false;
 		window->GetSize(width, height);
 
 		window->SetKeyPressFunction([this](int32 keycode, int32 scancode, int32 action, int32 mods)
-									{
+		{
 			//deltatime
 			switch (keycode)
 			{
@@ -72,74 +145,91 @@ namespace Example
 
 			case GLFW_KEY_Q: q = action; break;
 			case GLFW_KEY_E: e = action; break;
-			} });
+			}
+		});
 
-		window->SetMousePressFunction([this](int32 button, int32 action, int32 mods)
-									  { isPressed = button == GLFW_MOUSE_BUTTON_1 && action; });
+		// load verticies, normals, and texture coords form .obj
+		// apply the PVM matrix
+		// draw the triangles faces with normals pointing towards the camera
+		// if a triangle is completely covering another and has a depth value closer to the camera, don't draw the other one
+		// check if a triangles position is outside of the screen
+		// use texcoord as a color
 
-		window->SetMouseMoveFunction([this](float64 x, float64 y)
-									 {
-			if (isPressed)
+		//texture
+		int texW, texH, texC;
+		stbi_set_flip_vertically_on_load(true);
+		const unsigned char* data = stbi_load("textures/perfect.jpg", &texW, &texH, &texC, 3);
+		if (!data)
+		{
+			fprintf(stderr, "Cannot load file image %s\nSTB Reason: %s\n", "textures/BETTER.jpg", stbi_failure_reason());
+			exit(0);
+		}
+		printf("texW %i texH %i texC %i\n", texW, texH, texC);
+
+		int widthImg = 1920, heightImg = 1200;
+		std::vector<char> pixels;
+		pixels.reserve(widthImg * heightImg * 3);
+		srand((unsigned)time(nullptr));
+		V2 a = V2(widthImg / 4, heightImg / 3);//rand() % widthImg, rand() % heightImg);
+		V2 b = V2(widthImg / 2, heightImg * 3 / 4);//rand() % widthImg, rand() % heightImg);
+		V2 c = V2(widthImg * 3 / 4, heightImg / 3);//rand() % widthImg, rand() % heightImg);
+		V2 ta = V2(0, 0);//rand() / (float)RAND_MAX, rand() / (float)RAND_MAX);
+		V2 tb = V2(.5f, 1);//rand() / (float)RAND_MAX, rand() / (float)RAND_MAX);
+		V2 tc = V2(1, 0);//rand() / (float)RAND_MAX, rand() / (float)RAND_MAX);
+
+		for (size_t y = 0; y < heightImg; y++)
+		{
+			for (size_t x = 0; x < widthImg; x++)
 			{
-				senseX = prevX + (0.002 * (x - width / 2));
-				senseY = prevY + (0.002 * (y - height / 2));
-				cubeProjectionViewTransform = Rotation(V4(1, 0, 0), senseY) * Rotation(V4(0, 1, 0), senseX);
-				fireHydrantProjectionViewTransform = Rotation(V4(1, 0, 0), senseY) * Rotation(V4(0, 1, 0), senseX);
-			} });
+				if (isInTriangle(V2(x, y), a, b, c))
+				{
+					V3 barycentric = getBarycentricCoord(V2(x, y), a, b, c);
+					
+					if (true) // if texture is passed
+					{
+						V2 textureSample = UVmapping(barycentric, ta, tb, tc);
+
+						V3 pixel = getPixelColorFromUV(data, texW, texH, textureSample);
+						
+						if (pixel == V3(-1, -1, -1)) break;
+						pixels.push_back(unsigned char(pixel.r));
+						pixels.push_back(unsigned char(pixel.g));
+						pixels.push_back(unsigned char(pixel.b));
+					}
+					else
+					{
+						pixels.push_back(unsigned char(barycentric.x * 255.f));
+						pixels.push_back(unsigned char(barycentric.y * 255.f));
+						pixels.push_back(unsigned char(barycentric.z * 255.f));
+					}
+				}
+				else
+				{
+					// gray background
+					pixels.push_back(0x69);
+					pixels.push_back(0x69);
+					pixels.push_back(0x69);
+				}
+			}
+		}
+		stbi_flip_vertically_on_write(true);
+		int res = stbi_write_png("textures/res.png", widthImg, heightImg, 3, &pixels[0], widthImg * 3 * (int)sizeof(pixels[0]));
 
 		if (this->window->Open())
 		{
 			// set clear color to gray
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
-
-
 			// MeshResource
-			fireHydrantMesh = MeshResource::LoadObj("textures/fireHydrant.obj");
+			cubeMesh = MeshResource::LoadObj("textures/quad.obj");
 
-			// TextureResource
-			fireHydrantTexture = std::make_shared<TextureResource>("textures/cubepic.png");
-
-			// shaderResource
-			fireHydrantScript = std::make_shared<ShaderResource>();
-			fireHydrantScript->LoadShader(fireHydrantScript->vs, fireHydrantScript->ps, "textures/vs.glsl", "textures/ps.glsl");
-
-			// Actor
-			Actor temp;
-			Actor *fireHydrantActor = &temp;
-
-			// GraphicNode
-			fireHydrant = std::make_shared<GraphicNode>(fireHydrantMesh, fireHydrantTexture, fireHydrantScript, fireHydrantActor);
-
-			// MeshResource
-			cubeMesh = MeshResource::LoadObj("textures/cube.obj");
-
-			cubeTexture = std::make_shared<TextureResource>("textures/red.png");
+			cubeTexture = std::make_shared<TextureResource>("textures/res.png");
 
 			// shaderResource
 			cubeScript = std::make_shared<ShaderResource>();
-			cubeScript->LoadShader(cubeScript->vs, cubeScript->ps, "textures/vs.glsl", "textures/psNoTexture.glsl");
+			cubeScript->LoadShader(cubeScript->vs, cubeScript->ps, "textures/vs.glsl", "textures/ps.glsl");
 			// note: bindTexture() still requires a texture, but just won't use it
 
-			// Actor
-			Actor temp2;
-			Actor *cubeActor = &temp2;
-
-			// GraphicNode
-			cube = std::make_shared<GraphicNode>(cubeMesh, cubeTexture, cubeScript, cubeActor);
-
-			// MeshResource
-			quadMesh = MeshResource::LoadObj("textures/quad.obj");
-
-			// Actor
-			Actor temp3;
-			Actor *quadActor = &temp3;
-
-			// GraphicNode
-			quad = std::make_shared<GraphicNode>(quadMesh, cubeTexture, cubeScript, quadActor);
-
-			this->window->SetUiRender([this]()
-									  { this->RenderUI(); });
 			return true;
 		}
 		return false;
@@ -152,151 +242,43 @@ namespace Example
 	void
 	ExampleApp::Run()
 	{
-		glEnable(GL_DEPTH_TEST);
-		glDepthFunc(GL_LEQUAL);
+		//glEnable(GL_DEPTH_TEST);
+		//glDepthFunc(GL_LEQUAL);
 
-		// gravity
-		const float g = -9.806e-3f;
+		//Camera cam(90, (float)width / height, 0.01f, 100.0f);
+		//cam.setPos(V4(0, 2, 5));
+		//cam.setRot(V4(0, 1, 0), M_PI);
 
-		Camera cam(90, (float)width / height, 0.01f, 100.0f);
-		cam.setPos(V4(0, 4, 3));
-		cam.setRot(V4(0, 1, 0), M_PI);
+		//Lightning light(V3(10, 10, 10), V3(1, 1, 1), .01f);
+		//
+		//float camSpeed = .08f;
 
-		Lightning light(V3(10, 10, 10), V3(1, 1, 1), .01f);
-		
-		float camSpeed = .08f;
+		//// set identies
+		//cubeWorldSpaceTransform = cubeProjectionViewTransform = Translate(V4());
 
-		// set identies
-		fireHydrantWorldSpaceTransform = fireHydrantProjectionViewTransform = Translate(V4());
-		
-		cubeWorldSpaceTransform = cubeProjectionViewTransform = Translate(V4());
+		//while (this->window->IsOpen())
+		//{
+		//	cam.setPos(cam.getPos() + Normalize(V4((d - a), (q - e), (w - s))) * -camSpeed);
 
-		M4 quadWorldSpaceTransform[100];
-		M4 quadProjectionViewTransform[100];
-		for (size_t i = 0; i < 10; i++)
-		{
-			for (size_t j = 0; j < 10; j++)
-			{
-				quadWorldSpaceTransform[i * 10 + j] = quadProjectionViewTransform[i] = Translate(V4());
-				quadWorldSpaceTransform[i * 10 + j] = Translate(V4(i * 2, j * 2, 0));
-			}
-		}
-		plane = new Plane(V3(0, 0, -0), V3(0, 0, 1));
-		while (this->window->IsOpen())
-		{
-			//--------------------ImGui section--------------------
+		//	// cube world space
 
-			auto start = std::chrono::high_resolution_clock::now();
+		//	// // cube view space
+		//	cubeProjectionViewTransform = cam.pv() * cubeWorldSpaceTransform;
 
-			//--------------------math section--------------------
-			cam.setPos(cam.getPos() + Normalize(V4((d - a), (q - e), (w - s))) * -camSpeed);
-			
-			// std::cout << "frame " << frameIndex << std::endl;
-			Debug::DrawLine(V4(cos(frameIndex / 10.f),0, sin(frameIndex / 10.f)), V4(0, -1, 0), (V4(0, 1, 0, 1)));
-			// fireHydrant->getTexture()->LoadFromFile();
+		//	//--------------------real-time render section--------------------
+		//	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			// Implement a gravitational acceleration on the fireHydrant
-			// fireHydrant->actor->velocity = fireHydrant->actor->velocity + fireHydrant->actor->mass * g;
+		//	cubeScript->setM4(cam.pv(), "m4ProjViewPos");
 
-			// fireHydrant world space
-			// fireHydrantWorldSpaceTransform = fireHydrantWorldSpaceTransform *
-			// Translate(V4(0, -1, 0) * fireHydrant->actor->velocity);
-			
-			// fireHydrant view space
-			// fireHydrantProjectionViewTransform = cam.pv() * fireHydrantWorldSpaceTransform * Scalar(V4(.1, .1, .1));
+		//	light.bindLight(cubeScript, cam.getPos());
+		//	cube->DrawScene(cubeProjectionViewTransform, cubeColor);
 
-			// cube world space
-			cubeWorldSpaceTransform = cubeWorldSpaceTransform *
-									  Translate(V4(0, 0, cos(frameIndex / 20.f)));
-
-			// // cube view space
-			cubeProjectionViewTransform = cam.pv() * cubeWorldSpaceTransform;
-
-			// equation
-			double mouseWorldX, mouseWorldY;
-
-			if (isPressed)
-			{
-				glfwGetCursorPos(this->window->GetHandle(), &mouseWorldX, &mouseWorldY);
-				mouseWorldX = (mouseWorldX / this->width);
-				mouseWorldY = (mouseWorldY / this->width);
-				// std::cout << "x:" << mouseWorldX << " y:" << mouseWorldY << std::endl;
-
-				// shot a ray
-				Ray r(cam.getPos(), V3(1, 0, sin(frameIndex / 100.f)));
-
-				V3 res;
-				if (r.Intersect(res, *plane))
-				{
-					std::cout << r.dir.x << r.dir.y << r.dir.z << std::endl;
-					std::cout << "hit at" << res.x << "," << res.y << "," << res.z << std::endl;
-				}
-				else
-				{
-					std::cout << "none intersecting" << std::endl;
-				}
-			}
-
-			for (size_t i = 0; i < 100; i++)
-			{
-				quadProjectionViewTransform[i] = cam.pv() * quadWorldSpaceTransform[i];
-			}
-
-			//--------------------real-time render section--------------------
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-			// fireHydrantScript->setM4(cam.pv(), "m4ProjViewPos");
-			cubeScript->setM4(cam.pv(), "m4ProjViewPos");
-
-			light.bindLight(fireHydrantScript, cam.getPos());
-			fireHydrant->DrawScene(fireHydrantProjectionViewTransform, fireHydrantColor);
-
-			light.bindLight(cubeScript, cam.getPos());
-			cube->DrawScene(cubeProjectionViewTransform, cubeColor);
-
-			for (int i = 0; i < 100; i++)
-			{
-				if (plane->pointIsOnPlane(quadWorldSpaceTransform[i].toV3(), .0000001))
-				{
-					printf("true\n");
-					cube->DrawScene(quadProjectionViewTransform[i], fireHydrantColor);
-				}
-			}
-
-			// usleep(10000);
-			this->window->Update();
-			frameIndex++;
-
-			Debug::Render(cam.pv());
-			this->window->SwapBuffers();
-			auto finish = std::chrono::system_clock::now();
-			duration = std::chrono::duration_cast<std::chrono::microseconds>(finish - start).count();
-		}
-	}
-
-	void ExampleApp::RenderUI()
-	{
-		bool show = true;
-		ImGui::Begin("Mega Cringe", &show, ImGuiWindowFlags_NoSavedSettings);
-		float cube[3];
-		for (int i = 0; i < 3; i++)
-		{
-			cube[i] = cubeWorldSpaceTransform[i][3];
-		}
-		ImGui::Text("cube: %.3f\t%.3f\t%.3f", cube[0], cube[1], cube[2]);
-		
-	
-		// ImGui::SliderFloat("x", &x, -5.f, 5.f);
-		// ImGui::SliderFloat("y", &y, -5.f, 5.f);
-		// ImGui::SliderFloat("z", &z, -5.f, 5.f);
-
-		// plane->normal = V3(x, y, z);
-		ImGui::Text("planeNormal: %.3f\t%.3f\t%.3f", plane->normal.x, plane->normal.y, plane->normal.z);
-
-
-		ImGui::Text("frames: %d %.0f", frameIndex, (float)1e6 / duration);
-
-		ImGui::End();
+		//	
+		//	this->window->Update();
+		//	frameIndex++;
+		//	Debug::Render(cam.pv());
+		//	this->window->SwapBuffers();
+		//}
 	}
 
 } // namespace Example

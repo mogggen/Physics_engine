@@ -34,7 +34,6 @@ namespace Example
 		void Run();
 
 	private:
-		void RenderUI();
 		uint64_t duration;
 		int width, height;
 		uint32_t frameIndex = 0;

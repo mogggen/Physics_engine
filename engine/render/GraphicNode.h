@@ -14,7 +14,7 @@ class GraphicNode
 public:
 	Actor* actor;
 	GraphicNode(std::shared_ptr<MeshResource> mesh, std::shared_ptr<TextureResource> texture, std::shared_ptr<ShaderResource> shader, Actor* actor);
-	void DrawScene(const M4& mvp, const V4& rbga);
+	void DrawScene(const mat4& mvp, const vec4& rbga);
 
 	std::shared_ptr<MeshResource> getMesh();
 	std::shared_ptr<TextureResource> getTexture();

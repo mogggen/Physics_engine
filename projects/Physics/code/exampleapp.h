@@ -49,17 +49,17 @@ namespace Example
 		GLuint vertexShader;
 		GLuint pixelShader;
 
-		M4 fireHydrantWorldSpaceTransform;
-		M4 fireHydrantProjectionViewTransform;
-		V4 fireHydrantColor{1, 1, 1, 1};
+		mat4 fireHydrantWorldSpaceTransform;
+		mat4 fireHydrantProjectionViewTransform;
+		vec4 fireHydrantColor{1, 1, 1, 1};
 		std::shared_ptr<MeshResource> fireHydrantMesh;
 		std::shared_ptr<TextureResource> fireHydrantTexture;
 		std::shared_ptr<ShaderResource> fireHydrantScript;
 		std::shared_ptr<GraphicNode> fireHydrant;
 
-		M4 cubeWorldSpaceTransform;
-		M4 cubeProjectionViewTransform;
-		V4 cubeColor{1, 0, 0, 1};
+		mat4 cubeWorldSpaceTransform;
+		mat4 cubeProjectionViewTransform;
+		vec4 cubeColor{1, 0, 0, 1};
 
 		std::shared_ptr<MeshResource> cubeMesh;
 		std::shared_ptr<TextureResource> cubeTexture;

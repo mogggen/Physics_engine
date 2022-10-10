@@ -18,10 +18,10 @@ struct ShaderResource
 	void setFloat(float32 facIn, std::string parameterName);
 
 	void setV1(float32 floatIn, std::string parameterName);
-	void setV2(V2 vecIn, std::string parameterName);
-	void setV3(V3 vecIn, std::string parameterName);
-	void setV4(V4 vecIn, std::string parameterName);
+	void setV2(vec2 vecIn, std::string parameterName);
+	void setV3(vec3 vecIn, std::string parameterName);
+	void setV4(vec4 vecIn, std::string parameterName);
 
-	void setM4(M4 matIn, std::string parameterName);
+	void setM4(mat4 matIn, std::string parameterName);
 
 };

@@ -2,7 +2,7 @@
 #include "Lightning.h"
 
 
-Lightning::Lightning(V3 _pos, V3 _rgb, float _intensity)
+Lightning::Lightning(vec3 _pos, vec3 _rgb, float _intensity)
 {
     pos = _pos;
     rgb = _rgb;
@@ -15,22 +15,22 @@ Lightning::~Lightning()
 }
 
 
-void Lightning::setPos(V3 _pos)
+void Lightning::setPos(vec3 _pos)
 {
     pos = _pos;
 }
 
-V3 Lightning::getPos()
+vec3 Lightning::getPos()
 {
     return pos;
 }
 
-void Lightning::setColor(V3 _rgb)
+void Lightning::setColor(vec3 _rgb)
 {
     rgb = _rgb;
 }
 
-V3 Lightning::getColor()
+vec3 Lightning::getColor()
 {
     return rgb;
 }
@@ -45,7 +45,7 @@ float Lightning::getIntensity()
     return intensity;
 }
 
-void Lightning::bindLight(std::shared_ptr<ShaderResource> shader, V3 cameraPos)
+void Lightning::bindLight(std::shared_ptr<ShaderResource> shader, vec3 cameraPos)
 {
     shader->setV3(rgb, "lightColor");
     shader->setV3(pos, "lightPos");

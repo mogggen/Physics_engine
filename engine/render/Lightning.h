@@ -5,21 +5,21 @@
 
 class Lightning
 {
-    V3 pos;
-    V3 rgb;
+    vec3 pos;
+    vec3 rgb;
     float intensity;
 public:
-    Lightning(V3 _pos, V3 _rgb, float _intensity);
+    Lightning(vec3 _pos, vec3 _rgb, float _intensity);
     ~Lightning();
 
-    void setPos(V3 _pos);
-    V3 getPos();
+    void setPos(vec3 _pos);
+    vec3 getPos();
 
-    void setColor(V3 _rgb);
-    V3 getColor();
+    void setColor(vec3 _rgb);
+    vec3 getColor();
 
     void setIntensity(float _intensity);
     float getIntensity();
 
-    void bindLight(std::shared_ptr<ShaderResource> shader, V3 cameraPos);
+    void bindLight(std::shared_ptr<ShaderResource> shader, vec3 cameraPos);
 };

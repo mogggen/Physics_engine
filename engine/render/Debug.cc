@@ -11,8 +11,8 @@ namespace Debug
 {
     struct Vertex
     {
-        V4 pos;
-        V4 color;
+        vec4 pos;
+        vec4 color;
     };
     struct DebugRenderBuffer
     {
@@ -30,24 +30,24 @@ namespace Debug
         buf->vertices[buf->verticesAmount++] = vert;
     }
 
-    // void DrawSquare(float size, V4 pos, V4 color)
+    // void DrawSquare(float size, vec4 pos, vec4 color)
     // {
-    //     PushVertex(&triBuf, Vertex{pos + V4(-size / 2, 0, -size / 2), color});
-    //     PushVertex(&triBuf, Vertex{pos + V4(-size / 2, 0, size / 2), color});
-    //     PushVertex(&triBuf, Vertex{pos + V4(size / 2, 0, size / 2), color});
+    //     PushVertex(&triBuf, Vertex{pos + vec4(-size / 2, 0, -size / 2), color});
+    //     PushVertex(&triBuf, Vertex{pos + vec4(-size / 2, 0, size / 2), color});
+    //     PushVertex(&triBuf, Vertex{pos + vec4(size / 2, 0, size / 2), color});
 
-    //     PushVertex(&triBuf, Vertex{pos + V4(-size / 2, 0, -size / 2), color});
-    //     PushVertex(&triBuf, Vertex{pos + V4(size / 2, 0, -size / 2), color});
-    //     PushVertex(&triBuf, Vertex{pos + V4(size / 2, 0, size / 2), color});
+    //     PushVertex(&triBuf, Vertex{pos + vec4(-size / 2, 0, -size / 2), color});
+    //     PushVertex(&triBuf, Vertex{pos + vec4(size / 2, 0, -size / 2), color});
+    //     PushVertex(&triBuf, Vertex{pos + vec4(size / 2, 0, size / 2), color});
     // }
 
-    void DrawLine(V4 start, V4 end, V4 color)
+    void DrawLine(vec4 start, vec4 end, vec4 color)
     {
         PushVertex(&lineBuf, Vertex{start, color});
         PushVertex(&lineBuf, Vertex{end, color});
     }
 
-    void Render(M4 cameraVPMatrix)
+    void Render(mat4 cameraVPMatrix)
     {
         // Rendering debug triangles
         // if (triBuf.vbo == 0)

@@ -1,0 +1,15 @@
+transform the triangles into perspective view
+
+load triangles from obj instead of hardcoded
+
+obj verticies position -> into world space -> into projective space -> the quad's texture 
+
+// streach, repeat flipped, repeat texture, solid background color
+//nearest, linear
+
+make res.png the texture of the cube (that should be a quad)
+
+
+port it so it runs as the lab says it should
+
+submit

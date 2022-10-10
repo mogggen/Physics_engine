@@ -94,25 +94,25 @@ void ShaderResource::setV1(float32 vecIn, std::string parameterName)
 	glUniform1fv(glGetUniformLocation(program, parameterName.c_str()), 1, (float32*)&vecIn);
 }
 
-void ShaderResource::setV2(V2 vecIn, std::string parameterName)
+void ShaderResource::setV2(vec2 vecIn, std::string parameterName)
 {
 	glUseProgram(program);
 	glUniform2fv(glGetUniformLocation(program, parameterName.c_str()), 1, (float32*)&vecIn);
 }
 
-void ShaderResource::setV3(V3 vecIn, std::string parameterName)
+void ShaderResource::setV3(vec3 vecIn, std::string parameterName)
 {
 	glUseProgram(program);
 	glUniform3fv(glGetUniformLocation(program, parameterName.c_str()), 1, (float32*)&vecIn);
 }
 
-void ShaderResource::setV4(V4 vecIn, std::string parameterName)
+void ShaderResource::setV4(vec4 vecIn, std::string parameterName)
 {
 	glUseProgram(program);
 	glUniform4fv(glGetUniformLocation(program, parameterName.c_str()), 1, (float32*)&vecIn);
 }
 
-void ShaderResource::setM4(M4 matIn, std::string parameterName)
+void ShaderResource::setM4(mat4 matIn, std::string parameterName)
 {
 	glUseProgram(program);
 	glUniformMatrix4fv(glGetUniformLocation(program, parameterName.c_str()), 1, GL_FALSE, (float32*)&matIn);

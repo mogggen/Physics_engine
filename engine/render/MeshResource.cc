@@ -42,12 +42,12 @@ void MeshResource::render()
 
 std::shared_ptr<MeshResource> MeshResource::Cube()
 {
-	V4 top(0, 255, 0, 100);		  // red
-	V4 back(128, 66, 128, 100);	  // gray
-	V4 left(0, 0, 255, 100);	  // blue
-	V4 right(255, 0, 0, 100);	  // red
-	V4 front(255, 165, 0, 100);	  // orange
-	V4 bottom(64, 224, 208, 100); // turquoise
+	vec4 top(0, 255, 0, 100);		  // red
+	vec4 back(128, 66, 128, 100);	  // gray
+	vec4 left(0, 0, 255, 100);	  // blue
+	vec4 right(255, 0, 0, 100);	  // red
+	vec4 front(255, 165, 0, 100);	  // orange
+	vec4 bottom(64, 224, 208, 100); // turquoise
 
 	float factor = .01f;
 	top = top * factor;
@@ -66,163 +66,163 @@ std::shared_ptr<MeshResource> MeshResource::Cube()
 			// 000
 			Vertex // back : 0
 			{
-				V3(-.5f, -.5f, -.5f), // position, will transform later with the projection matrix
+				vec3(-.5f, -.5f, -.5f), // position, will transform later with the projection matrix
 				back,				  // raw color 0-1 : black-white
-				V2(1, 1),			  // texture position, when the indicies are added, combined with this data, the orientation and size of the texture will make sense
-				V3(0, 1, 0)
+				vec2(1, 1),			  // texture position, when the indicies are added, combined with this data, the orientation and size of the texture will make sense
+				vec3(0, 1, 0)
 			},
 			Vertex // left : 1
 			{
-				V3(-.5f, -.5f, -.5f),
+				vec3(-.5f, -.5f, -.5f),
 				left,
-				V2(0, 1),
-				V3(0, 0, 0)},
+				vec2(0, 1),
+				vec3(0, 0, 0)},
 			Vertex // bottom : 2
 			{
-				V3(-.5f, -.5f, -.5f),
+				vec3(-.5f, -.5f, -.5f),
 				bottom,
-				V2(1, 0),
-				V3(0, 0, 0)},
+				vec2(1, 0),
+				vec3(0, 0, 0)},
 
 			// 100
 			Vertex // back : 3
 			{
-				V3(.5f, -.5f, -.5f),
+				vec3(.5f, -.5f, -.5f),
 				back,
-				V2(0, 1),
-				V3(0, 0, 0)},
+				vec2(0, 1),
+				vec3(0, 0, 0)},
 			Vertex // right : 4
 			{
-				V3(.5f, -.5f, -.5f),
+				vec3(.5f, -.5f, -.5f),
 				right,
-				V2(1, 1),
-				V3(0, 0, 0)},
+				vec2(1, 1),
+				vec3(0, 0, 0)},
 			Vertex // bottom : 5
 			{
-				V3(.5f, -.5f, -.5f),
+				vec3(.5f, -.5f, -.5f),
 				bottom,
-				V2(0, 0),
-				V3(0, 0, 0)},
+				vec2(0, 0),
+				vec3(0, 0, 0)},
 
 			// 010
 			Vertex // back : 6
 			{
-				V3(-.5f, .5f, -.5f),
+				vec3(-.5f, .5f, -.5f),
 				back,
-				V2(1, 0),
-				V3(0, 0, 0)},
+				vec2(1, 0),
+				vec3(0, 0, 0)},
 			Vertex // left : 7
 			{
-				V3(-.5f, .5f, -.5f),
+				vec3(-.5f, .5f, -.5f),
 				left,
-				V2(0, 0),
-				V3(0, 0, 0)},
+				vec2(0, 0),
+				vec3(0, 0, 0)},
 			Vertex // top : 8
 			{
-				V3(-.5f, .5f, -.5f),
+				vec3(-.5f, .5f, -.5f),
 				top,
-				V2(0, 0),
-				V3(0, 0, 0)},
+				vec2(0, 0),
+				vec3(0, 0, 0)},
 
 			// 110
 			Vertex // back : 9
 			{
-				V3(.5f, .5f, -.5f),
+				vec3(.5f, .5f, -.5f),
 				back,
-				V2(0, 0),
-				V3(0, 0, 0)},
+				vec2(0, 0),
+				vec3(0, 0, 0)},
 			Vertex // right : 10
 			{
-				V3(.5f, .5f, -.5f),
+				vec3(.5f, .5f, -.5f),
 				right,
-				V2(1, 0),
-				V3(0, 0, 0)},
+				vec2(1, 0),
+				vec3(0, 0, 0)},
 			Vertex // top : 11
 			{
-				V3(.5f, .5f, -.5f),
+				vec3(.5f, .5f, -.5f),
 				top,
-				V2(1, 0),
-				V3(0, 0, 0)},
+				vec2(1, 0),
+				vec3(0, 0, 0)},
 
 			// 001
 			Vertex // left : 12
 			{
-				V3(-.5f, -.5f, .5f),
+				vec3(-.5f, -.5f, .5f),
 				left,
-				V2(1, 1),
-				V3(0, 0, 0)},
+				vec2(1, 1),
+				vec3(0, 0, 0)},
 			Vertex // front : 13
 			{
-				V3(-.5f, -.5f, .5f),
+				vec3(-.5f, -.5f, .5f),
 				front,
-				V2(0, 1),
-				V3(0, 0, 0)},
+				vec2(0, 1),
+				vec3(0, 0, 0)},
 			Vertex // bottom : 14
 			{
-				V3(-.5f, -.5f, .5f),
+				vec3(-.5f, -.5f, .5f),
 				bottom,
-				V2(1, 1),
-				V3(0, 0, 0)},
+				vec2(1, 1),
+				vec3(0, 0, 0)},
 
 			// 101
 			Vertex // right : 15
 			{
-				V3(.5f, -.5f, .5f),
+				vec3(.5f, -.5f, .5f),
 				right,
-				V2(0, 1),
-				V3(0, 0, 0)},
+				vec2(0, 1),
+				vec3(0, 0, 0)},
 			Vertex // front : 16
 			{
-				V3(.5f, -.5f, .5f),
+				vec3(.5f, -.5f, .5f),
 				front,
-				V2(1, 1),
-				V3(0, 0, 0)},
+				vec2(1, 1),
+				vec3(0, 0, 0)},
 			Vertex // bottom : 17
 			{
-				V3(.5f, -.5f, .5f),
+				vec3(.5f, -.5f, .5f),
 				bottom,
-				V2(0, 1),
-				V3(0, 0, 0)},
+				vec2(0, 1),
+				vec3(0, 0, 0)},
 
 			// 011
 			Vertex // left : 18
 			{
-				V3(-.5f, .5f, .5f),
+				vec3(-.5f, .5f, .5f),
 				left,
-				V2(1, 0),
-				V3(0, 0, 0)},
+				vec2(1, 0),
+				vec3(0, 0, 0)},
 			Vertex // front : 19
 			{
-				V3(-.5f, .5f, .5f),
+				vec3(-.5f, .5f, .5f),
 				front,
-				V2(0, 0),
-				V3(0, 0, 0)},
+				vec2(0, 0),
+				vec3(0, 0, 0)},
 			Vertex // top : 20
 			{
-				V3(-.5f, .5f, .5f),
+				vec3(-.5f, .5f, .5f),
 				top,
-				V2(0, 1),
-				V3(0, 0, 0)},
+				vec2(0, 1),
+				vec3(0, 0, 0)},
 
 			// 111
 			Vertex // right : 21
 			{
-				V3(.5f, .5f, .5f),
+				vec3(.5f, .5f, .5f),
 				right,
-				V2(0, 0),
-				V3(0, 0, 0)},
+				vec2(0, 0),
+				vec3(0, 0, 0)},
 			Vertex // front : 22
 			{
-				V3(.5f, .5f, .5f),
+				vec3(.5f, .5f, .5f),
 				front,
-				V2(1, 0),
-				V3(0, 0, 0)},
+				vec2(1, 0),
+				vec3(0, 0, 0)},
 			Vertex // top : 23
 			{
-				V3(.5f, .5f, .5f),
+				vec3(.5f, .5f, .5f),
 				top,
-				V2(1, 1),
-				V3(0, 0, 0)},
+				vec2(1, 1),
+				vec3(0, 0, 0)},
 		};
 
 	uint32_t indices[] // World point's relations to form triangles and surfaces with razterisation
@@ -261,9 +261,9 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 
 	unsigned long long verticesUsed = 0ull;
 	std::vector<uint32_t> indices;
-	std::vector<V3> coords;
-	std::vector<V2> texels;
-	std::vector<V3> normals;
+	std::vector<vec3> coords;
+	std::vector<vec2> texels;
+	std::vector<vec3> normals;
 	std::vector<Vertex> vertices; // complete package
 
 	if (fs)
@@ -278,7 +278,7 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 
 			if (buf[0] == 'v' && buf[1] == '\0')
 			{
-				V3 nextCoordinate;
+				vec3 nextCoordinate;
 				if (fscanf(fs, "%f %f %f", &nextCoordinate.x, &nextCoordinate.y, &nextCoordinate.z) == 3)
 				{
 					coords.push_back(nextCoordinate);
@@ -291,7 +291,7 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 
 			else if (buf[0] == 'v' && buf[1] == 't' && buf[2] == '\0')
 			{
-				V2 nextTexel;
+				vec2 nextTexel;
 				if (fscanf(fs, "%f %f", &nextTexel.x, &nextTexel.y) == 2)
 				{
 					texels.push_back(nextTexel);
@@ -304,7 +304,7 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 
 			else if (buf[0] == 'v' && buf[1] == 'n' && buf[2] == '\0')
 			{
-				V3 nextNormal;
+				vec3 nextNormal;
 				if (fscanf(fs, "%f %f %f", &nextNormal.x, &nextNormal.y, &nextNormal.z) == 3)
 				{
 					normals.push_back(nextNormal);
@@ -334,7 +334,7 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 							break;
 							vertices.push_back(Vertex{
 								coords[(listOfIndices[i][0]) - 1],
-								V4(1, 1, 1, 1),
+								vec4(1, 1, 1, 1),
 								texels[(listOfIndices[i][1]) - 1],
 								normals[(listOfIndices[i][2]) - 1],
 							});
@@ -376,7 +376,7 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 
 							vertices.push_back(Vertex{
 								coords[listOfIndices[i][0] - 1],
-								V4(1, 1, 1, 1),
+								vec4(1, 1, 1, 1),
 								texels[listOfIndices[i][1] - 1],
 								normals[listOfIndices[i][2] - 1],
 							});

@@ -3,7 +3,7 @@
 
 namespace Debug
 {
-    void Render(M4 cameraVPMatrix);
-    // void DrawSquare(float size, V4 pos, V4 color);
-    void DrawLine(V4 start, V4 end, V4 color);
+    void Render(mat4 cameraVPMatrix);
+    // void DrawSquare(float size, vec4 pos, vec4 color);
+    void DrawLine(vec4 start, vec4 end, vec4 color);
 }

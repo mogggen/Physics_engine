@@ -3,27 +3,27 @@
 
 struct Vertex
 {
-	V3 pos;
-	V4 rgba;
-	V2 texel;
-	V3 normal;
+	vec3 pos;
+	vec4 rgba;
+	vec2 texel;
+	vec3 normal;
 
 	inline Vertex();
-	inline Vertex(V3 pos, V3 rgb);
-	inline Vertex(V3 pos, V4 rgba, V2 texel, V3 normal);
+	inline Vertex(vec3 pos, vec3 rgb);
+	inline Vertex(vec3 pos, vec4 rgba, vec2 texel, vec3 normal);
 };
 
-Vertex::Vertex() : pos(V3()), rgba(V4(V3(), 1)), texel(V2()), normal(V3())
+Vertex::Vertex() : pos(vec3()), rgba(vec4(vec3(), 1)), texel(vec2()), normal(vec3())
 {
 	
 }
 
-Vertex::Vertex(V3 pos, V3 rgb) : pos(pos), rgba(V4(rgb, 1)), texel(V2()), normal(V3())
+Vertex::Vertex(vec3 pos, vec3 rgb) : pos(pos), rgba(vec4(rgb, 1)), texel(vec2()), normal(vec3())
 {
 
 }
 
-Vertex::Vertex(V3 pos, V4 rgba, V2 texel=V2(), V3 normal=V3()) : pos(pos), rgba(rgba), texel(texel), normal(normal)
+Vertex::Vertex(vec3 pos, vec4 rgba, vec2 texel=vec2(), vec3 normal=vec3()) : pos(pos), rgba(rgba), texel(texel), normal(normal)
 {
 
 }

@@ -41,12 +41,38 @@ namespace Example
 	/**
 	 */
 
-	float sign(const V2& p, const V2& a, const V2& b)
+	class SoftwareRenderer
+	{
+		SoftwareRenderer();
+		GLuint vertexBufHandle;
+		GLuint indexBufHandle;
+		unsigned char* frameBuffer;
+		int textureWidth, textureHeight;
+		int width, height;
+	public:
+		void rasterizeTriangle();
+		static const unsigned char* loadTexture(const char* pathToFile, int& texW, int& texH, int& texC);
+		static int saveRender(const std::vector<char>& pixels, int w, int h, const char* pathToFile);
+
+		static bool isInTriangle(const vec2& p, const vec2& a, const vec2& b, const vec2& c);
+		static float sign(const vec2& p, const vec2& a, const vec2& b);
+		static vec3 getBarycentricCoord(const vec2& p, const vec2& a, const vec2& b, const vec2& c);
+		static vec2 UVmapping(const vec3& bp, const vec2& ta, const vec2& tb, const vec2& tc);
+		static vec3 getPixelColorFromUV(const unsigned char* texture, const int& w, const int& h, const vec2& texel);
+	};
+
+	SoftwareRenderer::SoftwareRenderer()
+	{
+		stbi_set_flip_vertically_on_load(true);
+		stbi_flip_vertically_on_write(true);
+	}
+
+	inline float SoftwareRenderer::sign(const vec2& p, const vec2& a, const vec2& b)
 	{
 		return (p.x - b.x) * (a.y - b.y) - (a.x - b.x) * (p.y - b.y);
 	}
 
-	bool isInTriangle(const V2& p, const V2& a, const V2& b, const V2& c)
+	inline bool SoftwareRenderer::isInTriangle(const vec2& p, const vec2& a, const vec2& b, const vec2& c)
 	{
 		float d1, d2, d3;
 		bool has_neg, has_pos;
@@ -61,7 +87,7 @@ namespace Example
 		return !(has_neg && has_pos);
 	}
 
-	V3 getBarycentricCoord(const V2& p, const V2& a, const V2& b, const V2& c)
+	vec3 SoftwareRenderer::getBarycentricCoord(const vec2& p, const vec2& a, const vec2& b, const vec2& c)
 	{
 		float L1 = ((p.y - c.y) * (b.x - c.x) + (p.x - c.x) * (c.y - b.y)) /
 			((a.y - c.y) * (b.x - c.x) + (a.x - c.x) * (c.y - b.y));
@@ -70,27 +96,44 @@ namespace Example
 
 		float L3 = 1 - L1 - L2;
 
-		return V3(L1, L2, L3);
+		return vec3(L1, L2, L3);
 	}
 
 	// resulting barycentric coordinate p
 	// texel coordinates for a-c
-	V2 UVmapping(const V3& bp, const V2& ta, const V2& tb, const V2& tc)
+	inline vec2 SoftwareRenderer::UVmapping(const vec3& bp, const vec2& ta, const vec2& tb, const vec2& tc)
 	{
-		return V2(ta * bp.x + tb * bp.y + tc * bp.z);
+		return vec2(ta * bp.x + tb * bp.y + tc * bp.z);
 	}
 
-	V3 getPixelColorFromUV(const unsigned char *texture, const int& w, const int& h, const V2& texel)
+	inline vec3 SoftwareRenderer::getPixelColorFromUV(const unsigned char *texture, const int& w, const int& h, const vec2& texel)
 	{
 		int pixelX = texel.u * w;
 		int pixelY = texel.v * h;
-		int index = pixelX + pixelY * w;
+		int index = (pixelX + pixelY * w) * 3;
 		if (index + 2 < w * h * 3)
-			return V3(texture[index * 3], texture[index * 3 + 1], texture[index * 3 + 2]);
-		return V3(-1, -1, -1);
+			return vec3(texture[index], texture[index + 1], texture[index + 2]);
+		return vec3(-1, -1, -1);
 	}
 
-	//V3 barycentricToCartesian(const V3& barycentric, const V2& p0, const V2& p1, const V2& p2)
+	inline const unsigned char* SoftwareRenderer::loadTexture(const char* pathToFile , int& texW, int& texH, int& texC)
+	{
+		const unsigned char* data = stbi_load(pathToFile, &texW, &texH, &texC, 3);
+		if (!data)
+		{
+			fprintf(stderr, "Cannot load file image %s\nSTB Reason: %s\n", pathToFile, stbi_failure_reason());
+			exit(0);
+		}
+		return data;
+	}
+	inline int SoftwareRenderer::saveRender(const std::vector<char>& pixels, int w = 1024, int h = 1024, const char* pathToFile = "textures/res.jpg")
+	{
+		int res = stbi_write_png(pathToFile, w, h, 3, &pixels[0], w * 3 * (int)sizeof(pixels[0]));
+		return res;
+	}
+	
+
+	//vec3 barycentricToCartesian(const vec3& barycentric, const vec2& p0, const vec2& p1, const vec2& p2)
 	//{
 	//	return barycentric.x * p0 + barycentric.y * p1 + barycentric.z * p2;
 	//}
@@ -105,18 +148,11 @@ namespace Example
 	//	return output_start + slope * (input - input_start);
 	//}
 
-	//int SaveImage(const std::vector<char>& pixels, int w = 1024, int h = 1024)
-	//{
-	//	stbi_flip_vertically_on_write(1);
-	//	int res = stbi_write_png("res.png", w, h, 3, &pixels[0], w * 3 * (int)sizeof(pixels[0]));
-	//	return res;
-	//}
-
-	void Print(M4 m)
+	void Print(mat4 m)
 	{
 		for (size_t i = 0; i < 4; i++)
 		{
-			V4 v = m[i];
+			vec4 v = m[i];
 			std::cout << '(';
 			for (char i = 0; i < 4; i++)
 				std::cout << v.data[i] << (i == 3 ? ")\n" : ", ");
@@ -157,50 +193,43 @@ namespace Example
 
 		//texture
 		int texW, texH, texC;
-		stbi_set_flip_vertically_on_load(true);
-		const unsigned char* data = stbi_load("textures/perfect.jpg", &texW, &texH, &texC, 3);
-		if (!data)
-		{
-			fprintf(stderr, "Cannot load file image %s\nSTB Reason: %s\n", "textures/BETTER.jpg", stbi_failure_reason());
-			exit(0);
-		}
-		printf("texW %i texH %i texC %i\n", texW, texH, texC);
+		const unsigned char* data = SoftwareRenderer::loadTexture("textures/evening.jpg", texW, texH, texC);
 
 		int widthImg = 1920, heightImg = 1200;
 		std::vector<char> pixels;
-		pixels.reserve(widthImg * heightImg * 3);
+		pixels.reserve(size_t(widthImg * heightImg * 3));
 		srand((unsigned)time(nullptr));
-		V2 a = V2(widthImg / 4, heightImg / 3);//rand() % widthImg, rand() % heightImg);
-		V2 b = V2(widthImg / 2, heightImg * 3 / 4);//rand() % widthImg, rand() % heightImg);
-		V2 c = V2(widthImg * 3 / 4, heightImg / 3);//rand() % widthImg, rand() % heightImg);
-		V2 ta = V2(0, 0);//rand() / (float)RAND_MAX, rand() / (float)RAND_MAX);
-		V2 tb = V2(.5f, 1);//rand() / (float)RAND_MAX, rand() / (float)RAND_MAX);
-		V2 tc = V2(1, 0);//rand() / (float)RAND_MAX, rand() / (float)RAND_MAX);
+		vec2 a = vec2(-widthImg / 4, -heightImg / 4);//rand() % widthImg, rand() % heightImg);
+		vec2 b = vec2(widthImg / 2, heightImg * 5 / 4);//rand() % widthImg, rand() % heightImg);
+		vec2 c = vec2(widthImg * 5 / 4, -heightImg / 4);//rand() % widthImg, rand() % heightImg);
+		vec2 ta = vec2(0, 0);//rand() / (float)RAND_MAX, rand() / (float)RAND_MAX);
+		vec2 tb = vec2(.5f, 1);//rand() / (float)RAND_MAX, rand() / (float)RAND_MAX);
+		vec2 tc = vec2(1, 0);//rand() / (float)RAND_MAX, rand() / (float)RAND_MAX);
 
 		for (size_t y = 0; y < heightImg; y++)
 		{
 			for (size_t x = 0; x < widthImg; x++)
 			{
-				if (isInTriangle(V2(x, y), a, b, c))
+				if (SoftwareRenderer::isInTriangle(vec2(x, y), a, b, c))
 				{
-					V3 barycentric = getBarycentricCoord(V2(x, y), a, b, c);
+					vec3 barycentric = SoftwareRenderer::getBarycentricCoord(vec2(x, y), a, b, c);
 					
 					if (true) // if texture is passed
 					{
-						V2 textureSample = UVmapping(barycentric, ta, tb, tc);
+						vec2 textureSample = SoftwareRenderer::UVmapping(barycentric, ta, tb, tc);
 
-						V3 pixel = getPixelColorFromUV(data, texW, texH, textureSample);
+						vec3 pixel = SoftwareRenderer::getPixelColorFromUV(data, texW, texH, textureSample);
 						
-						if (pixel == V3(-1, -1, -1)) break;
-						pixels.push_back(unsigned char(pixel.r));
-						pixels.push_back(unsigned char(pixel.g));
-						pixels.push_back(unsigned char(pixel.b));
+						if (pixel == vec3(-1, -1, -1)) break;
+						pixels.push_back(unsigned char(barycentric.x * pixel.r));
+						pixels.push_back(unsigned char(barycentric.y * pixel.g));
+						pixels.push_back(unsigned char(barycentric.z * pixel.b));
 					}
 					else
 					{
-						pixels.push_back(unsigned char(barycentric.x * 255.f));
-						pixels.push_back(unsigned char(barycentric.y * 255.f));
-						pixels.push_back(unsigned char(barycentric.z * 255.f));
+						pixels.push_back(unsigned char(255.f));
+						pixels.push_back(unsigned char(255.f));
+						pixels.push_back(unsigned char(255.f));
 					}
 				}
 				else
@@ -212,8 +241,8 @@ namespace Example
 				}
 			}
 		}
-		stbi_flip_vertically_on_write(true);
-		int res = stbi_write_png("textures/res.png", widthImg, heightImg, 3, &pixels[0], widthImg * 3 * (int)sizeof(pixels[0]));
+		SoftwareRenderer::saveRender(pixels, widthImg, heightImg);
+		//int res = stbi_write_png("textures/res.png", widthImg, heightImg, 3, &pixels[0], widthImg * 3 * (int)sizeof(pixels[0]));
 
 		if (this->window->Open())
 		{
@@ -223,7 +252,7 @@ namespace Example
 			// MeshResource
 			cubeMesh = MeshResource::LoadObj("textures/quad.obj");
 
-			cubeTexture = std::make_shared<TextureResource>("textures/res.png");
+			cubeTexture = std::make_shared<TextureResource>("textures/res.jpg");
 
 			// shaderResource
 			cubeScript = std::make_shared<ShaderResource>();
@@ -242,43 +271,43 @@ namespace Example
 	void
 	ExampleApp::Run()
 	{
-		//glEnable(GL_DEPTH_TEST);
-		//glDepthFunc(GL_LEQUAL);
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LEQUAL);
 
-		//Camera cam(90, (float)width / height, 0.01f, 100.0f);
-		//cam.setPos(V4(0, 2, 5));
-		//cam.setRot(V4(0, 1, 0), M_PI);
+		Camera cam(90, (float)width / height, 0.01f, 100.0f);
+		cam.setPos(vec4(0, 2, 5));
+		cam.setRot(vec4(0, 1, 0), M_PI);
 
-		//Lightning light(V3(10, 10, 10), V3(1, 1, 1), .01f);
-		//
-		//float camSpeed = .08f;
+		Lightning light(vec3(10, 10, 10), vec3(1, 1, 1), .01f);
+		
+		float camSpeed = .08f;
 
-		//// set identies
-		//cubeWorldSpaceTransform = cubeProjectionViewTransform = Translate(V4());
+		// set identies
+		cubeWorldSpaceTransform = cubeProjectionViewTransform = Translate(vec4());
 
-		//while (this->window->IsOpen())
-		//{
-		//	cam.setPos(cam.getPos() + Normalize(V4((d - a), (q - e), (w - s))) * -camSpeed);
+		while (this->window->IsOpen())
+		{
+			cam.setPos(cam.getPos() + Normalize(vec4((d - a), (q - e), (w - s))) * -camSpeed);
 
-		//	// cube world space
+			// cube world space
 
-		//	// // cube view space
-		//	cubeProjectionViewTransform = cam.pv() * cubeWorldSpaceTransform;
+			// // cube view space
+			cubeProjectionViewTransform = cam.pv() * cubeWorldSpaceTransform;
 
-		//	//--------------------real-time render section--------------------
-		//	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			//--------------------real-time render section--------------------
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		//	cubeScript->setM4(cam.pv(), "m4ProjViewPos");
+			cubeScript->setM4(cam.pv(), "m4ProjViewPos");
 
-		//	light.bindLight(cubeScript, cam.getPos());
-		//	cube->DrawScene(cubeProjectionViewTransform, cubeColor);
+			light.bindLight(cubeScript, cam.getPos());
+			cube->DrawScene(cubeProjectionViewTransform, cubeColor);
 
-		//	
-		//	this->window->Update();
-		//	frameIndex++;
-		//	Debug::Render(cam.pv());
-		//	this->window->SwapBuffers();
-		//}
+			
+			this->window->Update();
+			frameIndex++;
+			Debug::Render(cam.pv());
+			this->window->SwapBuffers();
+		}
 	}
 
 } // namespace Example

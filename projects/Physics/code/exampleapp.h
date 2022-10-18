@@ -20,6 +20,8 @@
 
 namespace Example
 {
+	class SoftwareRenderer;
+
 	class ExampleApp : public Core::App
 	{
 	public:
@@ -34,14 +36,15 @@ namespace Example
 		void Run();
 
 	private:
+		SoftwareRenderer* softwareRenderer;
+
 		uint64_t duration;
 		int width, height;
 		uint32_t frameIndex = 0;
-		Plane *plane;
-		float x, y, z;
 
 		float64 prevX = 0, prevY = 0;
 		float64 senseX = 0, senseY = 0;
+		int widthImg = 20, heightImg = 120;
 		bool w, a, s, d,
 			q, e, isPressed = false;
 
@@ -49,28 +52,14 @@ namespace Example
 		GLuint vertexShader;
 		GLuint pixelShader;
 
-		mat4 fireHydrantWorldSpaceTransform;
-		mat4 fireHydrantProjectionViewTransform;
-		vec4 fireHydrantColor{1, 1, 1, 1};
-		std::shared_ptr<MeshResource> fireHydrantMesh;
-		std::shared_ptr<TextureResource> fireHydrantTexture;
-		std::shared_ptr<ShaderResource> fireHydrantScript;
-		std::shared_ptr<GraphicNode> fireHydrant;
-
 		mat4 cubeWorldSpaceTransform;
 		mat4 cubeProjectionViewTransform;
-		vec4 cubeColor{1, 0, 0, 1};
+		vec4 cubeColor{0, 0, 0, 1};
 
 		std::shared_ptr<MeshResource> cubeMesh;
 		std::shared_ptr<TextureResource> cubeTexture;
 		std::shared_ptr<ShaderResource> cubeScript;
 		std::shared_ptr<GraphicNode> cube;
-
-		// will have a entire array of these
-		std::shared_ptr<MeshResource> quadMesh;
-		std::shared_ptr<TextureResource> quadTexture;
-		std::shared_ptr<ShaderResource> quadScript;
-		std::shared_ptr<GraphicNode> quad;
 
 		Display::Window *window;
 	};

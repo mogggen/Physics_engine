@@ -43,28 +43,52 @@ namespace Example
 
 	class SoftwareRenderer
 	{
-		SoftwareRenderer();
+		// get from foo.obj
 		GLuint vertexBufHandle;
 		GLuint indexBufHandle;
-		unsigned char* frameBuffer;
-		int textureWidth, textureHeight;
-		int width, height;
-	public:
-		void rasterizeTriangle();
-		static const unsigned char* loadTexture(const char* pathToFile, int& texW, int& texH, int& texC);
-		static int saveRender(const std::vector<char>& pixels, int w, int h, const char* pathToFile);
+		unsigned* vertices;
+		unsigned* indices;
 
-		static bool isInTriangle(const vec2& p, const vec2& a, const vec2& b, const vec2& c);
-		static float sign(const vec2& p, const vec2& a, const vec2& b);
-		static vec3 getBarycentricCoord(const vec2& p, const vec2& a, const vec2& b, const vec2& c);
-		static vec2 UVmapping(const vec3& bp, const vec2& ta, const vec2& tb, const vec2& tc);
-		static vec3 getPixelColorFromUV(const unsigned char* texture, const int& w, const int& h, const vec2& texel);
+
+		//resulting frame
+		unsigned char* frameBuffer;
+		int rasterWidth, rasterHeight;
+		
+		// the texture
+		unsigned char* textureBuffer;
+		int textureWidth, textureHeight;
+		
+	public:
+		SoftwareRenderer();
+		void setVertexBuffer(unsigned* vertexBuffer);
+		void setIndexBuffer(unsigned* indexBuffer);
+		unsigned char* getFrameBuffer();
+		void setFrameBuffer(unsigned char* frameBuffer);
+		void projectModel(const mat4& pvm);
+		const unsigned char* loadTexture(const char* pathToFile);
+		int saveRender(int w, int h, const char* pathToFile);
+
+		unsigned char* getTextureBuffer();
+		int getTextureWidth();
+		int getTextureHeight();
+
+		bool isInTriangle(const vec2& p, const vec2& a, const vec2& b, const vec2& c);
+		float sign(const vec2& p, const vec2& a, const vec2& b);
+		vec3 getBarycentricCoord(const vec2& p, const vec2& a, const vec2& b, const vec2& c);
+		vec2 UVmapping(const vec3& bp, const vec2& ta, const vec2& tb, const vec2& tc);
+		vec3 getPixelColorFromUV(const unsigned char* texture, const int& w, const int& h, const vec2& texel);
+		void rasterizeTriangle(const int& widthImg, const int& heightImg, int frameIndex);
 	};
 
 	SoftwareRenderer::SoftwareRenderer()
 	{
 		stbi_set_flip_vertically_on_load(true);
 		stbi_flip_vertically_on_write(true);
+	}
+
+	void SoftwareRenderer::setFrameBuffer(unsigned char* _frameBuffer)
+	{
+		frameBuffer = _frameBuffer;
 	}
 
 	inline float SoftwareRenderer::sign(const vec2& p, const vec2& a, const vec2& b)
@@ -116,22 +140,257 @@ namespace Example
 		return vec3(-1, -1, -1);
 	}
 
-	inline const unsigned char* SoftwareRenderer::loadTexture(const char* pathToFile , int& texW, int& texH, int& texC)
+	inline const unsigned char* SoftwareRenderer::loadTexture(const char* pathToFile)
 	{
-		const unsigned char* data = stbi_load(pathToFile, &texW, &texH, &texC, 3);
-		if (!data)
+		int nrChannels;
+		textureBuffer = stbi_load(pathToFile, &textureWidth, &textureHeight, &nrChannels, 3);
+		if (!textureBuffer)
 		{
 			fprintf(stderr, "Cannot load file image %s\nSTB Reason: %s\n", pathToFile, stbi_failure_reason());
 			exit(0);
 		}
-		return data;
+		return textureBuffer;
 	}
-	inline int SoftwareRenderer::saveRender(const std::vector<char>& pixels, int w = 1024, int h = 1024, const char* pathToFile = "textures/res.jpg")
+
+	bool SoftwareRenderer::LoadObj(const char* pathToFile, unsigned* _indices, vec3* _coordinates, vec2* _texels, vec3* _normals)
 	{
-		int res = stbi_write_png(pathToFile, w, h, 3, &pixels[0], w * 3 * (int)sizeof(pixels[0]));
+		char buf[1024];
+		FILE* fs;
+#ifndef __linux
+		fopen_s(&fs, pathToFile, "r"); // textures/sphere.obj
+#else
+		fs = fopen64(pathToFile, "r"); // "textures/sphere.obj"
+#endif
+
+		unsigned long long verticesUsed = 0ull;
+		std::vector<uint32_t> indices;
+		std::vector<vec3> coords;
+		std::vector<vec2> texels;
+		std::vector<vec3> normals;
+		std::vector<Vertex> vertices; // complete package
+
+		if (fs)
+		{
+			while (true)
+			{
+				int foo = fscanf(fs, "%1024s", buf); // reads one word at a time and places it at buf[0] with a trailing '\0'
+				if (foo <= 0)
+				{
+					break;
+				}
+
+				if (buf[0] == 'v' && buf[1] == '\0')
+				{
+					vec3 nextCoordinate;
+					if (fscanf(fs, "%f %f %f", &nextCoordinate.x, &nextCoordinate.y, &nextCoordinate.z) == 3)
+					{
+						coords.push_back(nextCoordinate);
+					}
+					else
+					{
+						std::cerr << "missing arguments in vertex, expected 3" << std::endl;
+					}
+				}
+
+				else if (buf[0] == 'v' && buf[1] == 't' && buf[2] == '\0')
+				{
+					vec2 nextTexel;
+					if (fscanf(fs, "%f %f", &nextTexel.x, &nextTexel.y) == 2)
+					{
+						texels.push_back(nextTexel);
+					}
+					else
+					{
+						std::cerr << "missing arguments in texel, expected 2" << std::endl;
+					}
+				}
+
+				else if (buf[0] == 'v' && buf[1] == 'n' && buf[2] == '\0')
+				{
+					vec3 nextNormal;
+					if (fscanf(fs, "%f %f %f", &nextNormal.x, &nextNormal.y, &nextNormal.z) == 3)
+					{
+						normals.push_back(nextNormal);
+					}
+					else
+					{
+						std::cerr << "missing arguments in texel, expected 3" << std::endl;
+					}
+				}
+
+				else if (buf[0] == 'f' && buf[1] == '\0')
+				{
+					char pos[4][64];
+					uint8_t argc = fscanf(fs, "%s %s %s %s", &pos[0], &pos[1], &pos[2], &pos[3]);
+
+					uint32_t listOfIndices[4][3];
+
+					if (argc == 4 && pos[3][0] != 'f' && pos[3][0] != '#')
+					{
+						for (size_t i = 0; i < 4; i++)
+						{
+							if (sscanf(pos[i], "%lu"
+								"/ %lu"
+								"/ %lu"
+								"/",
+								&listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) != 3)
+								break;
+							vertices.push_back(Vertex{
+								coords[(listOfIndices[i][0]) - 1],
+								vec4(1, 1, 1, 1),
+								texels[(listOfIndices[i][1]) - 1],
+								normals[(listOfIndices[i][2]) - 1],
+								});
+						}
+
+						float dist1 = (vertices[vertices.size() - 4].pos - vertices[vertices.size() - 2].pos).Length();
+						float dist2 = (vertices[vertices.size() - 3].pos - vertices[vertices.size() - 1].pos).Length();
+						if (dist1 > dist2)
+						{
+							indices.push_back(vertices.size() - 4);
+							indices.push_back(vertices.size() - 3);
+							indices.push_back(vertices.size() - 1);
+
+							indices.push_back(vertices.size() - 3);
+							indices.push_back(vertices.size() - 2);
+							indices.push_back(vertices.size() - 1);
+						}
+						else
+						{
+							indices.push_back(vertices.size() - 4);
+							indices.push_back(vertices.size() - 3);
+							indices.push_back(vertices.size() - 2);
+
+							indices.push_back(vertices.size() - 4);
+							indices.push_back(vertices.size() - 2);
+							indices.push_back(vertices.size() - 1);
+						}
+					}
+					else if (argc == 3)
+					{
+						for (size_t i = 0; i < 3; i++)
+						{
+							if (sscanf(pos[i], "%lu"
+								"/ %lu"
+								"/ %lu"
+								"/",
+								&listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) != 3)
+								break;
+
+							vertices.push_back(Vertex{
+								coords[listOfIndices[i][0] - 1],
+								vec4(1, 1, 1, 1),
+								texels[listOfIndices[i][1] - 1],
+								normals[listOfIndices[i][2] - 1],
+								});
+							indices.push_back(vertices.size() - 1);
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			printf("file not found with path \"./%s\"\n", pathToFile);
+		}
+		fclose(fs);
+		printf("loadedToBuffer %s\n", pathToFile);
+		_indices = &indices[0];
+		_coordinates = &coords[0];
+		_texels = &texels[0];
+		_normals = &normals[0];
+		return fs;
+	}
+
+
+	inline int SoftwareRenderer::saveRender(int w = 1024, int h = 1024, const char* pathToFile = "textures/res.jpg")
+	{
+		int res = stbi_write_png(pathToFile, w, h, 3, frameBuffer, w * 3);
 		return res;
 	}
+
+	unsigned char* SoftwareRenderer::getTextureBuffer()
+	{
+		return textureBuffer;
+	}
+
+	int SoftwareRenderer::getTextureWidth()
+	{
+		return textureWidth;
+	}
+
+	int SoftwareRenderer::getTextureHeight()
+	{
+		return textureHeight;
+	}
+
+	unsigned char* SoftwareRenderer::getFrameBuffer()
+	{
+		return frameBuffer;
+	}
 	
+	// CPU vertex shader
+	inline void SoftwareRenderer::projectModel(const mat4& pvm)
+	{
+		for (size_t i = 0; i < sizeof(vertices) / sizeof(unsigned); i += 3)
+		{
+			vec4 temp = pvm * vec4(vertices[i], vertices[i + 1], vertices[i + 2], 1);
+			for (size_t j = 0; j < 3; j++)
+			{
+				vertices[i + j] = temp[j];
+			}
+		}
+	}
+
+	// CPU pixel shader
+	inline void SoftwareRenderer::rasterizeTriangle(const int& widthImg, const int& heightImg, int frameIndex)
+	{
+		float step = frameIndex * 0.01f;
+		frameBuffer = new unsigned char[widthImg * heightImg * 3];
+		// one triangle
+		vec2 a = vec2(-widthImg / 4, -heightImg / 4);
+		vec2 b = vec2(widthImg / 2, heightImg * 5 / 4);
+		vec2 c = vec2(widthImg * 5 / 4, -heightImg / 4);
+		vec2 ta = vec2(0 + step, 0);
+		vec2 tb = vec2(.5f + step, 1);
+		vec2 tc = vec2(1 + step, 0);
+
+		for (size_t y = 0; y < heightImg; y++)
+		{
+			for (size_t x = 0; x < widthImg; x++)
+			{
+				if (this->isInTriangle(vec2(x, y), a, b, c))
+				{
+					vec3 barycentric = this->getBarycentricCoord(vec2(x, y), a, b, c);
+
+					if (true) // if texture is passed
+					{
+						vec2 textureSample = this->UVmapping(barycentric, ta, tb, tc);
+
+						vec3 pixel = this->getPixelColorFromUV(textureBuffer, textureWidth, textureHeight, textureSample);
+
+						if (pixel == vec3(-1, -1, -1)) break;
+						frameBuffer[x + y * widthImg] = (unsigned char(barycentric.x * pixel.r));
+						frameBuffer[x + y * widthImg] = (unsigned char(barycentric.y * pixel.g));
+						frameBuffer[x + y * widthImg] = (unsigned char(barycentric.z * pixel.b));
+					}
+					else
+					{
+						frameBuffer[x + y * widthImg] = (unsigned char(barycentric.x * 255.f));
+						frameBuffer[x + y * widthImg] = (unsigned char(barycentric.y * 255.f));
+						frameBuffer[x + y * widthImg] = (unsigned char(barycentric.z * 255.f));
+					}
+				}
+				else
+				{
+					// gray background
+					frameBuffer[x + y * widthImg] = (0x69);
+					frameBuffer[x + y * widthImg] = (0x69);
+					frameBuffer[x + y * widthImg] = (0x69);
+				}
+			}
+		}
+	}
 
 	//vec3 barycentricToCartesian(const vec3& barycentric, const vec2& p0, const vec2& p1, const vec2& p2)
 	//{
@@ -192,57 +451,8 @@ namespace Example
 		// use texcoord as a color
 
 		//texture
-		int texW, texH, texC;
-		const unsigned char* data = SoftwareRenderer::loadTexture("textures/evening.jpg", texW, texH, texC);
-
-		int widthImg = 1920, heightImg = 1200;
-		std::vector<char> pixels;
-		pixels.reserve(size_t(widthImg * heightImg * 3));
-		srand((unsigned)time(nullptr));
-		vec2 a = vec2(-widthImg / 4, -heightImg / 4);//rand() % widthImg, rand() % heightImg);
-		vec2 b = vec2(widthImg / 2, heightImg * 5 / 4);//rand() % widthImg, rand() % heightImg);
-		vec2 c = vec2(widthImg * 5 / 4, -heightImg / 4);//rand() % widthImg, rand() % heightImg);
-		vec2 ta = vec2(0, 0);//rand() / (float)RAND_MAX, rand() / (float)RAND_MAX);
-		vec2 tb = vec2(.5f, 1);//rand() / (float)RAND_MAX, rand() / (float)RAND_MAX);
-		vec2 tc = vec2(1, 0);//rand() / (float)RAND_MAX, rand() / (float)RAND_MAX);
-
-		for (size_t y = 0; y < heightImg; y++)
-		{
-			for (size_t x = 0; x < widthImg; x++)
-			{
-				if (SoftwareRenderer::isInTriangle(vec2(x, y), a, b, c))
-				{
-					vec3 barycentric = SoftwareRenderer::getBarycentricCoord(vec2(x, y), a, b, c);
-					
-					if (true) // if texture is passed
-					{
-						vec2 textureSample = SoftwareRenderer::UVmapping(barycentric, ta, tb, tc);
-
-						vec3 pixel = SoftwareRenderer::getPixelColorFromUV(data, texW, texH, textureSample);
-						
-						if (pixel == vec3(-1, -1, -1)) break;
-						pixels.push_back(unsigned char(barycentric.x * pixel.r));
-						pixels.push_back(unsigned char(barycentric.y * pixel.g));
-						pixels.push_back(unsigned char(barycentric.z * pixel.b));
-					}
-					else
-					{
-						pixels.push_back(unsigned char(255.f));
-						pixels.push_back(unsigned char(255.f));
-						pixels.push_back(unsigned char(255.f));
-					}
-				}
-				else
-				{
-					// gray background
-					pixels.push_back(0x69);
-					pixels.push_back(0x69);
-					pixels.push_back(0x69);
-				}
-			}
-		}
-		SoftwareRenderer::saveRender(pixels, widthImg, heightImg);
-		//int res = stbi_write_png("textures/res.png", widthImg, heightImg, 3, &pixels[0], widthImg * 3 * (int)sizeof(pixels[0]));
+		softwareRenderer = new SoftwareRenderer;
+		softwareRenderer->loadTexture("textures/evening.jpg");
 
 		if (this->window->Open())
 		{
@@ -250,14 +460,22 @@ namespace Example
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
 			// MeshResource
-			cubeMesh = MeshResource::LoadObj("textures/quad.obj");
-
-			cubeTexture = std::make_shared<TextureResource>("textures/res.jpg");
+			cubeMesh = MeshResource::LoadObj("textures/cube.obj");
 
 			// shaderResource
 			cubeScript = std::make_shared<ShaderResource>();
 			cubeScript->LoadShader(cubeScript->vs, cubeScript->ps, "textures/vs.glsl", "textures/ps.glsl");
-			// note: bindTexture() still requires a texture, but just won't use it
+
+			// TextureResource
+			cubeTexture = std::make_shared<TextureResource>("textures/res.jpg");
+			//cubeTexture->LoadFromFile();
+			//cubeTexture->BindTexture();
+
+			// Actor
+			Actor* cubeActor = new Actor();
+
+			// GraphicNode
+			cube = std::make_shared<GraphicNode>(cubeMesh, cubeTexture, cubeScript, cubeActor);
 
 			return true;
 		}
@@ -289,15 +507,20 @@ namespace Example
 		{
 			cam.setPos(cam.getPos() + Normalize(vec4((d - a), (q - e), (w - s))) * -camSpeed);
 
+			softwareRenderer->rasterizeTriangle(widthImg, heightImg, frameIndex);
+
 			// cube world space
 
-			// // cube view space
+			// cube view space
 			cubeProjectionViewTransform = cam.pv() * cubeWorldSpaceTransform;
 
 			//--------------------real-time render section--------------------
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			cubeScript->setM4(cam.pv(), "m4ProjViewPos");
+
+			cubeTexture->LoadFromBuffer(softwareRenderer->getTextureBuffer(), softwareRenderer->getTextureWidth(), softwareRenderer->getTextureHeight());
+			cubeTexture->BindTexture();
 
 			light.bindLight(cubeScript, cam.getPos());
 			cube->DrawScene(cubeProjectionViewTransform, cubeColor);

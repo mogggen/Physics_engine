@@ -1,15 +1,14 @@
-transform the triangles into perspective view
 
-load triangles from obj instead of hardcoded
-
-obj verticies position -> into world space -> into projective space -> the quad's texture 
-
-// streach, repeat flipped, repeat texture, solid background color
-//nearest, linear
-
-make res.png the texture of the cube (that should be a quad)
+render multiple trinangles from .obj to an array and loop through them with isInTriangle()
 
 
-port it so it runs as the lab says it should
+transform the vertices of the triangles with pvm matrix
+and stbi_write_png(res.jpg)
 
-submit
+load_from_file()
+bind_texture
+
+
+somehow keep the window input (maybe from the booleans: left, right, up, down, forward, backward)
+and apply them to the jpg in realtime
+

@@ -44,7 +44,6 @@ namespace Example
 
 		float64 prevX = 0, prevY = 0;
 		float64 senseX = 0, senseY = 0;
-		int widthImg = 20, heightImg = 120;
 		bool w, a, s, d,
 			q, e, isPressed = false;
 

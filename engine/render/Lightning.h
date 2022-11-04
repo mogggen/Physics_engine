@@ -21,5 +21,5 @@ public:
     void setIntensity(float _intensity);
     float getIntensity();
 
-    void bindLight(std::shared_ptr<ShaderResource> shader, vec3 cameraPos);
+    void setFragShaderUniformVariables(const std::shared_ptr<ShaderResource>& shader, const vec3& cameraPos);
 };

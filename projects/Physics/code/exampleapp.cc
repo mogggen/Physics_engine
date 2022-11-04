@@ -43,9 +43,9 @@ namespace Example
 
 	class SoftwareRenderer
 	{
-		// get from foo.obj
 		GLuint vertexBufHandle;
 		GLuint indexBufHandle;
+		// get from foo.obj
 		unsigned* vertices;
 		unsigned* indices;
 
@@ -58,14 +58,18 @@ namespace Example
 		unsigned char* textureBuffer;
 		int textureWidth, textureHeight;
 		
+		// the openGL texture size
 	public:
+		int widthImg = 1920, heightImg = 1020;
+
 		SoftwareRenderer();
 		void setVertexBuffer(unsigned* vertexBuffer);
 		void setIndexBuffer(unsigned* indexBuffer);
 		unsigned char* getFrameBuffer();
 		void setFrameBuffer(unsigned char* frameBuffer);
 		void projectModel(const mat4& pvm);
-		const unsigned char* loadTexture(const char* pathToFile);
+		void loadTexture(const char* pathToFile);
+		bool LoadObj(const char* pathToFile); //, unsigned* _indices, vec3* _coordinates, vec2* _texels, vec3* _normals);
 		int saveRender(int w, int h, const char* pathToFile);
 
 		unsigned char* getTextureBuffer();
@@ -77,13 +81,15 @@ namespace Example
 		vec3 getBarycentricCoord(const vec2& p, const vec2& a, const vec2& b, const vec2& c);
 		vec2 UVmapping(const vec3& bp, const vec2& ta, const vec2& tb, const vec2& tc);
 		vec3 getPixelColorFromUV(const unsigned char* texture, const int& w, const int& h, const vec2& texel);
-		void rasterizeTriangle(const int& widthImg, const int& heightImg, int frameIndex);
+		void rasterizeTriangle(const vec2& a, const vec2& b, const vec2& c, const vec2& ta, const vec2& tb, const vec2& tc);
 	};
 
 	SoftwareRenderer::SoftwareRenderer()
 	{
 		stbi_set_flip_vertically_on_load(true);
 		stbi_flip_vertically_on_write(true);
+
+		frameBuffer = new unsigned char[widthImg * heightImg * 3];
 	}
 
 	void SoftwareRenderer::setFrameBuffer(unsigned char* _frameBuffer)
@@ -140,7 +146,7 @@ namespace Example
 		return vec3(-1, -1, -1);
 	}
 
-	inline const unsigned char* SoftwareRenderer::loadTexture(const char* pathToFile)
+	inline void SoftwareRenderer::loadTexture(const char* pathToFile)
 	{
 		int nrChannels;
 		textureBuffer = stbi_load(pathToFile, &textureWidth, &textureHeight, &nrChannels, 3);
@@ -149,12 +155,11 @@ namespace Example
 			fprintf(stderr, "Cannot load file image %s\nSTB Reason: %s\n", pathToFile, stbi_failure_reason());
 			exit(0);
 		}
-		return textureBuffer;
 	}
 
-	bool SoftwareRenderer::LoadObj(const char* pathToFile, unsigned* _indices, vec3* _coordinates, vec2* _texels, vec3* _normals)
+	inline bool SoftwareRenderer::LoadObj(const char* pathToFile) //, unsigned* _indices, vec3* _coordinates, vec2* _texels, vec3* _normals)
 	{
-		char buf[1024];
+		char wordBuf[1024];
 		FILE* fs;
 #ifndef __linux
 		fopen_s(&fs, pathToFile, "r"); // textures/sphere.obj
@@ -171,15 +176,14 @@ namespace Example
 
 		if (fs)
 		{
-			while (true)
+			while (true) // reads one word at a time and places it at wordBuf[0] with a trailing '\0'
 			{
-				int foo = fscanf(fs, "%1024s", buf); // reads one word at a time and places it at buf[0] with a trailing '\0'
-				if (foo <= 0)
+				int count = fscanf(fs, "%1024s", wordBuf);
+				if (count <= 0)
 				{
 					break;
 				}
-
-				if (buf[0] == 'v' && buf[1] == '\0')
+				if (wordBuf[0] == 'v' && wordBuf[1] == '\0')
 				{
 					vec3 nextCoordinate;
 					if (fscanf(fs, "%f %f %f", &nextCoordinate.x, &nextCoordinate.y, &nextCoordinate.z) == 3)
@@ -192,7 +196,7 @@ namespace Example
 					}
 				}
 
-				else if (buf[0] == 'v' && buf[1] == 't' && buf[2] == '\0')
+				else if (wordBuf[0] == 'v' && wordBuf[1] == 't' && wordBuf[2] == '\0')
 				{
 					vec2 nextTexel;
 					if (fscanf(fs, "%f %f", &nextTexel.x, &nextTexel.y) == 2)
@@ -205,7 +209,7 @@ namespace Example
 					}
 				}
 
-				else if (buf[0] == 'v' && buf[1] == 'n' && buf[2] == '\0')
+				else if (wordBuf[0] == 'v' && wordBuf[1] == 'n' && wordBuf[2] == '\0')
 				{
 					vec3 nextNormal;
 					if (fscanf(fs, "%f %f %f", &nextNormal.x, &nextNormal.y, &nextNormal.z) == 3)
@@ -218,7 +222,7 @@ namespace Example
 					}
 				}
 
-				else if (buf[0] == 'f' && buf[1] == '\0')
+				else if (wordBuf[0] == 'f' && wordBuf[1] == '\0')
 				{
 					char pos[4][64];
 					uint8_t argc = fscanf(fs, "%s %s %s %s", &pos[0], &pos[1], &pos[2], &pos[3]);
@@ -295,10 +299,27 @@ namespace Example
 		}
 		fclose(fs);
 		printf("loadedToBuffer %s\n", pathToFile);
-		_indices = &indices[0];
-		_coordinates = &coords[0];
-		_texels = &texels[0];
-		_normals = &normals[0];
+		
+		printf("calculating object...");
+		
+		for	(size_t i = 0; i < coords.size(); i++)
+		{
+			vec2 a = vec2(coords[indices[i]].x, coords[indices[i]].y);
+			vec2 b = vec2(coords[indices[i + 1]].x, coords[indices[i + 1]].y);
+			vec2 c = vec2(coords[indices[i + 2]].x, coords[indices[i + 2]].y);
+
+			vec2 ta = texels[indices[i]];
+			vec2 tb = texels[indices[i + 1]];
+			vec2 tc = texels[indices[i + 2]];
+
+			(*this).rasterizeTriangle(a, b, c, ta, tb, tc);
+		}
+		
+		saveRender(1024, 1024, "textures/res.jpg");
+		// _indices = &indices[0];
+		// _coordinates = &coords[0];
+		// _texels = &texels[0];
+		// _normals = &normals[0];
 		return fs;
 	}
 
@@ -343,17 +364,9 @@ namespace Example
 	}
 
 	// CPU pixel shader
-	inline void SoftwareRenderer::rasterizeTriangle(const int& widthImg, const int& heightImg, int frameIndex)
+	inline void SoftwareRenderer::rasterizeTriangle(const vec2& a, const vec2& b, const vec2& c, const vec2& ta, const vec2& tb, const vec2& tc)
 	{
-		float step = frameIndex * 0.01f;
-		frameBuffer = new unsigned char[widthImg * heightImg * 3];
 		// one triangle
-		vec2 a = vec2(-widthImg / 4, -heightImg / 4);
-		vec2 b = vec2(widthImg / 2, heightImg * 5 / 4);
-		vec2 c = vec2(widthImg * 5 / 4, -heightImg / 4);
-		vec2 ta = vec2(0 + step, 0);
-		vec2 tb = vec2(.5f + step, 1);
-		vec2 tc = vec2(1 + step, 0);
 
 		for (size_t y = 0; y < heightImg; y++)
 		{
@@ -363,13 +376,17 @@ namespace Example
 				{
 					vec3 barycentric = this->getBarycentricCoord(vec2(x, y), a, b, c);
 
-					if (true) // if texture is passed
+					if (1) // if texture is passed
 					{
 						vec2 textureSample = this->UVmapping(barycentric, ta, tb, tc);
 
 						vec3 pixel = this->getPixelColorFromUV(textureBuffer, textureWidth, textureHeight, textureSample);
 
-						if (pixel == vec3(-1, -1, -1)) break;
+						if (pixel == vec3(-1, -1, -1))
+						{
+							printf("%i", 0);
+							break;
+						}
 						frameBuffer[x + y * widthImg] = (unsigned char(barycentric.x * pixel.r));
 						frameBuffer[x + y * widthImg] = (unsigned char(barycentric.y * pixel.g));
 						frameBuffer[x + y * widthImg] = (unsigned char(barycentric.z * pixel.b));
@@ -407,7 +424,7 @@ namespace Example
 	//	return output_start + slope * (input - input_start);
 	//}
 
-	void Print(mat4 m)
+	void Print(const mat4 m)
 	{
 		for (size_t i = 0; i < 4; i++)
 		{
@@ -453,6 +470,8 @@ namespace Example
 		//texture
 		softwareRenderer = new SoftwareRenderer;
 		softwareRenderer->loadTexture("textures/evening.jpg");
+		softwareRenderer->LoadObj("textures/cube.obj");
+		exit(0);
 
 		if (this->window->Open())
 		{
@@ -460,16 +479,16 @@ namespace Example
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
 			// MeshResource
-			cubeMesh = MeshResource::LoadObj("textures/cube.obj");
+			cubeMesh = MeshResource::LoadObj("textures/actual_cube.obj");
 
 			// shaderResource
 			cubeScript = std::make_shared<ShaderResource>();
 			cubeScript->LoadShader(cubeScript->vs, cubeScript->ps, "textures/vs.glsl", "textures/ps.glsl");
 
 			// TextureResource
-			cubeTexture = std::make_shared<TextureResource>("textures/res.jpg");
-			//cubeTexture->LoadFromFile();
-			//cubeTexture->BindTexture();
+			cubeTexture = std::make_shared<TextureResource>("textures/cubepic.png");
+			cubeTexture->LoadFromFile();
+			cubeTexture->BindTexture();
 
 			// Actor
 			Actor* cubeActor = new Actor();
@@ -505,30 +524,31 @@ namespace Example
 
 		while (this->window->IsOpen())
 		{
+			frameIndex++;
 			cam.setPos(cam.getPos() + Normalize(vec4((d - a), (q - e), (w - s))) * -camSpeed);
 
-			softwareRenderer->rasterizeTriangle(widthImg, heightImg, frameIndex);
+			//softwareRenderer->rasterizeTriangle();
 
 			// cube world space
 
 			// cube view space
-			cubeProjectionViewTransform = cam.pv() * cubeWorldSpaceTransform;
+			Print(cubeWorldSpaceTransform);
+			Print(cam.pv());
+			std::cin.get();
+			cubeProjectionViewTransform = cubeWorldSpaceTransform * cam.pv();
 
 			//--------------------real-time render section--------------------
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			cubeScript->setM4(cam.pv(), "m4ProjViewPos");
-
-			cubeTexture->LoadFromBuffer(softwareRenderer->getTextureBuffer(), softwareRenderer->getTextureWidth(), softwareRenderer->getTextureHeight());
+			cubeTexture->LoadFromBuffer(softwareRenderer->getFrameBuffer(), softwareRenderer->widthImg, softwareRenderer->heightImg);
 			cubeTexture->BindTexture();
 
-			light.bindLight(cubeScript, cam.getPos());
+			light.setFragShaderUniformVariables(cubeScript, cam.getPos());
 			cube->DrawScene(cubeProjectionViewTransform, cubeColor);
 
 			
 			this->window->Update();
-			frameIndex++;
-			Debug::Render(cam.pv());
 			this->window->SwapBuffers();
 		}
 	}

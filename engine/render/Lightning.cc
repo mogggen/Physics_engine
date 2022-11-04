@@ -45,7 +45,7 @@ float Lightning::getIntensity()
     return intensity;
 }
 
-void Lightning::bindLight(std::shared_ptr<ShaderResource> shader, vec3 cameraPos)
+void Lightning::setFragShaderUniformVariables(const std::shared_ptr<ShaderResource>& shader, const vec3 &cameraPos)
 {
     shader->setV3(rgb, "lightColor");
     shader->setV3(pos, "lightPos");

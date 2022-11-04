@@ -11,9 +11,8 @@ TextureResource::TextureResource(std::string file) : file(file)
 //	
 //}
 
-void TextureResource::LoadFromBuffer(const void* buf, const int& widthImg, const int& heightImg)
+void TextureResource::LoadFromBuffer(void* buf, const int& widthImg, const int& heightImg)
 {
-	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -56,6 +55,7 @@ void TextureResource::LoadFromFile()
 	glGenerateMipmap(GL_TEXTURE_2D);
 
 	glBindTexture(GL_TEXTURE_2D, 0);
+	delete[] img;
 }
 
 void TextureResource::BindTexture()

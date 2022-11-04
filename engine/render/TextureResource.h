@@ -18,6 +18,6 @@ public:
 	void setBuf(const unsigned char* buf);
 	
 	void BindTexture();
-	void LoadFromBuffer(const void* buf, const int& widthImg, const int& heightImg);
+	void LoadFromBuffer(void* buf, const int& widthImg, const int& heightImg);
 	void LoadFromFile();
 };

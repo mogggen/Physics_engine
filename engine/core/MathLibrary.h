@@ -1284,9 +1284,15 @@ struct Plane
 	vec3 point;
 	float MARGIN = 1.e-5f;
 	
+	inline Plane();
 	inline Plane(vec3 point, vec3 normal);
 	bool pointIsOnPlane(const vec3& point, float margin);
 };
+
+Plane::Plane()
+{
+
+}
 
 Plane::Plane(vec3 point, vec3 normal) : point(point), normal(normal)
 {

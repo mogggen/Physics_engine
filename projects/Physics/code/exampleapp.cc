@@ -72,8 +72,9 @@ namespace Example
 		void setFrameBuffer(unsigned char* frameBuffer);
 		void triangle(vec2 a, vec2 b, vec2 c, const vec2& ta, const vec2& tb, const vec2& tc);
 		void append_line(int x0, int y0, int x1, int y1, vec3 color);
-		vec3 depthPassForEachPixel(const unsigned& x, const unsigned& y, const vec3& a, const vec3& b, const vec3& c);
+		float getDepthFromPixel(const vec2& p, const vec3& a, const vec3& b, const vec3& c);
 		void moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(vec2& norm);
+		void moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(vec3& norm);
 		void projectModel(const mat4& pvm);
 		void loadTexture(const char* pathToFile);
 		bool LoadObj(const char* pathToFile, float* _coordinates, unsigned* _indices, float* _texels, float* _normals);
@@ -89,7 +90,7 @@ namespace Example
 		vec2 UVmapping(const vec3& bp, const vec2& ta, const vec2& tb, const vec2& tc);
 		vec3 getPixelColorFromUV(const unsigned char* texture, const int& w, const int& h, const vec2& texel);
 		void setBackground(const vec3& color=vec3(0.0f, 0.0f, 0.0f));
-		void rasterizeTriangle(vec2 a, vec2 b, vec2 c, const vec2& ta, const vec2& tb, const vec2& tc);
+		void rasterizeTriangle(vec3 ca, vec3 cb, vec3 cc, const vec2& ta, const vec2& tb, const vec2& tc);
 	};
 
 	SoftwareRenderer::SoftwareRenderer()
@@ -110,22 +111,6 @@ namespace Example
 	vec2 modelToRes(vec3 coord, const unsigned widthImg, const unsigned heightImg)
 	{
 		return vec2(coord.x * 0.75 * widthImg, coord.y * 0.75 * heightImg);
-	}
-
-
-	// do cross product of of two vectors, made from the three points, to use as normal and use one point for the point
-	vec3 SoftwareRenderer::depthPassForEachPixel(const unsigned& x, const unsigned& y, const vec3& a, const vec3& b, const vec3& c/*, const Plane& face*/) // last check before RasterizeTriangle()
-	{
-		float bestZ = -INFINITY;
-		for (size_t i = 0; i < 0; i++)
-		{
-			//if (face.pointIsOnPlane(vec3(x, y, 0), 100000.f) && isInTriangle(vec2(x, y), texA, texB, texC) && c.z > bestZ)
-			{
-			
-			}
-		}
-		// the rgb of the closes trinagle of the bunch at that pixel
-		return vec3();
 	}
 
 	void SoftwareRenderer::append_line(int x0, int y0, int x1, int y1, vec3 color)
@@ -213,10 +198,10 @@ namespace Example
 
 	vec3 SoftwareRenderer::getBarycentricCoord(const vec2& p, const vec2& a, const vec2& b, const vec2& c)
 	{
-		float L1 = safeDivide(((p.y - c.y) * (b.x - c.x) + (p.x - c.x) * (c.y - b.y)),
-			((a.y - c.y) * (b.x - c.x) + (a.x - c.x) * (c.y - b.y)), 1);
+		float L1 = safeDivide((p.y - c.y) * (b.x - c.x) + (p.x - c.x) * (c.y - b.y),
+			(a.y - c.y) * (b.x - c.x) + (a.x - c.x) * (c.y - b.y), 1);
 
-		float L2 = safeDivide((p.x - L1 * a.x - c.x + L1 * c.x), (b.x - c.x), 1);
+		float L2 = safeDivide(p.x - L1 * a.x - c.x + L1 * c.x, b.x - c.x, 1);
 
 		float L3 = 1 - L1 - L2;
 
@@ -230,10 +215,16 @@ namespace Example
 		return vec2(ta * bp.x + tb * bp.y + tc * bp.z);
 	}
 
+	inline float SoftwareRenderer::getDepthFromPixel(const vec2& p, const vec3& a, const vec3& b, const vec3& c)
+	{
+		vec3 norm(Cross(a - b, a - c));
+		return a.z - ((p.x - a.x) * norm.x + (p.y - a.y) * norm.y) / norm.z;
+	}
+
 	inline vec3 SoftwareRenderer::getPixelColorFromUV(const unsigned char *texture, const int& w, const int& h, const vec2& texel)
 	{
-		int pixelX = fabsf(texel.u) * w;
-		int pixelY = fabsf(texel.v) * h;
+		int pixelX = (texel.u) * w;
+		int pixelY = (texel.v) * h;
 		int index = (pixelX + pixelY * w) * 3;
 		if (index + 2 < w * h * 3)
 			return vec3(texture[index], texture[index + 1], texture[index + 2]);
@@ -261,6 +252,7 @@ namespace Example
 		fs = fopen64(pathToFile, "r"); // "textures/sphere.obj"
 #endif
 
+		setBackground(vec3(0x69, 0x69, 0x69));
 		unsigned long long verticesUsed = 0ull;
 		std::vector<unsigned> indices;
 		std::vector<vec3> coords;
@@ -327,11 +319,14 @@ namespace Example
 					{
 						for (size_t i = 0; i < 4; i++)
 						{
-							if (sscanf(pos[i], "%lu"
+							int count = sscanf(pos[i], "%lu"
 								"/ %lu"
 								"/ %lu"
 								"/",
-								&listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) != 3)
+								&listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]);
+							std::cin.get();
+							
+							if (count != 3)
 								break;
 							vertices.push_back(Vertex{
 								coords[(listOfIndices[i][0]) - 1],
@@ -394,6 +389,19 @@ namespace Example
 		}
 		printf("loadedToBuffer %s\n", pathToFile);
 		
+		for (size_t i = 0; i < coords.size(); i += 3)
+		{
+			vec3 a = coords[indices[i]];
+			vec3 b = coords[indices[i + 1]];
+			vec3 c = coords[indices[i + 2]];
+
+			vec2 ta = texels[indices[i]];
+			vec2 tb = texels[indices[i + 1]];
+			vec2 tc = texels[indices[i + 2]];
+
+			rasterizeTriangle(a, b, c, ta, tb, tc);
+		}
+
 		//std::cout << (coords.size() == indices.size() && coords.size() == texels.size() && coords.size() == normals.size() ? "same length" : "diffrent length");
 		/*_coordinates = new float[coords.size() * 3];
 		_indices = new unsigned[indices.size()];
@@ -435,20 +443,7 @@ namespace Example
 
 		printf("step 1/5: transforming obj verticies to modelSpace\n");
 
-		setBackground(vec3(0x69, 0x69, 0x69));
-
-		for (size_t i = 0; i < coords.size(); i++)
-		{
-			vec2 a = vec2(coords[indices[i]].x, coords[indices[i]].y);
-			vec2 b = vec2(coords[indices[i + 1]].x, coords[indices[i + 1]].y);
-			vec2 c = vec2(coords[indices[i + 2]].x, coords[indices[i + 2]].y);
-
-			vec2 ta = vec2(0, 0);
-			vec2 tb = vec2(.5f, 1);
-			vec2 tc = vec2(1, 0);
-
-			rasterizeTriangle(a, b, c, ta, tb, tc);
-		}
+		
 		int res = stbi_write_png("textures/res.jpg", widthImg, heightImg, 3, frameBuffer, widthImg * 3);
 
 		//save for later
@@ -583,28 +578,49 @@ namespace Example
 
 	// CPU pixel shader
 	// abc is window coordinates with no depth
-	inline void SoftwareRenderer::rasterizeTriangle(vec2 a, vec2 b, vec2 c, const vec2& ta, const vec2& tb, const vec2& tc)
+	inline void SoftwareRenderer::rasterizeTriangle(vec3 ca, vec3 cb, vec3 cc, const vec2& ta, const vec2& tb, const vec2& tc)
 	{
+		// model coord
+		vec2 a = vec2(ca.x, ca.y);
+		vec2 b = vec2(cb.x, cb.y);
+		vec2 c = vec2(cc.x, cc.y);
+		
+		// depth
+		float da = ca.z;
+		float db = cb.z;
+		float dc = cc.z;
+
+		// scale to screen
 		moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(a);
 		moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(b);
 		moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(c);
+		moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(ca);
+		moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(cb);
+		moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(cc);
+		
+		// scale with rgb
 		a.x *= 3;
 		b.x *= 3;
 		c.x *= 3;
+		
+		ca.x *= 3;
+		cb.x *= 3;
+		cc.x *= 3;
 
 		for (unsigned y = 0; y < heightImg; y++)
 		{
 			for (unsigned x = 0; x < widthImg * 3; x += 3)
 			{
-				if (this->isInTriangle(vec2(x, y), a, b, c))
+				if (isInTriangle(vec2(x, y), a, b, c))
 				{
-					vec3 barycentric = this->getBarycentricCoord(vec2(x, y), a, b, c);
+					vec3 barycentric = getBarycentricCoord(vec2(x, y), a, b, c);
+					float depth = getDepthFromPixel(vec2(x, y), ca, cb, cc) * 255.f;
 
-					if (1) // if texture is passed
+					if (0) // if texture is passed
 					{
-						vec2 textureSample = this->UVmapping(barycentric, ta, tb, tc);
+						vec2 textureSample = UVmapping(barycentric, ta, tb, tc);
 
-						vec3 pixel = this->getPixelColorFromUV(textureBuffer, textureWidth, textureHeight, textureSample);
+						vec3 pixel = getPixelColorFromUV(textureBuffer, textureWidth, textureHeight, textureSample);
 
 						if (pixel == vec3(-1, -1, -1))
 						{
@@ -617,9 +633,12 @@ namespace Example
 					}
 					else
 					{
-						frameBuffer[x + y * widthImg * 3] = unsigned char(barycentric.x * 255.f);
-						frameBuffer[x + y * widthImg * 3 + 1] = unsigned char(barycentric.y * 255.f);
-						frameBuffer[x + y * widthImg * 3 + 2] = unsigned char(barycentric.z * 255.f);
+						frameBuffer[x + y * widthImg * 3] = unsigned char(depth); // values over 255 will overflow
+						frameBuffer[x + y * widthImg * 3 + 1] = unsigned char(depth);
+						frameBuffer[x + y * widthImg * 3 + 2] = unsigned char(depth);
+						//frameBuffer[x + y * widthImg * 3] = unsigned char(barycentric.x * 255.f);
+						//frameBuffer[x + y * widthImg * 3 + 1] = unsigned char(barycentric.y * 255.f);
+						//frameBuffer[x + y * widthImg * 3 + 2] = unsigned char(barycentric.z * 255.f);
 					}
 				}
 			}
@@ -694,6 +713,13 @@ namespace Example
 		norm.y = (heightImg >> 1) * (norm.y + 1);
 	}
 
+	void
+		SoftwareRenderer::moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(vec3& norm)
+	{
+		norm.x = (widthImg >> 1) * (norm.x + 1);
+		norm.y = (heightImg >> 1) * (norm.y + 1);
+	}
+
 	//vec3 barycentricToCartesian(const vec3& barycentric, const vec2& p0, const vec2& p1, const vec2& p2)
 	//{
 	//	return barycentric.x * p0 + barycentric.y * p1 + barycentric.z * p2;
@@ -760,7 +786,7 @@ namespace Example
 		 float* normals = nullptr;
 
 		softwareRenderer->loadTexture("textures/evening.jpg");
-		softwareRenderer->LoadObj("textures/actual_cube.obj", vertices, indices, texels, normals);
+		softwareRenderer->LoadObj("textures/triangle.obj", vertices, indices, texels, normals);
 
 		//vec2 a = vec2(softwareRenderer->widthImg / 4, softwareRenderer->heightImg / 3);//rand() % softwareRenderer->widthImg, rand() % softwareRenderer->heightImg);
 		//vec2 b = vec2(softwareRenderer->widthImg / 2, softwareRenderer->heightImg / 4);//rand() % softwareRenderer->widthImg, rand() % softwareRenderer->heightImg);

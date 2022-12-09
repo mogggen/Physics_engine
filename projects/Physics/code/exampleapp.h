@@ -55,6 +55,9 @@ namespace Example
 		mat4 cubeProjectionViewTransform;
 		vec4 cubeColor{0, 0, 0, 1};
 
+		std::vector<Vertex> loadedVertices;
+		std::vector<unsigned> loadedIndices;
+
 		std::shared_ptr<MeshResource> cubeMesh;
 		std::shared_ptr<TextureResource> cubeTexture;
 		std::shared_ptr<ShaderResource> cubeScript;

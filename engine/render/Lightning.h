@@ -9,6 +9,7 @@ class Lightning
     vec3 rgb;
     float intensity;
 public:
+    Lightning();
     Lightning(vec3 _pos, vec3 _rgb, float _intensity);
     ~Lightning();
 

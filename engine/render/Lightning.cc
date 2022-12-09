@@ -2,6 +2,11 @@
 #include "Lightning.h"
 
 
+Lightning::Lightning()
+{
+
+}
+
 Lightning::Lightning(vec3 _pos, vec3 _rgb, float _intensity)
 {
     pos = _pos;

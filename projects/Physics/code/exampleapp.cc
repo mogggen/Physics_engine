@@ -66,6 +66,7 @@ namespace Example
 	public:
 		int widthImg = 1920, heightImg = 1020;
 		Camera cam;
+		mat4 currentRotation;
 		Lightning light;
 
 		SoftwareRenderer();
@@ -77,13 +78,14 @@ namespace Example
 		void setIndexBuffer(unsigned* indexBuffer);
 		unsigned char* getFrameBuffer();
 		void setFrameBuffer(unsigned char* frameBuffer);
-		void triangle(vec2 a, vec2 b, vec2 c, const vec2& ta, const vec2& tb, const vec2& tc);
+		void triangle(vec3 a, vec3 b, vec3 c, const vec2& ta, const vec2& tb, const vec2& tc);
 		void append_line(int x0, int y0, int x1, int y1, vec3 color);
 		bool DrawToDepthBuffer(unsigned x, unsigned y, const float depth);
 		float getDepthFromPixel(const vec2& p, const vec3& a, const vec3& b, const vec3& c);
 		void moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(vec2& norm);
 		void moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(vec3& norm);
 		void projectModel(const mat4& pvm);
+		void clearRender();
 		vec3 RasterizeLight(const vec3& lightSourceColor, const vec3& TextureRGB, const vec3& fragPosOut, const vec3& normalOut);
 		void loadTexture(const char* pathToFile);
 		bool LoadObj(const char* pathToFile, std::vector<Vertex>& vertices, std::vector<unsigned>& indices, float* _coordinates, unsigned* _indices, float* _texels, float* _normals);
@@ -125,7 +127,7 @@ namespace Example
 
 		cam = Camera(90, (float)widthImg / heightImg, 0.01f, 100.0f);
 		cam.setPos(vec4(0, 2, 5));
-		cam.setRot(vec4(0, 1, 0), M_PI);
+		cam.addRot(vec4(0, 1, 0), M_PI);
 
 		light = Lightning(vec3(10, 10, 10), vec3(1, 1, 1), .01f);
 	}
@@ -147,78 +149,12 @@ namespace Example
 		frameBuffer = _frameBuffer;
 	}
 
-	vec2 modelToRes(vec3 coord, const unsigned widthImg, const unsigned heightImg)
-	{
-		return vec2(coord.x * 0.75 * widthImg, coord.y * 0.75 * heightImg);
-	}
-
-	void SoftwareRenderer::append_line(int x0, int y0, int x1, int y1, vec3 color)
-	{
-		bool steep = false;
-		x0 *= 3;
-		y0 *= 3;
-		x1 *= 3;
-		y1 *= 3;
-
-		if (std::abs(x0 - x1) < std::abs(y0 - y1))
-		{
-			std::swap(x0, y0);
-			std::swap(x1, y1);
-			steep = true;
-		}
-		if (x0 > x1)
-		{
-			std::swap(x0, x1);
-			std::swap(y0, y1);
-		}
-		int dx = x1 - x0;
-		int dy = y1 - y0;
-		int derror2 = std::abs(dy) * 2;
-		int error2 = 0;
-		int y = y0;
-		const int yincr = -1 + 2 * (y1 > y0);
-		if (steep)
-		{
-			for (int x = x0; x <= x1 && x + widthImg * 3 * y >= 0 && x + widthImg * 3 * y < widthImg * 3 * heightImg; x += 3)
-			{
-				frameBuffer[x + widthImg * 3 * y] = color.r;
-				frameBuffer[x + widthImg * 3 * y + 1] = color.g;
-				frameBuffer[x + widthImg * 3 * y + 2] = color.b;
-				//img.set_pixel_color(y, x, color);
-				error2 += derror2;
-				if (error2 > dx)
-				{
-					y += yincr;
-					error2 -= dx * 2;
-				}
-			}
-		}
-		else
-		{
-			for (int x = x0; x <= x1 && y + widthImg * 3 * x >= 0 && y + widthImg * 3 * x < widthImg * 3 * heightImg; x += 3)
-			{
-				frameBuffer[y + widthImg * 3 * x] = color.r;
-				frameBuffer[y + widthImg * 3 * x + 1] = color.g;
-				frameBuffer[y + widthImg * 3 * x + 2] = color.b;
-				//img.set_pixel_color(x, y, color);
-				error2 += derror2;
-				if (error2 > dx) {
-					y += yincr;
-					error2 -= dx * 2;
-				}
-			}
-		}
-	}
-
 	void Print(mat4 m);
 
 	inline void SoftwareRenderer::projectVertex(vec3& v)
 	{
 		const mat4 start = Translate(vec4(v));
-		const mat4 projection = cam.pv() * start;
-		/*Print(start);
-		Print(projection);*/
-		//printf("%f %f %f", projection[0][3], projection[1][3], projection[2][3]);
+		const mat4 projection = cam.pv() * (currentRotation * start);
 		v = vec3(projection[0][3], projection[1][3], projection[2][3]) / projection[3][3];
 	}
 
@@ -275,18 +211,17 @@ namespace Example
 
 	inline vec3 SoftwareRenderer::getPixelColorFromUV(const unsigned char *texture, const int& w, const int& h, vec2 texel)
 	{
-		// GL_REPEAT
-		while (texel.u > 1.f) texel.u -= 1.f;
-		while (texel.v > 1.f) texel.v -= 1.f;
-		while (texel.u < 0.f) texel.u += 1.f;
-		while (texel.v < 0.f) texel.u += 1.f;
+		if (texel.u > 1.f) texel.u -= (int)texel.u;
+		if (texel.u < 0.f) texel.u += (int)std::abs(texel.u) + 1;
 
+		if (texel.v > 1.f) texel.v -= (int)texel.v;
+		if (texel.v < 0.f) texel.v += (int)std::abs(texel.v) + 1;
+		
 		int pixelX = (texel.u) * w;
 		int pixelY = (texel.v) * h;
 		int index = (pixelX + pixelY * w) * 3;
-		if (index + 2 < w * h * 3)
-			return vec3(texture[index], texture[index + 1], texture[index + 2]);
-		return vec3(-1, -1, -1);
+		if (index + 2 < textureWidth * 3 * textureHeight)
+		return vec3(texture[index], texture[index + 1], texture[index + 2]);
 	}
 
 	inline void SoftwareRenderer::loadTexture(const char* pathToFile)
@@ -304,13 +239,7 @@ namespace Example
 	{
 		char wordBuf[1024];
 		FILE* fs;
-#ifndef __linux
-		fopen_s(&fs, pathToFile, "r"); // textures/sphere.obj
-#else
-		fs = fopen64(pathToFile, "r"); // "textures/sphere.obj"
-#endif
-
-		setBackground(vec3(0x69, 0x69, 0x69));
+		fopen_s(&fs, pathToFile, "r");
 		unsigned long long verticesUsed = 0ull;
 		std::vector<vec3> coords;
 		std::vector<vec2> texels;
@@ -443,155 +372,6 @@ namespace Example
 		{
 			printf("file not found with path \"./%s\"\n", pathToFile);
 		}
-
-		for (size_t i = 0; i < coords.size(); i += 3)
-		{
-			vec3 a = coords[indices[i]];
-			vec3 b = coords[indices[i + 1]];
- 			vec3 c = coords[indices[i + 2]];
-
-			projectVertex(a);
-			projectVertex(b);
-			projectVertex(c);
-
-			vec2 ta = texels[indices[i]];
-			vec2 tb = texels[indices[i + 1]];
-			vec2 tc = texels[indices[i + 2]];
-
-			rasterizeTriangle(a, b, c, ta, tb, tc);
-		}
-
-		//std::cout << (coords.size() == indices.size() && coords.size() == texels.size() && coords.size() == normals.size() ? "same length" : "diffrent length");
-		/*_coordinates = new float[coords.size() * 3];
-		_indices = new unsigned[indices.size()];
-		_texels = new float[texels.size() * 2];
-		_normals = new float[normals.size() * 3];
-
-		for (size_t i = 0; i < coords.size() * 3; i += 3)
-		{
-			float x = coords[i][0];
-			float y = coords[i][1];
-			float z = coords[i][2];
-			_coordinates[i] = x;
-			_coordinates[i + 1] = y;
-			_coordinates[i + 2] = z;
-		}
-
-		for (size_t i = 0; i < normals.size(); i++)
-		{
-			float x = normals[i][0];
-			float y = normals[i][1];
-			float z = normals[i][2];
-			_normals[i] = x;
-			_normals[i + 1] = y;
-			_normals[i + 2] = z;
-		}
-
-		for (size_t i = 0; i < texels.size(); i++)
-		{
-			float x = texels[i][0];
-			float y = texels[i][1];
-			_texels[i] = x;
-			_texels[i + 1] = y;
-		}
-
-		for (size_t i = 0; i < indices.size(); i++)
-		{
-			_indices[i] = indices[i];
-		}*/
-
-		printf("step 1/5: transforming obj verticies to modelSpace\n");
-
-
-		//int res = stbi_write_png("textures/res.jpg", widthImg, heightImg, 3, frameBuffer, widthImg * 3);
-
-		//save for later
-
-		//int centerX = widthImg / 2;
-		//int centerY = heightImg / 2;
-		//float angOfs = M_PI / 12;
-		//float angle = M_PI / 4;
-
-		/*append_line(centerX, centerY, 0, 0, vec3(0, 0, 0));
-		append_line(centerX, centerY, widthImg, 0, vec3(255, 255, 0));
-		append_line(centerX, centerY, 0, heightImg, vec3(0, 0, 255));
-		append_line(centerX, centerY, widthImg, heightImg, vec3(255, 0, 0));
-		append_line(600, 300, 100, 90, vec3(0, 255, 0));
-
-		append_line(900, 900, 1920, 900, vec3(0, 0, 0));
-
-		for (size_t i = 0; i < 9; i++)
-		{
-			append_line(centerX, centerY, centerX * cosf(angOfs + angle * i) * 100.f, centerY * sinf(angOfs * angle * i) * 100.f, vec3((i % 3) * 255.f, ((i + 1) % 3) * 255.f, ((i + 2) % 3) * 255.f));
-		}
-		saveRender(widthImg, heightImg, "textures/res10.jpg");
-
-		for (size_t i = 0; i < false && vertices.size() / 3; i += 3)
-		{
-			vertices[indices[i]].pos = vertices[indices[i]].pos * 100.f;
-			vertices[indices[i]].pos.x = vertices[indices[i]].pos.x + widthImg * .5f;
-			vertices[indices[i + 1]].pos = vertices[indices[i + 1]].pos * 100.f;
-			vertices[indices[i + 1]].pos.x = vertices[indices[i + 1]].pos.x + widthImg * .5f;
-			vertices[indices[i + 2]].pos = vertices[indices[i + 2]].pos * 100.f;
-			vertices[indices[i + 2]].pos.x = vertices[indices[i + 2]].pos.x + widthImg * .5f;
-
-			append_line(vertices[indices[i]].pos.x, vertices[indices[i]].pos.y, vertices[indices[i + 1]].pos.x, vertices[indices[i + 1]].pos.y, vec3(255, 0, 0));
-			append_line(vertices[indices[i + 1]].pos.x, vertices[indices[i + 1]].pos.y, vertices[indices[i + 2]].pos.x, vertices[indices[i + 2]].pos.y, vec3(0, 255, 0));
-			append_line(vertices[indices[i + 2]].pos.x, vertices[indices[i + 2]].pos.y, vertices[indices[i]].pos.x, vertices[indices[i]].pos.y, vec3(0, 0, 255));
-		}*/
-
-		/*printf("populate faces...\n");
-		Plane* faces = new Plane[coords.size() / 3];
-		size_t lenFaces = sizeof(faces) / sizeof(*faces);
-
-		printf("num of faces: %llu\n", lenFaces);
-		for (size_t i = 0; i < lenFaces; i++)
-		{
-			vec3 a = vec3(coords[indices[i * 3]]);
-			vec3 b = vec3(coords[indices[i * 3 + 1]]);
-			vec3 c = vec3(coords[indices[i * 3 + 2]]);
-
-			faces[i] = Plane(a, Cross(a - b, a - c));
-		}*/
-
-		//printf("calculating object...\n");
-
-
-		//for (size_t y = 0; y < heightImg; y++)
-		//{
-		//	if (y % 100 == 0 && y != 0)
-		//		printf("%f\n", y / (float)heightImg);
-		//	for (size_t x = 0; x < widthImg * 3; x += 3)
-		//	{
-		//		for	(size_t i = 0; i < lenFaces; i += 3)
-		//		{
-		//			//vec2 ta = texels[indices[i]];
-		//			//vec2 tb = texels[indices[i + 1]];
-		//			//vec2 tc = texels[indices[i + 2]];
-
-		//			// for every vertex check, calculate it's face plane and get the line intersection pick the depth and store which pixel is closes to the screen, no alpha support
-		//			
-		//			vec2 a = modelToRes(coords[indices[i]], this->widthImg, this->heightImg);
-		//			vec2 b = modelToRes(coords[indices[i + 1]], this->widthImg, this->heightImg);
-		//			vec2 c = modelToRes(coords[indices[i + 2]], this->widthImg, this->heightImg);
-		//			vec3 coord = vec3(x, y, 0);
-
-
-		//			vec3 rgb;// = this->depthPassForEachPixel(x, y, a, b, c/*, face*/);
-		//			frameBuffer[x * y * widthImg] = rgb.r;
-		//			frameBuffer[x * y * widthImg + 1] = rgb.g;
-		//			frameBuffer[x * y * widthImg + 2] = rgb.b;
-		//		}
-
-		//	}
-		//}
-		////this->rasterizeTriangle(a, b, c, ta, tb, tc);
-
-		//saveRender(widthImg, heightImg, "textures/res.jpg");
-		// _indices = &indices[0];
-		// _coordinates = &coords[0];
-		// _texels = &texels[0];
-		// _normals = &normals[0];
 		return fs;
 	}
 
@@ -607,7 +387,6 @@ namespace Example
 			return false;
 		}
 
-		setBackground(vec3(0x69, 0x69, 0x69));
 		unsigned long long verticesUsed = 0ull;
 		vector<vec3> coords;
 		vector<vec2> texels;
@@ -837,152 +616,20 @@ namespace Example
 		
 		 for (size_t i = 0; i < coords.size(); i += 3)
 		 {
-		 	vec3 a = coords[indices[i]];
-		 	vec3 b = coords[indices[i + 1]];
-		 	vec3 c = coords[indices[i + 2]];
+			vec3 a = coords[indices[i]];
+			vec3 b = coords[indices[i + 1]];
+			vec3 c = coords[indices[i + 2]];
 
-		 	projectVertex(a);
-		 	projectVertex(b);
-		 	projectVertex(c);
+			projectVertex(a);
+			projectVertex(b);
+			projectVertex(c);
 
-		 	vec2 ta = texels[indices[i]];
-		 	vec2 tb = texels[indices[i + 1]];
-		 	vec2 tc = texels[indices[i + 2]];
+			vec2 ta = texels[indices[i]];
+			vec2 tb = texels[indices[i + 1]];
+			vec2 tc = texels[indices[i + 2]];
 
-		 	rasterizeTriangle(a, b, c, ta, tb, tc);
+			rasterizeTriangle(a, b, c, ta, tb, tc);
 		 }
-
-		//std::cout << (coords.size() == indices.size() && coords.size() == texels.size() && coords.size() == normals.size() ? "same length" : "diffrent length");
-		/*_coordinates = new float[coords.size() * 3];
-		_indices = new unsigned[indices.size()];
-		_texels = new float[texels.size() * 2];
-		_normals = new float[normals.size() * 3];
-
-		for (size_t i = 0; i < coords.size() * 3; i += 3)
-		{
-			float x = coords[i][0];
-			float y = coords[i][1];
-			float z = coords[i][2];
-			_coordinates[i] = x;
-			_coordinates[i + 1] = y;
-			_coordinates[i + 2] = z;
-		}
-
-		for (size_t i = 0; i < normals.size(); i++)
-		{
-			float x = normals[i][0];
-			float y = normals[i][1];
-			float z = normals[i][2];
-			_normals[i] = x;
-			_normals[i + 1] = y;
-			_normals[i + 2] = z;
-		}
-
-		for (size_t i = 0; i < texels.size(); i++)
-		{
-			float x = texels[i][0];
-			float y = texels[i][1];
-			_texels[i] = x;
-			_texels[i + 1] = y;
-		}
-
-		for (size_t i = 0; i < indices.size(); i++)
-		{
-			_indices[i] = indices[i];
-		}*/
-
-		printf("step 1/5: transforming obj verticies to modelSpace\n");
-
-		
-		//int res = stbi_write_png("textures/res.jpg", widthImg, heightImg, 3, frameBuffer, widthImg * 3);
-
-		//save for later
-
-		//int centerX = widthImg / 2;
-		//int centerY = heightImg / 2;
-		//float angOfs = M_PI / 12;
-		//float angle = M_PI / 4;
-
-		/*append_line(centerX, centerY, 0, 0, vec3(0, 0, 0));
-		append_line(centerX, centerY, widthImg, 0, vec3(255, 255, 0));
-		append_line(centerX, centerY, 0, heightImg, vec3(0, 0, 255));
-		append_line(centerX, centerY, widthImg, heightImg, vec3(255, 0, 0));
-		append_line(600, 300, 100, 90, vec3(0, 255, 0));
-
-		append_line(900, 900, 1920, 900, vec3(0, 0, 0));
-
-		for (size_t i = 0; i < 9; i++)
-		{
-			append_line(centerX, centerY, centerX * cosf(angOfs + angle * i) * 100.f, centerY * sinf(angOfs * angle * i) * 100.f, vec3((i % 3) * 255.f, ((i + 1) % 3) * 255.f, ((i + 2) % 3) * 255.f));
-		}
-		saveRender(widthImg, heightImg, "textures/res10.jpg");
-		
-		for (size_t i = 0; i < false && vertices.size() / 3; i += 3)
-		{
-			vertices[indices[i]].pos = vertices[indices[i]].pos * 100.f;
-			vertices[indices[i]].pos.x = vertices[indices[i]].pos.x + widthImg * .5f;
-			vertices[indices[i + 1]].pos = vertices[indices[i + 1]].pos * 100.f;
-			vertices[indices[i + 1]].pos.x = vertices[indices[i + 1]].pos.x + widthImg * .5f;
-			vertices[indices[i + 2]].pos = vertices[indices[i + 2]].pos * 100.f;
-			vertices[indices[i + 2]].pos.x = vertices[indices[i + 2]].pos.x + widthImg * .5f;
-
-			append_line(vertices[indices[i]].pos.x, vertices[indices[i]].pos.y, vertices[indices[i + 1]].pos.x, vertices[indices[i + 1]].pos.y, vec3(255, 0, 0));
-			append_line(vertices[indices[i + 1]].pos.x, vertices[indices[i + 1]].pos.y, vertices[indices[i + 2]].pos.x, vertices[indices[i + 2]].pos.y, vec3(0, 255, 0));
-			append_line(vertices[indices[i + 2]].pos.x, vertices[indices[i + 2]].pos.y, vertices[indices[i]].pos.x, vertices[indices[i]].pos.y, vec3(0, 0, 255));
-		}*/
-
-		/*printf("populate faces...\n");
-		Plane* faces = new Plane[coords.size() / 3];
-		size_t lenFaces = sizeof(faces) / sizeof(*faces);
-
-		printf("num of faces: %llu\n", lenFaces);
-		for (size_t i = 0; i < lenFaces; i++)
-		{
-			vec3 a = vec3(coords[indices[i * 3]]);
-			vec3 b = vec3(coords[indices[i * 3 + 1]]);
-			vec3 c = vec3(coords[indices[i * 3 + 2]]);
-
-			faces[i] = Plane(a, Cross(a - b, a - c));
-		}*/
-
-		//printf("calculating object...\n");
-		
-
-		//for (size_t y = 0; y < heightImg; y++)
-		//{
-		//	if (y % 100 == 0 && y != 0)
-		//		printf("%f\n", y / (float)heightImg);
-		//	for (size_t x = 0; x < widthImg * 3; x += 3)
-		//	{
-		//		for	(size_t i = 0; i < lenFaces; i += 3)
-		//		{
-		//			//vec2 ta = texels[indices[i]];
-		//			//vec2 tb = texels[indices[i + 1]];
-		//			//vec2 tc = texels[indices[i + 2]];
-
-		//			// for every vertex check, calculate it's face plane and get the line intersection pick the depth and store which pixel is closes to the screen, no alpha support
-		//			
-		//			vec2 a = modelToRes(coords[indices[i]], this->widthImg, this->heightImg);
-		//			vec2 b = modelToRes(coords[indices[i + 1]], this->widthImg, this->heightImg);
-		//			vec2 c = modelToRes(coords[indices[i + 2]], this->widthImg, this->heightImg);
-		//			vec3 coord = vec3(x, y, 0);
-
-
-		//			vec3 rgb;// = this->depthPassForEachPixel(x, y, a, b, c/*, face*/);
-		//			frameBuffer[x * y * widthImg] = rgb.r;
-		//			frameBuffer[x * y * widthImg + 1] = rgb.g;
-		//			frameBuffer[x * y * widthImg + 2] = rgb.b;
-		//		}
-
-		//	}
-		//}
-		////this->rasterizeTriangle(a, b, c, ta, tb, tc);
-		
-		//saveRender(widthImg, heightImg, "textures/res.jpg");
-		// _indices = &indices[0];
-		// _coordinates = &coords[0];
-		// _texels = &texels[0];
-		// _normals = &normals[0];
 		return 1;
 	}
 
@@ -1013,7 +660,6 @@ namespace Example
 		return frameBuffer;
 	}
 	
-	// CPU vertex shader
 	inline void SoftwareRenderer::projectModel(const mat4& pvm)
 	{
 
@@ -1025,8 +671,8 @@ namespace Example
 		const vec3& fragPosOut,
 		const vec3& normalOut)
 	{
-		vec3 viewDir = Normalize(fragPosOut - cam.getPos());
-		vec3 lightDir = Normalize(light.getPos() - fragPosOut);
+		vec3 viewDir = Normalize(1e-0f * fragPosOut - cam.getPos());
+		vec3 lightDir = Normalize(light.getPos() - 1e-0f * fragPosOut);
 
 		vec3 halfwayDir = Normalize(lightDir + viewDir);
 		vec3 ambientlight = light.getIntensity() * light.getColor();
@@ -1039,7 +685,8 @@ namespace Example
 		float spec = powf(Dot(norm, halfwayDir) > 0.f ? Dot(norm, halfwayDir) : 0.f, 64);
 		vec3 specular = light.getColor() * spec * light.getIntensity();
 
-		vec3 out = TextureRGB * (vec3(.3f, .3f, .3f) + lightSourceColor * .7f) * vec3(ambientlight + diffuse + specular);
+		vec3 out = TextureRGB * (lightSourceColor * .7f) * vec3(ambientlight + diffuse + specular);
+		
 		if (out.x > 255.f) out.x = 255.f;
 		if (out.y > 255.f) out.y = 255.f;
 		if (out.z > 255.f) out.z = 255.f;
@@ -1054,15 +701,7 @@ namespace Example
 	bool SoftwareRenderer::DrawToDepthBuffer(unsigned x, unsigned y, const float depth)
 	{
 		// true if the dpethBuffer got updated
-		//if ((x + widthImg * y) / 3 > depthBuffer.size()) return false;
-
-		//if ((x + y) % 3 != 0)
-		//{
-		//	printf("x %u y %u\n", x, y);
-		//	delete &x; // raise exception
-		//}
-		//x /= 3;
-		//y /= 3;
+		if (x + widthImg * y >= depthBuffer.size()) return false;
 
 		if (!depthBuffer[x + widthImg * y] < depth)
 		{
@@ -1074,45 +713,20 @@ namespace Example
 
 	// CPU pixel shader
 	// abc is window coordinates with no depth
-	inline void SoftwareRenderer::rasterizeTriangle(vec3 ca, vec3 cb, vec3 cc, const vec2& ta, const vec2& tb, const vec2& tc)
+	inline void SoftwareRenderer::rasterizeTriangle(vec3 a, vec3 b, vec3 c, const vec2& ta, const vec2& tb, const vec2& tc)
 	{
-		// model coord
-		vec2 a = vec2(ca.x, ca.y);
-		vec2 b = vec2(cb.x, cb.y);
-		vec2 c = vec2(cc.x, cc.y);
-		
-		// depth
-		float da = ca.z;
-		float db = cb.z;
-		float dc = cc.z;
 
 		// scale to screen
 		moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(a);
 		moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(b);
 		moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(c);
-		moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(ca);
-		moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(cb);
-		moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(cc);
 
 		// scale with rgb
 		a.x *= 3;
 		b.x *= 3;
 		c.x *= 3;
-		
-		ca.x *= 3;
-		cb.x *= 3;
-		cc.x *= 3;
 
-		unsigned left, right, top, bottom;
-
-		left = a.x;
-		if (left > b.x) left = b.x;
-		if (left > c.x) left = c.x;
-
-		right = a.x;
-		if (right < b.x) right = b.x;
-		if (right < c.x) right = c.x;
-
+		int left = 0, right = widthImg * 3, bottom = 0, top = heightImg;
 
 		bottom = a.y;
 		if (bottom > b.y) bottom = b.y;
@@ -1125,106 +739,141 @@ namespace Example
 		int trianglePass = 0;
 		int depthPass = 0;
 
-		for (unsigned y = bottom; y < top; y++)
+		for (int y = (bottom > 0 ? bottom : 0); y < top; y++)
 		{
-			for (unsigned x = left; x < right; x += 3)
+			for (int x = left; x < right; x += 3)
 			{
-				if (isInTriangle(vec2(x, y), vec2(ca.x, ca.y), vec2(cb.x, cb.y), vec2(cc.x, cc.y)))
+				if (!isInTriangle(vec2(x, y), vec2(a.x, a.y), vec2(b.x, b.y), vec2(c.x, c.y))) continue;
+				//trianglePass++;
+				float depth = getDepthFromPixel(vec2(x, y), a, b, c);
+				
+				if (!DrawToDepthBuffer(x, y, depth)) continue;
+				//depthPass++;
+				if (x + y * widthImg * 3 < 0) continue;
+				if (x + y * widthImg * 3 + 2 >= widthImg * heightImg * 3) break;
+				
+				vec3 barycentric = getBarycentricCoord(vec2(x, y), vec2(a.x, a.y), vec2(b.x, b.y), vec2(c.x, c.y));
+				if (textureBuffer != nullptr && 01)
 				{
-					//trianglePass++;
-					float depth = getDepthFromPixel(vec2(x, y), ca, cb, cc);
-					if (!DrawToDepthBuffer(x, y, depth))
-					{
-						std::printf("%i %i %f %f\n", x, y, depth, depthBuffer[x + widthImg * y]);
-					}
-					if (DrawToDepthBuffer(x, y, depth))
-					{
-						//depthPass++;
-						vec3 barycentric = getBarycentricCoord(vec2(x, y), vec2(ca.x, ca.y), vec2(cb.x, cb.y), vec2(cc.x, cc.y));
-						if (textureBuffer != nullptr)//|| true)
-						{
-							vec2 textureSample = UVmapping(barycentric, ta, tb, tc);
+					vec2 textureSample = UVmapping(barycentric, ta, tb, tc);
 
-							vec3 pixel = getPixelColorFromUV(textureBuffer, textureWidth, textureHeight, textureSample);
-
-							/*if (pixel == vec3(-1, -1, -1))
-							{
-								printf("%i", 0);
-								break;
-							}*/
-							vec2 res = vec2((ca * barycentric.x + cb * barycentric.y + cc * barycentric.z).x,
-								(ca * barycentric.x + cb * barycentric.y + cc * barycentric.z).y);
-							vec3 light = RasterizeLight(vec3(255, 255, 255), pixel, vec3(res, depth), vec3(0, 0, 1));
-
-							//frameBuffer[x + y * widthImg * 3] = unsigned char(pixel.x);
-							//frameBuffer[x + y * widthImg * 3 + 1] = unsigned char(pixel.y);
-							//frameBuffer[x + y * widthImg * 3 + 2] = unsigned char(pixel.z);
-
-							frameBuffer[x + y * widthImg * 3] = unsigned char(light.x);
-							frameBuffer[x + y * widthImg * 3 + 1] = unsigned char(light.y);
-							frameBuffer[x + y * widthImg * 3 + 2] = unsigned char(light.z);
-						}
-						else
-						{
-							//frameBuffer[x + y * widthImg * 3] = unsigned char(ca.z);
-							//frameBuffer[x + y * widthImg * 3 + 1] = unsigned char(cb.z);
-							//frameBuffer[x + y * widthImg * 3 + 2] = unsigned char(cc.z);
-							frameBuffer[x + y * widthImg * 3] = unsigned char(barycentric.x * 255.f);
-							frameBuffer[x + y * widthImg * 3 + 1] = unsigned char(barycentric.y * 255.f);
-							frameBuffer[x + y * widthImg * 3 + 2] = unsigned char(barycentric.z * 255.f);
-						}
-					}
+					vec3 pixel = getPixelColorFromUV(textureBuffer, textureWidth, textureHeight, textureSample);
+					vec2 res = vec2((a * barycentric.x + b * barycentric.y + c * barycentric.z).x,
+						(a * barycentric.x + b * barycentric.y + c * barycentric.z).y);
+					pixel = RasterizeLight(vec3(255, 255, 255), pixel, vec3(x, y, depth), vec3(0, 0, 1));
+							
+					frameBuffer[x + y * widthImg * 3] = unsigned char(pixel.x);
+					frameBuffer[x + y * widthImg * 3 + 1] = unsigned char(pixel.y);
+					frameBuffer[x + y * widthImg * 3 + 2] = unsigned char(pixel.z);
+				}
+				else
+				{
+					frameBuffer[x + y * widthImg * 3] = unsigned char(barycentric.x * 255.f);
+					frameBuffer[x + y * widthImg * 3 + 1] = unsigned char(barycentric.y * 255.f);
+					frameBuffer[x + y * widthImg * 3 + 2] = unsigned char(barycentric.z * 255.f);
 				}
 			}
 		}
-
-		//printf("%i %i %i\n", trianglePass, depthPass, pixelCounter);
-		//saveRender(widthImg, heightImg, "textures/res.jpg");
 	}
 
-	void SoftwareRenderer::triangle(vec2 a, vec2 b, vec2 c, const vec2& ta, const vec2& tb, const vec2& tc)
-	{
+	void SoftwareRenderer::triangle(vec3 a, vec3 b, vec3 c, const vec2& ta, const vec2& tb, const vec2& tc) {
 		if (a.y == b.y && a.y == c.y) return;
-		// sort the vertices, a, b, c
+
+		// scale to screen
+		moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(a);
+		moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(b);
+		moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(c);
+
+		// scale with color channels (rgb)
+		a.x *= 3;
+		b.x *= 3;
+		c.x *= 3;
+
 		if (a.y > b.y) std::swap(a, b);
 		if (a.y > c.y) std::swap(a, c);
 		if (b.y > c.y) std::swap(b, c);
-		std::vector<unsigned char> resBuf;
 		int total_height = c.y - a.y;
 		for (int i = 0; i < total_height; i++)
 		{
-			bool second_half = i > b.y - a.y || b.y == a.y;
-			int segment_height = second_half ? c.y - b.y : b.y - a.y;
-			float alpha = (float)i / total_height;
-			float beta  = (float)(i - (second_half ? b.y - a.y : 0)) / segment_height;
-			vec2 A = a + (c - a) * alpha;
-			vec2 B = second_half ? b + (c - b)*beta : a + (b - a) * beta;
+			bool lower_half = i > b.y - a.y || b.y == a.y;
+			int subpart_height = lower_half ? c.y - b.y : b.y - a.y;
+			float total_ratio = (float)i / total_height;
+			float sub_ratio = safeDivide((float)(i - (lower_half ? b.y - a.y : 0)), subpart_height);
+			vec2 A = vec2(a.x, a.y) + (vec2(c.x, c.y) - vec2(a.x, a.y)) * total_ratio;
+			vec2 B = lower_half ? vec2(b.x, b.y) + (vec2(c.x, c.y) - vec2(b.x, b.y)) * sub_ratio : vec2(a.x, a.y) + (vec2(b.x, b.y) - vec2(a.x, a.y)) * sub_ratio;
 			if (A.x > B.x) std::swap(A, B);
-			for (int j = A.x; j <= B.x; j += 3)
+			for (int j = (int)A.x * 3; j <= (int)B.x * 3; j += 3)
 			{
 				vec2 point = vec2(j, a.y+i);
-				vec3 barycentric = getBarycentricCoord(point, a, b, c);
-				//vec2 textureSample = UVmapping(barycentric, ta, tb, tc);
-				//vec3 color = getPixelColorFromUV(textureBuffer, textureWidth, textureHeight, UVmapping(barycentric, ta, tb, tc));
-				
-				resBuf.push_back(barycentric.x);
-				resBuf.push_back(barycentric.y);
-				resBuf.push_back(barycentric.z);
-				//frameBuffer[(int)a.y + i + widthImg * 3 * j] = color.x;
-				//frameBuffer[(int)a.y + i + widthImg * 3 * j + 1] = color.y;
-				//frameBuffer[(int)a.y + i + widthImg * 3 * j + 2] = color.z;
+				float depth = getDepthFromPixel(point, a, b, c);
+				if (DrawToDepthBuffer(j, (int)a.y + i, depth))
+				{
+					int index = j + ((int)std::round(a.y) + i) * widthImg * 3;
+					if (index < 0) continue;
+					if (index >= widthImg * 3 * heightImg) break;
+					vec3 barycentric = getBarycentricCoord(point, vec2(a.x, a.y), vec2(b.x, b.y), vec2(c.x, c.y));
+					vec2 textureSample = UVmapping(barycentric, ta, tb, tc);
+					vec3 color = getPixelColorFromUV(textureBuffer, textureWidth, textureHeight, textureSample);
 
+					vec2 res = vec2((a * barycentric.x + b * barycentric.y + c * barycentric.z).x,
+						(a * barycentric.x + b * barycentric.y + c * barycentric.z).y);
+					color = RasterizeLight(vec3(255, 255, 255), color, vec3(j, (int)a.y + i, depth), vec3(0, 0, 1));
+
+					frameBuffer[index] = unsigned char(color.x);
+					frameBuffer[index + 1] = unsigned char(color.y);
+					frameBuffer[index + 2] = unsigned char(color.z);
+				}
 			}
 		}
-		delete[] frameBuffer;
-		frameBuffer = &resBuf[0];
-		saveRender(widthImg, resBuf.size() * 3 / widthImg, "textures/res.jpg");
 	}
+
+	//void SoftwareRenderer::triangle(vec3 a, vec3 b, vec3 c, const vec2& ta, const vec2& tb, const vec2& tc)
+	//{
+	//	if (a.y == b.y && a.y == c.y) return;
+	//	// sort the vertices, a, b, c
+	//	if (a.y > b.y) std::swap(a, b);
+	//	if (a.y > c.y) std::swap(a, c);
+	//	if (b.y > c.y) std::swap(b, c);
+
+	//	moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(a);
+	//	moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(b);
+	//	moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(c);
+
+	//	a.x *= 3;
+	//	b.x *= 3;
+	//	c.x *= 3;
+	//	
+	//	int total_height = c.y - a.y;
+	//	for (int i = 0; i < total_height; i++)
+	//	{
+	//		bool second_half = i > b.y - a.y || b.y == a.y;
+	//		int segment_height = second_half ? c.y - b.y : b.y - a.y;
+	//		float alpha = (float)i / total_height;
+	//		float beta  = (float)(i - (second_half ? b.y - a.y : 0)) / segment_height;
+	//		vec2 A = vec2(a.x, a.y) + (vec2(c.x, c.y) - vec2(a.x, a.y)) * alpha;
+	//		vec2 B = second_half ? vec2(b.x, b.y) + (vec2(c.x, c.y) - vec2(b.x, b.y)) * beta : vec2(a.x, a.y) + (vec2(b.x, b.y) - vec2(c.x, c.y)) * beta;
+	//		if (A.x > B.x) std::swap(A, B);
+	//		
+	//		for (int j = A.x; j <= B.x && j <= widthImg * 3; j += 3)
+	//		{
+	//			vec2 point = vec2(j, a.y+i);
+	//			//float depth = getDepthFromPixel(point, a, b, c);
+	//			//if (DrawToDepthBuffer(j, (unsigned)a.y + i, depth))
+	//			{
+	//				vec3 barycentric = getBarycentricCoord(point, vec2(a.x, a.y), vec2(b.x, b.y), vec2(c.x, c.y));
+	//				vec2 textureSample = UVmapping(barycentric, ta, tb, tc);
+	//				vec3 color = getPixelColorFromUV(textureBuffer, textureWidth, textureHeight, textureSample);
+	//				
+	//				frameBuffer[(int)a.y + i + widthImg * 3 * j] = color.x;
+	//				frameBuffer[(int)a.y + i + widthImg * 3 * j + 1] = color.y;
+	//				frameBuffer[(int)a.y + i + widthImg * 3 * j + 2] = color.z;
+	//			}
+	//		}
+	//	}
+	//}
 
 	void SoftwareRenderer::setBackground(const vec3& color)
 	{
-		delete[] frameBuffer;
-		frameBuffer = new unsigned char[widthImg * 3 * heightImg];
 		for (int y = 0; y < heightImg; y++)
 		{
 			for (int x = 0; x < widthImg * 3; x += 3)
@@ -1254,20 +903,19 @@ namespace Example
 		norm.y = (heightImg >> 1) * (norm.y + 1);
 	}
 
-	//vec3 barycentricToCartesian(const vec3& barycentric, const vec2& p0, const vec2& p1, const vec2& p2)
-	//{
-	//	return barycentric.x * p0 + barycentric.y * p1 + barycentric.z * p2;
-	//}
-
 	const float getFitSlope(const float& input_start, const float& input_end, const float& output_start, const float& output_end)
 	{
 		return 1.f * (output_end - output_start) / (input_end - input_start);
 	}
 
-	//float Fit(const float& input, const float& input_start, const float& output_start, const float& slope)
-	//{
-	//	return output_start + slope * (input - input_start);
-	//}
+	inline void SoftwareRenderer::clearRender()
+	{
+		setBackground(vec3(0x69, 0x69, 0x69));
+		for (float f : depthBuffer)
+		{
+			f = std::numeric_limits<float>::lowest();
+		}
+	}
 
 
 	void Print(const mat4 m)
@@ -1290,6 +938,26 @@ namespace Example
 		w = a = s = d = q = e = false;
 		window->GetSize(width, height);
 
+		window->SetMousePressFunction([this](int32 button, int32 action, int32 mods)
+		{
+			isRotate = button == GLFW_MOUSE_BUTTON_1 && action;
+			if (!isRotate)
+			{
+				prevX = senseX;
+				prevY = senseY;
+			}
+		});
+
+		window->SetMouseMoveFunction([this](float64 x, float64 y)
+		{
+			if (isRotate)
+			{
+				senseX = prevX + (0.002 * (x - width / 2));
+				senseY = prevY + (0.002 * (y - height / 2));
+				softwareRenderer->currentRotation = (Rotation(vec4(1, 0, 0), senseY) * Rotation(vec4(0, 1, 0), senseX));
+			}
+		});
+
 		window->SetKeyPressFunction([this](int32 keycode, int32 scancode, int32 action, int32 mods)
 		{
 			//deltatime
@@ -1300,115 +968,26 @@ namespace Example
 			case GLFW_KEY_S: s = action; break;
 			case GLFW_KEY_A: a = action; break;
 			case GLFW_KEY_D: d = action; break;
+			case GLFW_KEY_L: l = action; break;
 
 			case GLFW_KEY_Q: q = action; break;
 			case GLFW_KEY_E: e = action; break;
 			}
 		});
-
-		// apply the PVM matrix (skip many steps)
-		// render the zBuffer from .obj z coords
-		// check if a triangles position is outside of the screen (only if error)
-		// use texcoord as a color
-		// use normals and dotproduct with lightcolor combined with texel color info
 		
 		//texture
 		int widthImg = 1920, heightImg = 1200;
 		softwareRenderer = new SoftwareRenderer(widthImg, heightImg);
 
-
-
-		softwareRenderer->loadTexture("textures/evening.jpg");
-		//softwareRenderer->LoadObj("textures/triangle.obj", softwareRenderer->getVertexBuffer(), softwareRenderer->getIndexBuffer());
-		//softwareRenderer->LoadObj("textures/triangle.obj", loadedVertices, loadedIndices, nullptr, nullptr, nullptr, nullptr);
-
-		//vec2 a = vec2(softwareRenderer->widthImg / 4, softwareRenderer->heightImg / 3);//rand() % softwareRenderer->widthImg, rand() % softwareRenderer->heightImg);
-		//vec2 b = vec2(softwareRenderer->widthImg / 2, softwareRenderer->heightImg / 4);//rand() % softwareRenderer->widthImg, rand() % softwareRenderer->heightImg);
-		//vec2 c = vec2(softwareRenderer->widthImg * 3 / 4, softwareRenderer->heightImg / 3);//rand() % softwareRenderer->widthImg, rand() % softwareRenderer->heightImg);
-		//vec2 ta = vec2(0, 0);//rand() / (float)RAND_MAX, rand() / (float)RAND_MAX);
-		//vec2 tb = vec2(.5f, 1);//rand() / (float)RAND_MAX, rand() / (float)RAND_MAX);
-		//vec2 tc = vec2(1, 0);//rand() / (float)RAND_MAX, rand() / (float)RAND_MAX);
-		//
-		//softwareRenderer->triangle(a, b, c, ta, tb, tc);
-
-		// TODO: change to bresenham algorithm last, when everything else is working
-		// 
+		softwareRenderer->loadTexture("textures/perfect_test.jpg");
 
 		//texture
-		int texW, texH, texC;
 		stbi_set_flip_vertically_on_load(true);
-		const unsigned char* data = stbi_load("textures/perfect.jpg", &texW, &texH, &texC, 3);
-		if (!data)
-		{
-			fprintf(stderr, "Cannot load file image %s\nSTB Reason: %s\n", "textures/BETTER.jpg", stbi_failure_reason());
-			exit(0);
-		}
-		printf("texW %i texH %i texC %i\n", texW, texH, texC);
-
+		
 		softwareRenderer->widthImg = widthImg;
 		softwareRenderer->heightImg = heightImg;
-		//std::vector<unsigned char> resBuf;
-		//resBuf.resize(widthImg * heightImg * 3);
-		//unsigned char* resBuf = new unsigned char[widthImg * heightImg * 3];
-		//srand((unsigned)time(nullptr));
-
-		//vec2 a = vec2(1 / 4.f, 1 / 3.f);//widthImg / 4, heightImg / 3);
-		//vec2 b = vec2(1 / 2.f, 3 / 4.f);//widthImg / 2, heightImg * 3 / 4);
-		//vec2 c = vec2(3 / 4.f, 1 / 3.f);//widthImg * 3 / 4, heightImg / 3);
-
-		vec2 ta = vec2(0, 0);
-		vec2 tb = vec2(.5f, 1);
-		vec2 tc = vec2(1, 0);
-		
-		vec2 d = vec2(1, 0);
-		vec2 td = vec2(.1, 0);
-
-		// sort triangles (later
-
-		// background
-		/*softwareRenderer->setBackground(vec3(0x69, 0x69, 0x69));
-
-		for (size_t i = 0; i < sizeof(vertices) * 3 / sizeof(float); i += 9)
-		{
-			vec2 a = vec2(vertices[indices[i]],
-				vertices[indices[i + 1]]);
-			vec2 b = vec2(vertices[indices[i + 2]],
-				vertices[indices[i + 3]]);
-			vec2 c = vec2(vertices[indices[i + 4]],
-				vertices[indices[i + 5]]);
-			softwareRenderer->rasterizeTriangle(a, b, c, ta, tb, tc);
-		}*/
-
-		if (0)
-		{
-			// first triangle render
-			//softwareRenderer->rasterizeTriangle(a, b, c, ta, tb, tc);
-			//// second triangle render
-			//softwareRenderer->rasterizeTriangle(a, c, d, ta, tc, td);
-
-			//vec2 e = vec2(0, 1);
-			//softwareRenderer->moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(e);
-			//vec2 te = vec2(0.5, 0.5);
-
-			//// third triangle render
-			//softwareRenderer->rasterizeTriangle(a, b, e, ta, tc, te);
-		}
 
 		stbi_flip_vertically_on_write(true);
-		//int res = stbi_write_png("textures/res.jpg", widthImg, heightImg, 3, &resBuf[0], widthImg * 3 * (int)sizeof(resBuf[0]));
-		//exit(0);
-		//softwareRenderer->LoadObj("textures/monkey.obj");
-		
-		//softwareRenderer->rasterizeTriangle();
-		/*vec2 a = vec2(-softwareRenderer->widthImg / 4, -softwareRenderer->heightImg / 4);
-		vec2 b = vec2(softwareRenderer->widthImg / 2, softwareRenderer->heightImg * 5 / 4);
-		vec2 c = vec2(softwareRenderer->widthImg * 5 / 4, -softwareRenderer->heightImg / 4);
-		vec2 ta = vec2(0, 0);
-		vec2 tb = vec2(.5f, 1);
-		vec2 tc = vec2(1, 0);
-		softwareRenderer->rasterizeTriangle(a, b, c, ta, tb, tc);
-		*/
-		//softwareRenderer->saveRender(softwareRenderer->widthImg, softwareRenderer->heightImg, "textures/res.jpg");
 		if (this->window->Open())
 		{
 			// set clear color to gray
@@ -1449,7 +1028,8 @@ namespace Example
 
 		Camera cam(90, (float)width / height, 0.01f, 100.0f);
 		cam.setPos(vec4(0, 2, 5));
-		cam.setRot(vec4(0, 1, 0), M_PI);
+		cam.addRot(vec4(0, 0, 1), -M_PI / 2);
+		cam.addRot(vec4(0, 1, 0), M_PI);
 
 		Lightning light(vec3(10, 10, 10), vec3(1, 1, 1), .01f);
 		
@@ -1460,13 +1040,18 @@ namespace Example
 
 
 		// set identies
-		cubeWorldSpaceTransform = cubeProjectionViewTransform = Translate(vec4());
+		cubeWorldSpaceTransform = Translate(vec4());// Rotation(vec3(0, 0, 1), M_PI / 2);
+		cubeProjectionViewTransform = Translate(vec4());
 
 		softwareRenderer->LoadObj("textures/triangle.obj", loadedVertices, loadedIndices, nullptr, nullptr, nullptr, nullptr);
 		while (this->window->IsOpen())
 		{
+			softwareRenderer->clearRender();
 			frameIndex++;
-			softwareRenderer->cam.setPos(cam.getPos() + Normalize(vec4((d - a), (q - e), (w - s))) * -camSpeed);
+			if (l) // hold the L key
+				cam.setPos(cam.getPos() + Normalize(vec4((e - q), (d - a), (w - s))) * camSpeed); // move openGL camera
+			else
+				softwareRenderer->cam.setPos(softwareRenderer->cam.getPos() + Normalize(vec4((d - a), (q - e), (w - s))) * camSpeed); // move Rasterizer Camera
 
 			for (size_t i = 0; i < loadedVertices.size(); i += 3)
 			{
@@ -1478,15 +1063,15 @@ namespace Example
 				softwareRenderer->projectVertex(b);
 				softwareRenderer->projectVertex(c);
 
-
-				vec2 ta = loadedVertices[loadedIndices[i]].texel;
-				vec2 tb = loadedVertices[loadedIndices[i + 1]].texel;
-				vec2 tc = loadedVertices[loadedIndices[i + 2]].texel;
-
-				softwareRenderer->rasterizeTriangle(a, b, c, ta, tb, tc);
+				vec2 ta = loadedVertices[loadedIndices[i]].texel * vec2(cos(frameIndex * 0.01f), 1);
+				vec2 tb = loadedVertices[loadedIndices[i + 1]].texel * vec2(cos(frameIndex * 0.01f), 1);
+				vec2 tc = loadedVertices[loadedIndices[i + 2]].texel * vec2(cos(frameIndex * 0.01f), 1);
+				
+				if (l)
+					softwareRenderer->triangle(a, b, c, ta, tb, tc);
+				else
+					softwareRenderer->rasterizeTriangle(a, b, c, ta, tb, tc);
 			}
-
-			//softwareRenderer->rasterizeTriangle();
 
 			// cube world space
 

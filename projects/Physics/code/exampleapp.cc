@@ -69,8 +69,6 @@ namespace Example
 		Camera cam;
 		mat4 currentRotation;
 		Lightning light;
-		float rasratio;
-		float triratio;
 		SoftwareRenderer();
 		SoftwareRenderer(unsigned rzw, unsigned rzh);
 		void setVertexBuffer(std::vector<Vertex> vertexBuffer);
@@ -81,10 +79,8 @@ namespace Example
 		unsigned char* getFrameBuffer();
 		void setFrameBuffer(unsigned char* frameBuffer);
 		void triangle(vec3 a, vec3 b, vec3 c, const vec2& ta, const vec2& tb, const vec2& tc);
-		void append_line(int x0, int y0, int x1, int y1, vec3 color);
 		bool DrawToDepthBuffer(unsigned x, unsigned y, const float depth);
 		float getDepthFromPixel(const vec2& p, const vec3& a, const vec3& b, const vec3& c);
-		void moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(vec2& norm);
 		void moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(vec3& norm);
 		void projectModel(const mat4& pvm);
 		void clearRender();
@@ -537,12 +533,6 @@ namespace Example
 			for (int j = 0; j < 3; j++)
 			frameBuffer[i + j] = unsigned char(color.data[j]);
 		}
-	}
-
-	void SoftwareRenderer::moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(vec2& norm)
-	{
-		norm.x = (widthImg >> 1) * (norm.x + 1);
-		norm.y = (heightImg >> 1) * (norm.y + 1);
 	}
 
 	void SoftwareRenderer::moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(vec3& norm)

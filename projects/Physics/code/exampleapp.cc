@@ -27,7 +27,8 @@ namespace Example
 	 */
 	ExampleApp::ExampleApp()
 	{
-		// empty
+		senseX = prevX + (0.002 * (width / 2));
+		senseY = prevY + (0.002 * (height / 2));
 	}
 
 	//------------------------------------------------------------------------------
@@ -68,7 +69,8 @@ namespace Example
 		Camera cam;
 		mat4 currentRotation;
 		Lightning light;
-
+		float rasratio;
+		float triratio;
 		SoftwareRenderer();
 		SoftwareRenderer(unsigned rzw, unsigned rzh);
 		void setVertexBuffer(std::vector<Vertex> vertexBuffer);
@@ -104,7 +106,7 @@ namespace Example
 		vec2 UVmapping(const vec3& bp, const vec2& ta, const vec2& tb, const vec2& tc);
 		vec3 getPixelColorFromUV(const unsigned char* texture, const int& w, const int& h, vec2 texel);
 		void setBackground(const vec3& color=vec3(0.0f, 0.0f, 0.0f));
-		void rasterizeTriangle(vec3 ca, vec3 cb, vec3 cc, const vec2& ta, const vec2& tb, const vec2& tc);
+		void rasterizeTriangle(vec3 a, vec3 b, vec3 c, const vec2& ta, const vec2& tb, const vec2& tc);
 	};
 
 	SoftwareRenderer::SoftwareRenderer()
@@ -123,6 +125,7 @@ namespace Example
 			depthBuffer[i] = std::numeric_limits<float>::lowest();
 		}
 
+		currentRotation = (Rotation(vec4(1, 0, 0), 0) * Rotation(vec4(0, 1, 0), 0));
 		frameBuffer = new unsigned char[widthImg * heightImg * 3];
 
 		cam = Camera(90, (float)widthImg / heightImg, 0.01f, 100.0f);
@@ -375,265 +378,6 @@ namespace Example
 		return fs;
 	}
 
-	inline bool SoftwareRenderer::LoadObj(const char* pathToFile, std::vector<Vertex>& vertices, std::vector<unsigned>& indices)
-	{
-		using namespace std;
-		ifstream fs(pathToFile);
-		string line;
-
-		if (!fs)
-		{
-			printf("file not found with path \"./%s\"\n", pathToFile);
-			return false;
-		}
-
-		unsigned long long verticesUsed = 0ull;
-		vector<vec3> coords;
-		vector<vec2> texels;
-		vector<vec3> normals;
-
-		while (getline(fs, line))
-		{
-			size_t pos = 0;
-			string token;
-
-			while ((pos = line.find(" ")) != string::npos) {
-				token = line.substr(0, pos);
-				line.erase(0, pos + 1);
-				
-				if (token == "v")
-				{
-					size_t I = 0;
-					vec3 nextCoordinate;
-					
-					while ((pos = line.find(" ")) != string::npos)
-					{
-						if (I >= 3)
-						{
-							cerr << "too many arguments in vertex, expected 3" << endl;
-							break;
-						}
-						token = line.substr(0, pos);
-						line.erase(0, pos + 1);
-						nextCoordinate[I++] = stof(token);
-					}
-					nextCoordinate[I++] = stof(line);
-					if (I<3U) cerr << "not enough love, vertex";
-					coords.push_back(nextCoordinate);
-				}
-
-				else if (token == "vt")
-				{
-					size_t I = 0;
-					vec2 nextTexel;
-
-					while ((pos = line.find(" ")) != string::npos)
-					{
-						if (I >= 2)
-						{
-							cerr << "too many arguments in texel, expected 2" << endl;
-							break;
-						}
-						token = line.substr(0, pos);
-						line.erase(0, pos + 1);
-						nextTexel[I++] = stof(token);
-					}
-					nextTexel[I++] = stof(line);
-					if (I < 2)
-					{
-						cerr << "not enough love, texel";
-						break;
-					}
-					texels.push_back(nextTexel);
-				}
-
-				else if (token == "vn")
-				{
-					size_t I = 0;
-					vec3 nextNormal;
-
-					while ((pos = line.find(" ")) != string::npos)
-					{
-						if (I >= 3)
-						{
-							cerr << "missing arguments in normal, expected 3" << endl;
-							break;
-						}
-						token = line.substr(0, pos);
-						line.erase(0, pos + 1);
-						nextNormal[I++] = stof(token);
-					}
-					nextNormal[I++] = stof(line);
-					if (I < 3U)
-					{
-						cerr << "not enough love, normals";
-						break;
-					}
-					normals.push_back(nextNormal);
-				}
-
-				else if (token == "f")
-				{
-					size_t I = 0;
-					vector<string> args;
-
-					while ((pos = line.find(" ")) != string::npos)
-					{
-						if (I >= 5)
-						{
-							cerr << "missing arguments in face, expected 3 or 4" << endl;
-							break;
-						}
-						token = line.substr(0, pos);
-						line.erase(0, pos + 1);
-						args.push_back(token);
-					}
-					args.push_back(line);
-					// working
-					size_t posi = 0;
-					for (size_t i = 0; i < args.size(); i++)
-					{
-						vector<int> argi;
-						while ((posi = args[i].find("/")) != string::npos)
-						{
-							if (argi.size() >= 4)
-							{
-								cerr << "too many arguments in faceProperties, expected 2 or 3" << endl;
-								break;
-							}
-							token = args[i].substr(0, posi);
-							args[i].erase(0, posi + 1);
-							argi.push_back(stoi(token));
-						}
-						argi.push_back(stoi(args[i]));
-						if (argi.size() < 2)
-						{
-							cerr << "not enough parameters in faceProperies, expected 2 or 3" << endl;
-							break;
-						}
-					}
-
-					if (args.size() == 3)
-					{
-						size_t posi = 0;
-						for (size_t i = 0; i < args.size(); i++)
-						{
-							vector<unsigned> argi;
-							while ((posi = args[i].find("/")) != string::npos)
-							{
-								if (argi.size() >= 4)
-								{
-									cerr << "too many arguments in faceProperties, expected 2 or 3" << endl;
-									break;
-								}
-								token = args[i].substr(0, posi);
-								args[i].erase(0, posi + 1);
-								argi.push_back(stoi(token));
-							}
-							argi.push_back(stoi(args[i]));
-							if (argi.size() < 2)
-							{
-								cerr << "not enough parameters in faceProperies 2 or 3";
-								break;
-							}
-
-							vec3 placeHolder = vec3();
-							if (argi.size() == 3)
-								placeHolder = normals[argi[2] - 1],
-
-								vertices.push_back(Vertex{
-									coords[(argi[0]) - 1],
-									vec4(1, 1, 1, 1),
-									texels[(argi[1]) - 1],
-									placeHolder,
-									});
-							indices.push_back(vertices.size() - 1);
-						}
-					}
-					else if (args.size() == 4)
-					{
-						size_t posi = 0;
-						for (size_t i = 0; i < args.size(); i++)
-						{
-							vector<unsigned> argi;
-							while ((posi = line.find("/")) != string::npos)
-							{
-								if (argi.size() >= 4)
-								{
-									cerr << "too many arguments in faceProperties, expected 2 or 3" << endl;
-									break;
-								}
-								token = line.substr(0, posi);
-								line.erase(0, posi + 1);
-								argi.push_back(stoi(token));
-							}
-							argi.push_back(stoi(line));
-							if (argi.size() < 2)
-							{
-								cerr << "not enough parameters in faceProperies 2 or 3";
-								break;
-							}
-
-							vec3 placeHolder = vec3();
-							if (argi.size() == 3)
-								placeHolder = normals[argi[2] - 1],
-							
-							vertices.push_back(Vertex{
-								coords[(argi[0]) - 1],
-								vec4(1, 1, 1, 1),
-								texels[(argi[1]) - 1],
-								placeHolder,
-								});
-						}
-						float dist1 = (vertices[vertices.size() - 4].pos - vertices[vertices.size() - 2].pos).Length();
-						float dist2 = (vertices[vertices.size() - 3].pos - vertices[vertices.size() - 1].pos).Length();
-						if (dist1 > dist2)
-						{
-							indices.push_back(vertices.size() - 4);
-							indices.push_back(vertices.size() - 3);
-							indices.push_back(vertices.size() - 1);
-
-							indices.push_back(vertices.size() - 3);
-							indices.push_back(vertices.size() - 2);
-							indices.push_back(vertices.size() - 1);
-						}
-						else
-						{
-							indices.push_back(vertices.size() - 4);
-							indices.push_back(vertices.size() - 3);
-							indices.push_back(vertices.size() - 2);
-
-							indices.push_back(vertices.size() - 4);
-							indices.push_back(vertices.size() - 2);
-							indices.push_back(vertices.size() - 1);
-						}
-					}
-				}
-			}
-		}
-		
-		printf("loadedToBuffer %s\n", pathToFile);
-		
-		 for (size_t i = 0; i < coords.size(); i += 3)
-		 {
-			vec3 a = coords[indices[i]];
-			vec3 b = coords[indices[i + 1]];
-			vec3 c = coords[indices[i + 2]];
-
-			projectVertex(a);
-			projectVertex(b);
-			projectVertex(c);
-
-			vec2 ta = texels[indices[i]];
-			vec2 tb = texels[indices[i + 1]];
-			vec2 tc = texels[indices[i + 2]];
-
-			rasterizeTriangle(a, b, c, ta, tb, tc);
-		 }
-		return 1;
-	}
-
-
 	inline int SoftwareRenderer::saveRender(int w, int h, const char* pathToFile)
 	{
 		int res = stbi_write_png(pathToFile, w, h, 3, frameBuffer, w * 3);
@@ -671,8 +415,8 @@ namespace Example
 		const vec3& fragPosOut,
 		const vec3& normalOut)
 	{
-		vec3 viewDir = Normalize(1e-0f * fragPosOut - cam.getPos());
-		vec3 lightDir = Normalize(light.getPos() - 1e-0f * fragPosOut);
+		vec3 viewDir = Normalize(fragPosOut - cam.getPos());
+		vec3 lightDir = Normalize(light.getPos() - fragPosOut);
 
 		vec3 halfwayDir = Normalize(lightDir + viewDir);
 		vec3 ambientlight = light.getIntensity() * light.getColor();
@@ -711,71 +455,6 @@ namespace Example
 		return false;
 	}
 
-	// CPU pixel shader
-	// abc is window coordinates with no depth
-	inline void SoftwareRenderer::rasterizeTriangle(vec3 a, vec3 b, vec3 c, const vec2& ta, const vec2& tb, const vec2& tc)
-	{
-
-		// scale to screen
-		moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(a);
-		moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(b);
-		moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(c);
-
-		// scale with rgb
-		a.x *= 3;
-		b.x *= 3;
-		c.x *= 3;
-
-		int left = 0, right = widthImg * 3, bottom = 0, top = heightImg;
-
-		bottom = a.y;
-		if (bottom > b.y) bottom = b.y;
-		if (bottom > c.y) bottom = c.y;
-
-		top = a.y;
-		if (top < b.y) top = b.y;
-		if (top < c.y) top = c.y;
-
-		int trianglePass = 0;
-		int depthPass = 0;
-
-		for (int y = (bottom > 0 ? bottom : 0); y < top; y++)
-		{
-			for (int x = left; x < right; x += 3)
-			{
-				if (!isInTriangle(vec2(x, y), vec2(a.x, a.y), vec2(b.x, b.y), vec2(c.x, c.y))) continue;
-				//trianglePass++;
-				float depth = getDepthFromPixel(vec2(x, y), a, b, c);
-				
-				if (!DrawToDepthBuffer(x, y, depth)) continue;
-				//depthPass++;
-				if (x + y * widthImg * 3 < 0) continue;
-				if (x + y * widthImg * 3 + 2 >= widthImg * heightImg * 3) break;
-				
-				vec3 barycentric = getBarycentricCoord(vec2(x, y), vec2(a.x, a.y), vec2(b.x, b.y), vec2(c.x, c.y));
-				if (textureBuffer != nullptr && 01)
-				{
-					vec2 textureSample = UVmapping(barycentric, ta, tb, tc);
-
-					vec3 pixel = getPixelColorFromUV(textureBuffer, textureWidth, textureHeight, textureSample);
-					vec2 res = vec2((a * barycentric.x + b * barycentric.y + c * barycentric.z).x,
-						(a * barycentric.x + b * barycentric.y + c * barycentric.z).y);
-					pixel = RasterizeLight(vec3(255, 255, 255), pixel, vec3(x, y, depth), vec3(0, 0, 1));
-							
-					frameBuffer[x + y * widthImg * 3] = unsigned char(pixel.x);
-					frameBuffer[x + y * widthImg * 3 + 1] = unsigned char(pixel.y);
-					frameBuffer[x + y * widthImg * 3 + 2] = unsigned char(pixel.z);
-				}
-				else
-				{
-					frameBuffer[x + y * widthImg * 3] = unsigned char(barycentric.x * 255.f);
-					frameBuffer[x + y * widthImg * 3 + 1] = unsigned char(barycentric.y * 255.f);
-					frameBuffer[x + y * widthImg * 3 + 2] = unsigned char(barycentric.z * 255.f);
-				}
-			}
-		}
-	}
-
 	void SoftwareRenderer::triangle(vec3 a, vec3 b, vec3 c, const vec2& ta, const vec2& tb, const vec2& tc) {
 		if (a.y == b.y && a.y == c.y) return;
 
@@ -788,6 +467,11 @@ namespace Example
 		a.x *= 3;
 		b.x *= 3;
 		c.x *= 3;
+
+		// to keep the the positions of the triangles relelative to the triangle
+		vec2 ba = vec2(a.x , a.y);
+		vec2 bb = vec2(b.x, b.y);
+		vec2 bc = vec2(c.x, c.y);
 
 		if (a.y > b.y) std::swap(a, b);
 		if (a.y > c.y) std::swap(a, c);
@@ -802,16 +486,16 @@ namespace Example
 			vec2 A = vec2(a.x, a.y) + (vec2(c.x, c.y) - vec2(a.x, a.y)) * total_ratio;
 			vec2 B = lower_half ? vec2(b.x, b.y) + (vec2(c.x, c.y) - vec2(b.x, b.y)) * sub_ratio : vec2(a.x, a.y) + (vec2(b.x, b.y) - vec2(a.x, a.y)) * sub_ratio;
 			if (A.x > B.x) std::swap(A, B);
-			for (int j = (int)A.x * 3; j <= (int)B.x * 3; j += 3)
+			for (int j = (int)(A.x) * 3; j <= (int)(B.x) * 3; j += 3)
 			{
-				vec2 point = vec2(j, a.y+i);
+				vec2 point = vec2((int)j, (int)a.y+i);
 				float depth = getDepthFromPixel(point, a, b, c);
-				if (DrawToDepthBuffer(j, (int)a.y + i, depth))
+				if (DrawToDepthBuffer((int)j, (int)a.y + i, depth))
 				{
-					int index = j + ((int)std::round(a.y) + i) * widthImg * 3;
+					int index = j + ((int)a.y + i) * widthImg * 3;
 					if (index < 0) continue;
 					if (index >= widthImg * 3 * heightImg) break;
-					vec3 barycentric = getBarycentricCoord(point, vec2(a.x, a.y), vec2(b.x, b.y), vec2(c.x, c.y));
+					vec3 barycentric = getBarycentricCoord(vec2(point.x * 1/3.f, point.y), vec2(ba.x, ba.y), vec2(bb.x, bb.y), vec2(bc.x, bc.y));
 					vec2 textureSample = UVmapping(barycentric, ta, tb, tc);
 					vec3 color = getPixelColorFromUV(textureBuffer, textureWidth, textureHeight, textureSample);
 
@@ -819,58 +503,22 @@ namespace Example
 						(a * barycentric.x + b * barycentric.y + c * barycentric.z).y);
 					color = RasterizeLight(vec3(255, 255, 255), color, vec3(j, (int)a.y + i, depth), vec3(0, 0, 1));
 
-					frameBuffer[index] = unsigned char(color.x);
-					frameBuffer[index + 1] = unsigned char(color.y);
-					frameBuffer[index + 2] = unsigned char(color.z);
+					if (textureBuffer != nullptr)
+					{
+						frameBuffer[index] = unsigned char(color.x);
+						frameBuffer[index + 1] = unsigned char(color.y);
+						frameBuffer[index + 2] = unsigned char(color.z);
+					}
+					else
+					{
+						frameBuffer[index] = unsigned char(barycentric.x * 255.f);
+						frameBuffer[index + 1] = unsigned char(barycentric.y * 255.f);
+						frameBuffer[index + 2] = unsigned char(barycentric.z * 255.f);
+					}
 				}
 			}
 		}
 	}
-
-	//void SoftwareRenderer::triangle(vec3 a, vec3 b, vec3 c, const vec2& ta, const vec2& tb, const vec2& tc)
-	//{
-	//	if (a.y == b.y && a.y == c.y) return;
-	//	// sort the vertices, a, b, c
-	//	if (a.y > b.y) std::swap(a, b);
-	//	if (a.y > c.y) std::swap(a, c);
-	//	if (b.y > c.y) std::swap(b, c);
-
-	//	moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(a);
-	//	moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(b);
-	//	moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(c);
-
-	//	a.x *= 3;
-	//	b.x *= 3;
-	//	c.x *= 3;
-	//	
-	//	int total_height = c.y - a.y;
-	//	for (int i = 0; i < total_height; i++)
-	//	{
-	//		bool second_half = i > b.y - a.y || b.y == a.y;
-	//		int segment_height = second_half ? c.y - b.y : b.y - a.y;
-	//		float alpha = (float)i / total_height;
-	//		float beta  = (float)(i - (second_half ? b.y - a.y : 0)) / segment_height;
-	//		vec2 A = vec2(a.x, a.y) + (vec2(c.x, c.y) - vec2(a.x, a.y)) * alpha;
-	//		vec2 B = second_half ? vec2(b.x, b.y) + (vec2(c.x, c.y) - vec2(b.x, b.y)) * beta : vec2(a.x, a.y) + (vec2(b.x, b.y) - vec2(c.x, c.y)) * beta;
-	//		if (A.x > B.x) std::swap(A, B);
-	//		
-	//		for (int j = A.x; j <= B.x && j <= widthImg * 3; j += 3)
-	//		{
-	//			vec2 point = vec2(j, a.y+i);
-	//			//float depth = getDepthFromPixel(point, a, b, c);
-	//			//if (DrawToDepthBuffer(j, (unsigned)a.y + i, depth))
-	//			{
-	//				vec3 barycentric = getBarycentricCoord(point, vec2(a.x, a.y), vec2(b.x, b.y), vec2(c.x, c.y));
-	//				vec2 textureSample = UVmapping(barycentric, ta, tb, tc);
-	//				vec3 color = getPixelColorFromUV(textureBuffer, textureWidth, textureHeight, textureSample);
-	//				
-	//				frameBuffer[(int)a.y + i + widthImg * 3 * j] = color.x;
-	//				frameBuffer[(int)a.y + i + widthImg * 3 * j + 1] = color.y;
-	//				frameBuffer[(int)a.y + i + widthImg * 3 * j + 2] = color.z;
-	//			}
-	//		}
-	//	}
-	//}
 
 	void SoftwareRenderer::setBackground(const vec3& color)
 	{
@@ -1040,7 +688,7 @@ namespace Example
 
 
 		// set identies
-		cubeWorldSpaceTransform = Translate(vec4());// Rotation(vec3(0, 0, 1), M_PI / 2);
+		cubeWorldSpaceTransform = Translate(vec4());
 		cubeProjectionViewTransform = Translate(vec4());
 
 		softwareRenderer->LoadObj("textures/triangle.obj", loadedVertices, loadedIndices, nullptr, nullptr, nullptr, nullptr);
@@ -1048,10 +696,10 @@ namespace Example
 		{
 			softwareRenderer->clearRender();
 			frameIndex++;
-			if (l) // hold the L key
-				cam.setPos(cam.getPos() + Normalize(vec4((e - q), (d - a), (w - s))) * camSpeed); // move openGL camera
+			if (!l) // hold the L key to
+				cam.setPos(cam.getPos() + Normalize(vec4((e - q), (d - a), (w - s))) * camSpeed); // move the openGL camera
 			else
-				softwareRenderer->cam.setPos(softwareRenderer->cam.getPos() + Normalize(vec4((d - a), (q - e), (w - s))) * camSpeed); // move Rasterizer Camera
+				softwareRenderer->cam.setPos(softwareRenderer->cam.getPos() + Normalize(vec4((d - a), (q - e), (w - s))) * camSpeed); // move the softwareRenderer Camera
 
 			for (size_t i = 0; i < loadedVertices.size(); i += 3)
 			{
@@ -1063,14 +711,11 @@ namespace Example
 				softwareRenderer->projectVertex(b);
 				softwareRenderer->projectVertex(c);
 
-				vec2 ta = loadedVertices[loadedIndices[i]].texel * vec2(cos(frameIndex * 0.01f), 1);
-				vec2 tb = loadedVertices[loadedIndices[i + 1]].texel * vec2(cos(frameIndex * 0.01f), 1);
-				vec2 tc = loadedVertices[loadedIndices[i + 2]].texel * vec2(cos(frameIndex * 0.01f), 1);
+				vec2 ta = loadedVertices[loadedIndices[i]].texel;
+				vec2 tb = loadedVertices[loadedIndices[i + 1]].texel;
+				vec2 tc = loadedVertices[loadedIndices[i + 2]].texel;
 				
-				if (l)
-					softwareRenderer->triangle(a, b, c, ta, tb, tc);
-				else
-					softwareRenderer->rasterizeTriangle(a, b, c, ta, tb, tc);
+				softwareRenderer->triangle(a, b, c, ta, tb, tc);
 			}
 
 			// cube world space

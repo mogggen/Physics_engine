@@ -78,6 +78,7 @@ namespace Example
 		void setIndexBuffer(unsigned* indexBuffer);
 		unsigned char* getFrameBuffer();
 		void setFrameBuffer(unsigned char* frameBuffer);
+		void append_line(int x0, int y0, int x1, int y1, vec3 color);
 		void triangle(vec3 a, vec3 b, vec3 c, const vec2& ta, const vec2& tb, const vec2& tc);
 		bool DrawToDepthBuffer(unsigned x, unsigned y, const float depth);
 		float getDepthFromPixel(const vec2& p, const vec3& a, const vec3& b, const vec3& c);
@@ -236,90 +237,160 @@ namespace Example
 
 	inline bool SoftwareRenderer::LoadObj(const char* pathToFile, std::vector<Vertex>& vertices, std::vector<unsigned>& indices, float* _coordinates, unsigned* _indices, float* _texels, float* _normals)
 	{
-		char wordBuf[1024];
-		FILE* fs;
-		fopen_s(&fs, pathToFile, "r");
-		unsigned long long verticesUsed = 0ull;
-		std::vector<vec3> coords;
-		std::vector<vec2> texels;
-		std::vector<vec3> normals;
+		using namespace std;
+		ifstream fs(pathToFile);
+		string lineRemainder;
 
-		if (fs)
+		if (!fs)
 		{
-			while (true) // reads one word at a time and places it at wordBuf[0] with a trailing '\0'
-			{
-				int count = fscanf(fs, "%1024s", wordBuf);
-				if (count <= 0)
+			printf("file not found with path \"./%s\"\n", pathToFile);
+			return false;
+		}
+
+		unsigned long long verticesUsed = 0ull;
+		vector<vec3> coords;
+		vector<vec2> texels;
+		vector<vec3> normals;
+
+		while (getline(fs, lineRemainder))
+		{
+			size_t pos = 0;
+			string token;
+
+			if ((pos = lineRemainder.find(" ")) != string::npos) {
+				token = lineRemainder.substr(0, pos);
+				lineRemainder.erase(0, pos + 1);
+				if (token == "v")
 				{
-					break;
-				}
-				if (wordBuf[0] == 'v' && wordBuf[1] == '\0')
-				{
+					size_t I = 0;
 					vec3 nextCoordinate;
-					if (fscanf(fs, "%f %f %f", &nextCoordinate.x, &nextCoordinate.y, &nextCoordinate.z) == 3)
-					{
-						coords.push_back(nextCoordinate);
-					}
-					else
-					{
-						std::cerr << "missing arguments in vertex, expected 3" << std::endl;
-					}
-				}
 
-				else if (wordBuf[0] == 'v' && wordBuf[1] == 't' && wordBuf[2] == '\0')
-				{
-					vec2 nextTexel;
-					if (fscanf(fs, "%f %f", &nextTexel.x, &nextTexel.y) == 2)
+					while ((pos = lineRemainder.find(" ")) != string::npos)
 					{
-						texels.push_back(nextTexel);
-					}
-					else
-					{
-						std::cerr << "missing arguments in texel, expected 2" << std::endl;
-					}
-				}
-
-				else if (wordBuf[0] == 'v' && wordBuf[1] == 'n' && wordBuf[2] == '\0')
-				{
-					vec3 nextNormal;
-					if (fscanf(fs, "%f %f %f", &nextNormal.x, &nextNormal.y, &nextNormal.z) == 3)
-					{
-						normals.push_back(nextNormal);
-					}
-					else
-					{
-						std::cerr << "missing arguments in texel, expected 3" << std::endl;
-					}
-				}
-
-				else if (wordBuf[0] == 'f' && wordBuf[1] == '\0')
-				{
-					char pos[4][64];
-					uint8_t argc = fscanf(fs, "%s %s %s"/* % s"*/, &pos[0], &pos[1], &pos[2]/*, &pos[3]*/);
-
-					uint32_t listOfIndices[4][3];
-
-					if (argc == 4 && pos[3][0] != 'f' && pos[3][0] != '#')
-					{
-						for (size_t i = 0; i < 4; i++)
+						if (I >= 3)
 						{
-							int count = sscanf(pos[i], "%lu"
-								"/ %lu"
-								"/ %lu"
-								"/",
-								&listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]);
-							std::cin.get();
+							cerr << "too many arguments in vertex, expected 3" << endl;
+							break;
+						}
+						token = lineRemainder.substr(0, pos);
+						lineRemainder.erase(0, pos + 1);
+						nextCoordinate[I++] = stof(token);
+					}
+					nextCoordinate[I++] = stof(lineRemainder);
+					if (I < 3U) cerr << "not enough love, vertex";
+					coords.push_back(nextCoordinate);
+				}
 
-							if (count != 3)
+				else if (token == "vt")
+				{
+					size_t I = 0;
+					vec2 nextTexel;
+
+					while ((pos = lineRemainder.find(" ")) != string::npos)
+					{
+						if (I >= 2)
+						{
+							cerr << "too many arguments in texel, expected 2" << endl;
+							break;
+						}
+						token = lineRemainder.substr(0, pos);
+						lineRemainder.erase(0, pos + 1);
+						nextTexel[I++] = stof(token);
+					}
+					nextTexel[I++] = stof(lineRemainder);
+					if (I < 2)
+					{
+						cerr << "not enough love, texel";
+						break;
+					}
+					texels.push_back(nextTexel);
+				}
+
+				else if (token == "vn")
+				{
+					size_t I = 0;
+					vec3 nextNormal;
+
+					while ((pos = lineRemainder.find(" ")) != string::npos)
+					{
+						if (I >= 3)
+						{
+							cerr << "missing arguments in normal, expected 3" << endl;
+							break;
+						}
+						token = lineRemainder.substr(0, pos);
+						lineRemainder.erase(0, pos + 1);
+						nextNormal[I++] = stof(token);
+					}
+					nextNormal[I++] = stof(lineRemainder);
+					if (I<3U)
+					{
+						cerr << "not enough love, normals";
+						break;
+					}
+					normals.push_back(nextNormal);
+				}
+
+				else if (token == "f")
+				{
+					size_t I = 0;
+					vector<string> args;
+
+					while ((pos = lineRemainder.find(" ")) != string::npos)
+					{
+						if (I >= 5)
+						{
+							cerr << "missing arguments in face, expected 3 or 4" << endl;
+							break;
+						}
+						token = lineRemainder.substr(0, pos);
+						lineRemainder.erase(0, pos + 1);
+						args.push_back(token);
+					}
+					args.push_back(lineRemainder);
+					//for (string s : args) cout << s << endl;
+					
+
+					size_t posi = 0;
+					string tokenSmall;
+					vector<unsigned> argi;
+
+					for (size_t i = 0; i < args.size(); i++)
+					{
+						argi.clear();
+						while ((posi = args[i].find("/")) != string::npos)
+						{
+							if (argi.size() >= 4)
+							{
+								cout << "i: " << i << endl;
+								cout << "argi: ";
+								for (auto s : argi) cout << s << " ";
+								cout << endl;
+								cerr << "too many arguments in faceProperties, expected 2 or 3" << endl;
 								break;
-							vertices.push_back(Vertex{
-								coords[(listOfIndices[i][0]) - 1],
-								vec4(1, 1, 1, 1),
-								texels[(listOfIndices[i][1]) - 1],
-								normals[(listOfIndices[i][2]) - 1],
-								});
+							}
+							tokenSmall = args[i].substr(0, posi);
+							args[i].erase(0, posi + 1);
+							argi.push_back(stoi(tokenSmall));
+						}
+						argi.push_back(stoi(args[i]));
+						if (argi.size() < 2)
+						{
+							cerr << "not enough parameters in faceProperies 2 or 3";
+							break;
 						}
 
+						vertices.push_back(Vertex{
+							coords[(argi[0]) - 1],
+							vec4(1, 1, 1, 1),
+							texels[(argi[1]) - 1],
+							(argi.size() == 3 ? normals[argi[2] - 1] : vec3()),
+							});
+						if (args.size() == 3)
+							indices.push_back(vertices.size() - 1);
+					}
+					if (args.size() == 4)
+					{
 						float dist1 = (vertices[vertices.size() - 4].pos - vertices[vertices.size() - 2].pos).Length();
 						float dist2 = (vertices[vertices.size() - 3].pos - vertices[vertices.size() - 1].pos).Length();
 						if (dist1 > dist2)
@@ -343,35 +414,12 @@ namespace Example
 							indices.push_back(vertices.size() - 1);
 						}
 					}
-					else if (argc == 3)
-					{
-						for (size_t i = 0; i < 3; i++)
-						{
-							if (sscanf(pos[i], "%lu"
-								"/ %lu"
-								"/ %lu"
-								"/",
-								&listOfIndices[i][0], &listOfIndices[i][1], &listOfIndices[i][2]) != 3)
-								break;
-
-							vertices.push_back(Vertex{
-								coords[listOfIndices[i][0] - 1],
-								vec4(1, 1, 1, 1),
-								texels[listOfIndices[i][1] - 1],
-								normals[listOfIndices[i][2] - 1],
-								});
-							indices.push_back(vertices.size() - 1);
-						}
-					}
 				}
 			}
-			fclose(fs);
 		}
-		else
-		{
-			printf("file not found with path \"./%s\"\n", pathToFile);
-		}
-		return fs;
+
+		printf("loadedToBuffer %s\n", pathToFile);
+		return 1;
 	}
 
 	inline int SoftwareRenderer::saveRender(int w, int h, const char* pathToFile)
@@ -469,6 +517,12 @@ namespace Example
 		vec2 bb = vec2(b.x, b.y);
 		vec2 bc = vec2(c.x, c.y);
 
+		vec3 white = vec3(255, 255, 255);
+		/*append_line(0, 0, widthImg, heightImg, white);
+		append_line(a.x, a.y, b.x, b.y, white);
+		append_line(c.x, c.y, b.x, b.y, white);
+		append_line(a.x, a.y, c.x, c.y, white);*/
+
 		if (a.y > b.y) std::swap(a, b);
 		if (a.y > c.y) std::swap(a, c);
 		if (b.y > c.y) std::swap(b, c);
@@ -486,35 +540,45 @@ namespace Example
 			{
 				vec2 point = vec2((int)j, (int)a.y+i);
 				float depth = getDepthFromPixel(point, a, b, c);
-				if (DrawToDepthBuffer((int)j, (int)a.y + i, depth))
+				if (!DrawToDepthBuffer((int)j, (int)a.y + i, depth)) continue;
+				int index = j + ((int)a.y + i) * widthImg * 3;
+				if (index < 0) continue;
+				if (index >= widthImg * 3 * heightImg) break;
+				vec3 barycentric = getBarycentricCoord(vec2(point.x * 1/3.f, point.y), vec2(ba.x, ba.y), vec2(bb.x, bb.y), vec2(bc.x, bc.y));
+				vec2 textureSample = UVmapping(barycentric, ta, tb, tc);
+				vec3 color = getPixelColorFromUV(textureBuffer, textureWidth, textureHeight, textureSample);
+
+				vec2 res = vec2((a * barycentric.x + b * barycentric.y + c * barycentric.z).x,
+					(a * barycentric.x + b * barycentric.y + c * barycentric.z).y);
+				color = RasterizeLight(vec3(255, 255, 255), color, vec3(j, (int)a.y + i, depth), vec3(0, 0, 1));
+
+				if (textureBuffer != nullptr && 01)
 				{
-					int index = j + ((int)a.y + i) * widthImg * 3;
-					if (index < 0) continue;
-					if (index >= widthImg * 3 * heightImg) break;
-					vec3 barycentric = getBarycentricCoord(vec2(point.x * 1/3.f, point.y), vec2(ba.x, ba.y), vec2(bb.x, bb.y), vec2(bc.x, bc.y));
-					vec2 textureSample = UVmapping(barycentric, ta, tb, tc);
-					vec3 color = getPixelColorFromUV(textureBuffer, textureWidth, textureHeight, textureSample);
-
-					vec2 res = vec2((a * barycentric.x + b * barycentric.y + c * barycentric.z).x,
-						(a * barycentric.x + b * barycentric.y + c * barycentric.z).y);
-					color = RasterizeLight(vec3(255, 255, 255), color, vec3(j, (int)a.y + i, depth), vec3(0, 0, 1));
-
-					if (textureBuffer != nullptr)
-					{
-						frameBuffer[index] = unsigned char(color.x);
-						frameBuffer[index + 1] = unsigned char(color.y);
-						frameBuffer[index + 2] = unsigned char(color.z);
-					}
-					else
-					{
-						frameBuffer[index] = unsigned char(barycentric.x * 255.f);
-						frameBuffer[index + 1] = unsigned char(barycentric.y * 255.f);
-						frameBuffer[index + 2] = unsigned char(barycentric.z * 255.f);
-					}
+					frameBuffer[index] = unsigned char(color.x);
+					frameBuffer[index + 1] = unsigned char(color.y);
+					frameBuffer[index + 2] = unsigned char(color.z);
+				}
+				else
+				{
+					//frameBuffer[index] = unsigned char(barycentric.x * 255.f);
+					//frameBuffer[index + 1] = unsigned char(barycentric.y * 255.f);
+					//frameBuffer[index + 2] = unsigned char(barycentric.z * 255.f);
 				}
 			}
 		}
 	}
+
+	void SoftwareRenderer::append_line(int x0, int y0, int x1, int y1, vec3 color)
+	{
+		x0 *= 3;
+		x1 *= 3;
+		for (size_t i = 0; i < 100; i++)
+		{
+			
+			frameBuffer[]
+		}
+	}
+
 
 	void SoftwareRenderer::setBackground(const vec3& color)
 	{
@@ -528,10 +592,18 @@ namespace Example
 			}
 		}
 
-		for (int i = 0; i < widthImg * heightImg; i += 3)
+		//for (int i = 0; i < widthImg * heightImg; i += 3)
+		//{
+		//	for (int j = 0; j < 3; j++)
+		//	frameBuffer[i + j] = unsigned char(color.data[j]);
+		//}
+
+		for (size_t y = 0; y < heightImg; y++)
 		{
-			for (int j = 0; j < 3; j++)
-			frameBuffer[i + j] = unsigned char(color.data[j]);
+			for (size_t x = 0; x < widthImg; x++)
+			{
+				depthBuffer[x + widthImg * y] = std::numeric_limits<float>::lowest();
+			}
 		}
 	}
 
@@ -539,6 +611,12 @@ namespace Example
 	{
 		norm.x = (widthImg >> 1) * (norm.x + 1);
 		norm.y = (heightImg >> 1) * (norm.y + 1);
+		//norm.z *= -1.f;
+	}
+
+	const int Fit(int input, int outputStart, int outputEnd, int inputStart, int inputEnd)
+	{
+		return (int)(outputStart + (outputEnd - outputStart) / (inputEnd - inputStart) * (input - inputStart));
 	}
 
 	const float getFitSlope(const float& input_start, const float& input_end, const float& output_start, const float& output_end)
@@ -592,7 +670,7 @@ namespace Example
 			{
 				senseX = prevX + (0.002 * (x - width / 2));
 				senseY = prevY + (0.002 * (y - height / 2));
-				softwareRenderer->currentRotation = (Rotation(vec4(1, 0, 0), senseY) * Rotation(vec4(0, 1, 0), senseX));
+				softwareRenderer->currentRotation = Rotation(vec4(1, 0, 0), senseY) * Rotation(vec4(0, 1, 0), senseX);
 			}
 		});
 
@@ -602,12 +680,13 @@ namespace Example
 			switch (keycode)
 			{
 			case GLFW_KEY_ESCAPE: window->Close(); break;
+			case GLFW_KEY_L: l = action; break;
+
 			case GLFW_KEY_W: w = action; break;
 			case GLFW_KEY_S: s = action; break;
 			case GLFW_KEY_A: a = action; break;
 			case GLFW_KEY_D: d = action; break;
-			case GLFW_KEY_L: l = action; break;
-
+			
 			case GLFW_KEY_Q: q = action; break;
 			case GLFW_KEY_E: e = action; break;
 			}
@@ -617,7 +696,7 @@ namespace Example
 		int widthImg = 1920, heightImg = 1200;
 		softwareRenderer = new SoftwareRenderer(widthImg, heightImg);
 
-		softwareRenderer->loadTexture("textures/perfect_test.jpg");
+		softwareRenderer->loadTexture("textures/evening.jpg");
 
 		//texture
 		stbi_set_flip_vertically_on_load(true);
@@ -681,32 +760,39 @@ namespace Example
 		cubeWorldSpaceTransform = Translate(vec4());
 		cubeProjectionViewTransform = Translate(vec4());
 
-		softwareRenderer->LoadObj("textures/triangle.obj", loadedVertices, loadedIndices, nullptr, nullptr, nullptr, nullptr);
+		softwareRenderer->LoadObj("textures/sphere.obj", loadedVertices, loadedIndices, nullptr, nullptr, nullptr, nullptr);
 		while (this->window->IsOpen())
 		{
 			softwareRenderer->clearRender();
 			frameIndex++;
 			if (!l) // hold the L key to
 				cam.setPos(cam.getPos() + Normalize(vec4((e - q), (d - a), (w - s))) * camSpeed); // move the openGL camera
-			else
+			else{
 				softwareRenderer->cam.setPos(softwareRenderer->cam.getPos() + Normalize(vec4((d - a), (q - e), (w - s))) * camSpeed); // move the softwareRenderer Camera
-
-			for (size_t i = 0; i < loadedVertices.size(); i += 3)
-			{
-				vec3 a = loadedVertices[loadedIndices[i]].pos;
-				vec3 b = loadedVertices[loadedIndices[i + 1]].pos;
-				vec3 c = loadedVertices[loadedIndices[i + 2]].pos;
-				
-				softwareRenderer->projectVertex(a);
-				softwareRenderer->projectVertex(b);
-				softwareRenderer->projectVertex(c);
-
-				vec2 ta = loadedVertices[loadedIndices[i]].texel;
-				vec2 tb = loadedVertices[loadedIndices[i + 1]].texel;
-				vec2 tc = loadedVertices[loadedIndices[i + 2]].texel;
-				
-				softwareRenderer->triangle(a, b, c, ta, tb, tc);
 			}
+
+			softwareRenderer->append_line(
+				widthImg / 2, heightImg / 2,
+				widthImg / 2 + cos(frameIndex / 200.f) * 100,
+				heightImg / 2 + sin(frameIndex / 200.f) * 100,
+				vec3(0, 0, 255));
+
+			//for (size_t i = 0; i < loadedVertices.size(); i += 3)
+			//{
+			//	vec3 a = loadedVertices[loadedIndices[i]].pos;
+			//	vec3 b = loadedVertices[loadedIndices[i + 1]].pos;
+			//	vec3 c = loadedVertices[loadedIndices[i + 2]].pos;
+			//	
+			//	softwareRenderer->projectVertex(a);
+			//	softwareRenderer->projectVertex(b);
+			//	softwareRenderer->projectVertex(c);
+
+			//	vec2 ta = loadedVertices[loadedIndices[i]].texel;
+			//	vec2 tb = loadedVertices[loadedIndices[i + 1]].texel;
+			//	vec2 tc = loadedVertices[loadedIndices[i + 2]].texel;
+			//	
+			//	softwareRenderer->triangle(a, b, c, ta, tb, tc);
+			//}
 
 			// cube world space
 

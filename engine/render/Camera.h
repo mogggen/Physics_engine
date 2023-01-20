@@ -9,6 +9,10 @@ class Camera
 public:
 	Camera();
 	Camera(float fov, float ratio, float n, float f);
+	void setNearPlane(float n);
+	void setFarPlane(float f);
+	float getNearPlane();
+	float getFarPlane();
 	vec3 getPos();
 	void setPos(vec4 pos);
 	void addRot(vec4 dir, float theta);

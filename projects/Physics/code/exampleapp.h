@@ -20,6 +20,8 @@
 
 namespace Example
 {
+	struct objBuffer;
+	struct FrameBuffer;
 	class SoftwareRenderer;
 
 	class ExampleApp : public Core::App
@@ -48,7 +50,8 @@ namespace Example
 			q, e, isPressed = false;
 		bool isRotate = false;
 		bool l = false;
-
+		bool m = false;
+		unsigned timesPressedM;
 		GLuint program;
 		GLuint vertexShader;
 		GLuint pixelShader;

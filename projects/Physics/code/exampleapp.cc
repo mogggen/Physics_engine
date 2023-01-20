@@ -43,43 +43,51 @@ namespace Example
 	/**
 	 */
 
-	class SoftwareRenderer
+	struct objBuffer
 	{
-		GLuint vertexBufHandle;
-		GLuint indexBufHandle;
-		// get from foo.obj
 		std::vector<Vertex> vertices;
 		std::vector<unsigned> indices;
-		std::vector<float> depthBuffer; // one depth for each pixel, loop raster
-		int pixelCounter = 0;
-		// obj depth buffer
+	};
 
+	struct FrameBuffer
+	{
+		unsigned char* colorBuffer;
+		std::vector<float> depthBuffer;
+		unsigned widthImg = 1920, heightImg = 1080;
+	};
 
-		//resulting frame
-		unsigned char* frameBuffer = nullptr;
-		int rasterWidth, rasterHeight;
-		
+	class SoftwareRenderer
+	{
 		// the texture
-		unsigned char* textureBuffer = nullptr;
-		int textureWidth, textureHeight;
-		
-		// the openGL texture size
+		unsigned char* texture = nullptr;
+		int textureWidth, textureHeight;	
 	public:
-		int widthImg = 1920, heightImg = 1020;
+		void* handle;
+		objBuffer ob;
+		FrameBuffer fb;
 		Camera cam;
 		mat4 currentRotation;
 		Lightning light;
+		mat4 mvp;
 		SoftwareRenderer();
 		SoftwareRenderer(unsigned rzw, unsigned rzh);
-		void setVertexBuffer(std::vector<Vertex> vertexBuffer);
-		std::vector<Vertex>& getVertexBuffer();
-		std::vector<unsigned>& getIndexBuffer();
-		std::vector<float>& getDepthBuffer();
-		void setIndexBuffer(unsigned* indexBuffer);
+		void Init();
+
+		void defaultVertexShader(Vertex& v);
+		vec3 defaultFragmentShader(unsigned char* texture, vec3 position, vec2 uv, vec3 normal); // interpolate normals per face
+
+		std::function<vec3(Vertex& v)> vertexShader;
+		std::function<vec3(unsigned char* frame, vec3 pos, vec2 uv)> fragmentShader;
+
+		void SoftwareRenderer::setModel_view_projection(const mat4 mvp);
+
+		void setVertexShader(std::function<vec3(Vertex&)>&vertShader);
+		void setFragmentShader(std::function<vec3(unsigned char*, vec3, vec2)>& fragShader);
+
 		unsigned char* getFrameBuffer();
-		void setFrameBuffer(unsigned char* frameBuffer);
-		void append_line(int x0, int y0, int x1, int y1, vec3 color);
-		void triangle(vec3 a, vec3 b, vec3 c, const vec2& ta, const vec2& tb, const vec2& tc);
+		void setFrameBuffer(unsigned w, unsigned h);
+		void setFrameBuffer(unsigned char* frame);
+		void draw(void* handle);
 		bool DrawToDepthBuffer(unsigned x, unsigned y, const float depth);
 		float getDepthFromPixel(const vec2& p, const vec3& a, const vec3& b, const vec3& c);
 		void moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(vec3& norm);
@@ -87,10 +95,10 @@ namespace Example
 		void clearRender();
 		vec3 RasterizeLight(const vec3& lightSourceColor, const vec3& TextureRGB, const vec3& fragPosOut, const vec3& normalOut);
 		void loadTexture(const char* pathToFile);
-		bool LoadObj(const char* pathToFile, std::vector<Vertex>& vertices, std::vector<unsigned>& indices, float* _coordinates, unsigned* _indices, float* _texels, float* _normals);
-		bool LoadObj(const char* pathToFile, std::vector<Vertex>& vertices, std::vector<unsigned>& indices);
+		void* LoadObj(const char* pathToFile, std::vector<Vertex>& vertices, std::vector<unsigned>& indices);
 		int saveRender(int w = 1920, int h = 1200, const char* pathToFile="textures/res.jpg");
 
+		void setTextureResource(const char* pathToResource);
 		unsigned char* getTextureBuffer();
 		int getTextureWidth();
 		int getTextureHeight();
@@ -103,50 +111,80 @@ namespace Example
 		vec2 UVmapping(const vec3& bp, const vec2& ta, const vec2& tb, const vec2& tc);
 		vec3 getPixelColorFromUV(const unsigned char* texture, const int& w, const int& h, vec2 texel);
 		void setBackground(const vec3& color=vec3(0.0f, 0.0f, 0.0f));
-		void rasterizeTriangle(vec3 a, vec3 b, vec3 c, const vec2& ta, const vec2& tb, const vec2& tc);
+		void RasterizeTriangle(Vertex a, Vertex b, Vertex c);
 	};
 
 	SoftwareRenderer::SoftwareRenderer()
 	{
-		std::cerr << "CAUTION: widthImg and heightImg is undefined" << std::endl;
+		std::cerr << "CAUTION: widthImg and heightImg is set to 1920 by 1080" << std::endl;
+		Init();
 	}
 
-	SoftwareRenderer::SoftwareRenderer(unsigned razWidth, unsigned razHeight) : widthImg(razWidth), heightImg(razHeight)
+	SoftwareRenderer::SoftwareRenderer(unsigned razWidth, unsigned razHeight)
+	{
+		fb.widthImg = razWidth;
+		fb.heightImg = razHeight;
+		Init();
+	}
+
+	void SoftwareRenderer::Init()
 	{
 		stbi_set_flip_vertically_on_load(true);
 		stbi_flip_vertically_on_write(true);
 
-		depthBuffer.resize(widthImg * heightImg);
-		for (size_t i = 0; i < widthImg * heightImg; i++)
-		{
-			depthBuffer[i] = std::numeric_limits<float>::lowest();
-		}
+		fb.depthBuffer.resize(fb.widthImg * fb.heightImg);
 
 		currentRotation = (Rotation(vec4(1, 0, 0), 0) * Rotation(vec4(0, 1, 0), 0));
-		frameBuffer = new unsigned char[widthImg * heightImg * 3];
+		fb.colorBuffer = new unsigned char[fb.widthImg * fb.heightImg * 3];
 
-		cam = Camera(90, (float)widthImg / heightImg, 0.01f, 100.0f);
+		cam = Camera(90, (float)fb.widthImg / fb.heightImg, 0.01f, 1000.0f);
 		cam.setPos(vec4(0, 2, 5));
 		cam.addRot(vec4(0, 1, 0), M_PI);
+		for (float& f: fb.depthBuffer)
+		{
+			f = cam.getFarPlane();
+		}
 
 		light = Lightning(vec3(10, 10, 10), vec3(1, 1, 1), .01f);
+
+		handle = LoadObj("textures/sphere.obj", ob.vertices, ob.indices);
+
+		//auto lambda = &defaultVertexShader;
+		//[this](auto lambda) { setVertexShader(lambda); }
+		//setVertexShader(defaultVertexShader);
 	}
 
-	std::vector<Vertex>& SoftwareRenderer::getVertexBuffer()
+	void SoftwareRenderer::setFrameBuffer(unsigned w, unsigned h)
 	{
-		return vertices;
-	}
-
-	std::vector<unsigned>& SoftwareRenderer::getIndexBuffer()
-	{
-		return indices;
+		if (fb.colorBuffer) delete[] fb.colorBuffer;
+		fb.colorBuffer = new unsigned char[w * 3 * h];
 	}
 
 	void SoftwareRenderer::setFrameBuffer(unsigned char* _frameBuffer)
 	{
-		if (frameBuffer)
-			delete[] frameBuffer;
-		frameBuffer = _frameBuffer;
+		if (fb.colorBuffer) delete[] fb.colorBuffer;
+		fb.colorBuffer = _frameBuffer;
+	}	
+
+	void SoftwareRenderer::setTextureResource(const char* pathToResource)
+	{
+		if (texture) delete[] texture;
+		loadTexture(pathToResource);
+	}
+
+	void SoftwareRenderer::setVertexShader(std::function<vec3(Vertex&)>& vertShader)
+	{
+		this->vertexShader = vertShader;
+	}
+
+	void SoftwareRenderer::setFragmentShader(std::function<vec3(unsigned char*, vec3, vec2)>& fragShader)
+	{
+		this->fragmentShader = fragShader;
+	}
+
+	void SoftwareRenderer::setModel_view_projection(const mat4 mvp)
+	{
+		this->mvp = mvp;
 	}
 
 	void Print(mat4 m);
@@ -155,7 +193,8 @@ namespace Example
 	{
 		const mat4 start = Translate(vec4(v));
 		const mat4 projection = cam.pv() * (currentRotation * start);
-		v = vec3(projection[0][3], projection[1][3], projection[2][3]) / projection[3][3];
+		setModel_view_projection(projection);
+		v = vec3(mvp[0][3], mvp[1][3], mvp[2][3]) / mvp[3][3];
 	}
 
 	inline float SoftwareRenderer::sign(const vec2& p, const vec2& a, const vec2& b)
@@ -175,7 +214,6 @@ namespace Example
 		has_neg = (d1 < 0) || (d2 < 0) || (d3 < 0);
 		has_pos = (d1 > 0) || (d2 > 0) || (d3 > 0);
 
-		if (!has_neg || !has_pos) pixelCounter++;
 		return !has_neg || !has_pos;
 	}
 
@@ -221,22 +259,26 @@ namespace Example
 		int pixelY = (texel.v) * h;
 		int index = (pixelX + pixelY * w) * 3;
 		if (index + 2 < textureWidth * 3 * textureHeight)
-		return vec3(texture[index], texture[index + 1], texture[index + 2]);
+			return vec3(texture[index], texture[index + 1], texture[index + 2]);
+		return vec3();
 	}
 
 	inline void SoftwareRenderer::loadTexture(const char* pathToFile)
 	{
 		int nrChannels;
-		textureBuffer = stbi_load(pathToFile, &textureWidth, &textureHeight, &nrChannels, 3);
-		if (!textureBuffer)
+		texture = stbi_load(pathToFile, &textureWidth, &textureHeight, &nrChannels, 3);
+		if (!texture)
 		{
 			fprintf(stderr, "Cannot load file image %s\nSTB Reason: %s\n", pathToFile, stbi_failure_reason());
 			exit(0);
 		}
 	}
 
-	inline bool SoftwareRenderer::LoadObj(const char* pathToFile, std::vector<Vertex>& vertices, std::vector<unsigned>& indices, float* _coordinates, unsigned* _indices, float* _texels, float* _normals)
+	inline void* SoftwareRenderer::LoadObj(const char* pathToFile, std::vector<Vertex>& vertices, std::vector<unsigned>& indices)
 	{
+		if (!vertices.empty()) vertices.clear();
+		if (!indices.empty()) indices.clear();
+
 		using namespace std;
 		ifstream fs(pathToFile);
 		string lineRemainder;
@@ -244,7 +286,7 @@ namespace Example
 		if (!fs)
 		{
 			printf("file not found with path \"./%s\"\n", pathToFile);
-			return false;
+			return nullptr;
 		}
 
 		unsigned long long verticesUsed = 0ull;
@@ -419,18 +461,18 @@ namespace Example
 		}
 
 		printf("loadedToBuffer %s\n", pathToFile);
-		return 1;
+		return &ob;
 	}
 
 	inline int SoftwareRenderer::saveRender(int w, int h, const char* pathToFile)
 	{
-		int res = stbi_write_png(pathToFile, w, h, 3, frameBuffer, w * 3);
+		int res = stbi_write_png(pathToFile, w, h, 3, fb.colorBuffer, w * 3);
 		return res;
 	}
 
 	unsigned char* SoftwareRenderer::getTextureBuffer()
 	{
-		return textureBuffer;
+		return texture;
 	}
 
 	int SoftwareRenderer::getTextureWidth()
@@ -445,7 +487,7 @@ namespace Example
 
 	unsigned char* SoftwareRenderer::getFrameBuffer()
 	{
-		return frameBuffer;
+		return fb.colorBuffer;
 	}
 	
 	inline void SoftwareRenderer::projectModel(const mat4& pvm)
@@ -479,139 +521,106 @@ namespace Example
 		if (out.y > 255.f) out.y = 255.f;
 		if (out.z > 255.f) out.z = 255.f;
 		
-		if (out.x < 0.f) out.x = 0.f;
-		if (out.y < 0.f) out.y = 0.f;
-		if (out.z < 0.f) out.z = 0.f;
+		//if (out.x < 0.f) out.x = 0.f;
+		//if (out.y < 0.f) out.y = 0.f;
+		//if (out.z < 0.f) out.z = 0.f;
 
 		return out;
 	}
 
+	// true if the depthBuffer got updated
 	bool SoftwareRenderer::DrawToDepthBuffer(unsigned x, unsigned y, const float depth)
 	{
-		// true if the dpethBuffer got updated
-		if (x + widthImg * y >= depthBuffer.size()) return false;
+		if (x + fb.widthImg * y >= fb.depthBuffer.size() || x + fb.widthImg * y < 0) return false;
 
-		if (!depthBuffer[x + widthImg * y] < depth)
+		if (fb.depthBuffer[x + fb.widthImg * y] > depth)
 		{
-			depthBuffer[x + widthImg * y] = depth;
+			fb.depthBuffer[x + fb.widthImg * y] = depth;
 			return true;
 		}
 		return false;
 	}
 
-	void SoftwareRenderer::triangle(vec3 a, vec3 b, vec3 c, const vec2& ta, const vec2& tb, const vec2& tc) {
-		if (a.y == b.y && a.y == c.y) return;
-
-		// scale to screen
-		moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(a);
-		moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(b);
-		moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(c);
-
-		// scale with color channels (rgb)
-		a.x *= 3;
-		b.x *= 3;
-		c.x *= 3;
-
-		// to keep the the positions of the triangles relelative to the triangle
-		vec2 ba = vec2(a.x , a.y);
-		vec2 bb = vec2(b.x, b.y);
-		vec2 bc = vec2(c.x, c.y);
-
-		vec3 white = vec3(255, 255, 255);
-		/*append_line(0, 0, widthImg, heightImg, white);
-		append_line(a.x, a.y, b.x, b.y, white);
-		append_line(c.x, c.y, b.x, b.y, white);
-		append_line(a.x, a.y, c.x, c.y, white);*/
-
-		if (a.y > b.y) std::swap(a, b);
-		if (a.y > c.y) std::swap(a, c);
-		if (b.y > c.y) std::swap(b, c);
-		int total_height = c.y - a.y;
-		for (int i = 0; i < total_height; i++)
-		{
-			bool lower_half = i > b.y - a.y || b.y == a.y;
-			int subpart_height = lower_half ? c.y - b.y : b.y - a.y;
-			float total_ratio = (float)i / total_height;
-			float sub_ratio = safeDivide((float)(i - (lower_half ? b.y - a.y : 0)), subpart_height);
-			vec2 A = vec2(a.x, a.y) + (vec2(c.x, c.y) - vec2(a.x, a.y)) * total_ratio;
-			vec2 B = lower_half ? vec2(b.x, b.y) + (vec2(c.x, c.y) - vec2(b.x, b.y)) * sub_ratio : vec2(a.x, a.y) + (vec2(b.x, b.y) - vec2(a.x, a.y)) * sub_ratio;
-			if (A.x > B.x) std::swap(A, B);
-			for (int j = (int)(A.x) * 3; j <= (int)(B.x) * 3; j += 3)
-			{
-				vec2 point = vec2((int)j, (int)a.y+i);
-				float depth = getDepthFromPixel(point, a, b, c);
-				if (!DrawToDepthBuffer((int)j, (int)a.y + i, depth)) continue;
-				int index = j + ((int)a.y + i) * widthImg * 3;
-				if (index < 0) continue;
-				if (index >= widthImg * 3 * heightImg) break;
-				vec3 barycentric = getBarycentricCoord(vec2(point.x * 1/3.f, point.y), vec2(ba.x, ba.y), vec2(bb.x, bb.y), vec2(bc.x, bc.y));
-				vec2 textureSample = UVmapping(barycentric, ta, tb, tc);
-				vec3 color = getPixelColorFromUV(textureBuffer, textureWidth, textureHeight, textureSample);
-
-				vec2 res = vec2((a * barycentric.x + b * barycentric.y + c * barycentric.z).x,
-					(a * barycentric.x + b * barycentric.y + c * barycentric.z).y);
-				color = RasterizeLight(vec3(255, 255, 255), color, vec3(j, (int)a.y + i, depth), vec3(0, 0, 1));
-
-				if (textureBuffer != nullptr && 01)
-				{
-					frameBuffer[index] = unsigned char(color.x);
-					frameBuffer[index + 1] = unsigned char(color.y);
-					frameBuffer[index + 2] = unsigned char(color.z);
-				}
-				else
-				{
-					//frameBuffer[index] = unsigned char(barycentric.x * 255.f);
-					//frameBuffer[index + 1] = unsigned char(barycentric.y * 255.f);
-					//frameBuffer[index + 2] = unsigned char(barycentric.z * 255.f);
-				}
-			}
-		}
+	const unsigned min(const unsigned lhs, const unsigned rhs)
+	{
+		return lhs < rhs ? lhs : rhs;
 	}
 
-	void SoftwareRenderer::append_line(int x0, int y0, int x1, int y1, vec3 color)
+	const unsigned max(const unsigned lhs, const unsigned rhs)
 	{
-		x0 *= 3;
-		x1 *= 3;
-		for (size_t i = 0; i < 100; i++)
+		return lhs > rhs ? lhs : rhs;
+	}
+
+	void SoftwareRenderer::RasterizeTriangle(Vertex a, Vertex b, Vertex c) {
+		if (a.pos.y == b.pos.y && a.pos.y == c.pos.y) return;
+
+		defaultVertexShader(a); // vertexShader(a); //projectVertex()
+		defaultVertexShader(b);
+		defaultVertexShader(c);
+
+		// to keep the the positions of the triangles relelative to the triangle
+		vec2 ba = vec2(a.pos.x , a.pos.y);
+		vec2 bb = vec2(b.pos.x, b.pos.y);
+		vec2 bc = vec2(c.pos.x, c.pos.y);
+
+		if (a.pos.y > b.pos.y) std::swap(a, b);
+		if (a.pos.y > c.pos.y) std::swap(a, c);
+		if (b.pos.y > c.pos.y) std::swap(b, c);
+		for (int i = 0; i < c.pos.y - a.pos.y; i++)
 		{
-			
-			frameBuffer[]
+			bool lower_half = i > b.pos.y - a.pos.y || b.pos.y == a.pos.y;
+			int subpart_height = lower_half ? c.pos.y - b.pos.y : b.pos.y - a.pos.y;
+			float total_ratio = (float)i / (c.pos.y - a.pos.y);
+			float sub_ratio = safeDivide((float)(i - (lower_half ? b.pos.y - a.pos.y : 0)), subpart_height);
+			vec2 A = vec2(a.pos.x, a.pos.y) + (vec2(c.pos.x, c.pos.y) - vec2(a.pos.x, a.pos.y)) * total_ratio;
+			vec2 B = lower_half ? vec2(b.pos.x, b.pos.y) + (vec2(c.pos.x, c.pos.y) - vec2(b.pos.x, b.pos.y)) * sub_ratio : vec2(a.pos.x, a.pos.y) + (vec2(b.pos.x, b.pos.y) - vec2(a.pos.x, a.pos.y)) * sub_ratio;
+			if (A.x > B.x) std::swap(A, B);
+
+			for (int j = (int)(A.x) * 3; j <= (int)(B.x) * 3; j += 3)
+			{
+				vec2 point = vec2((int)j, (int)a.pos.y + i);
+				float depth = getDepthFromPixel(point, a.pos, b.pos, c.pos);
+				vec3 normal = getBarycentricCoord(point, vec2(ba.x, ba.y), vec2(bb.x, bb.y), vec2(bc.x, bc.y));
+				vec3 barycentric = getBarycentricCoord(vec2(point.x * 1 / 3.f, point.y), vec2(ba.x, ba.y), vec2(bb.x, bb.y), vec2(bc.x, bc.y));
+				vec2 textureSample = UVmapping(barycentric, a.texel, b.texel, c.texel);
+				if (!DrawToDepthBuffer(point.x, point.y, depth)) continue;
+				vec3 color = defaultFragmentShader(texture, vec3(point, depth), textureSample, normal);
+
+				int index = point.x + point.y * fb.widthImg * 3;
+
+				fb.colorBuffer[index + 0] = unsigned char(color.x);
+				fb.colorBuffer[index + 1] = unsigned char(color.y);
+				fb.colorBuffer[index + 2] = unsigned char(color.z);
+			}
 		}
 	}
 
 
 	void SoftwareRenderer::setBackground(const vec3& color)
 	{
-		for (int y = 0; y < heightImg; y++)
+		for (int y = 0; y < fb.heightImg; y++)
 		{
-			for (int x = 0; x < widthImg * 3; x += 3)
+			for (int x = 0; x < fb.widthImg * 3; x += 3)
 			{
-				frameBuffer[x + widthImg * 3 * y] = color.x;
-				frameBuffer[x + widthImg * 3 * y + 1] = color.y;
-				frameBuffer[x + widthImg * 3 * y + 2] = color.z;
+				fb.colorBuffer[x + fb.widthImg * 3 * y + 0] = color.x;
+				fb.colorBuffer[x + fb.widthImg * 3 * y + 1] = color.y;
+				fb.colorBuffer[x + fb.widthImg * 3 * y + 2] = color.z;
 			}
 		}
 
-		//for (int i = 0; i < widthImg * heightImg; i += 3)
-		//{
-		//	for (int j = 0; j < 3; j++)
-		//	frameBuffer[i + j] = unsigned char(color.data[j]);
-		//}
-
-		for (size_t y = 0; y < heightImg; y++)
+		for (size_t y = 0; y < fb.heightImg; y++)
 		{
-			for (size_t x = 0; x < widthImg; x++)
+			for (size_t x = 0; x < fb.widthImg; x++)
 			{
-				depthBuffer[x + widthImg * y] = std::numeric_limits<float>::lowest();
+				fb.depthBuffer[x + fb.widthImg * y] = cam.getFarPlane();
 			}
 		}
 	}
 
 	void SoftwareRenderer::moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(vec3& norm)
 	{
-		norm.x = (widthImg >> 1) * (norm.x + 1);
-		norm.y = (heightImg >> 1) * (norm.y + 1);
-		//norm.z *= -1.f;
+		norm.x = (fb.widthImg >> 1) * (norm.x + 1);
+		norm.y = (fb.heightImg >> 1) * (norm.y + 1);
 	}
 
 	const int Fit(int input, int outputStart, int outputEnd, int inputStart, int inputEnd)
@@ -627,9 +636,9 @@ namespace Example
 	inline void SoftwareRenderer::clearRender()
 	{
 		setBackground(vec3(0x69, 0x69, 0x69));
-		for (float f : depthBuffer)
+		for (float& f : fb.depthBuffer)
 		{
-			f = std::numeric_limits<float>::lowest();
+			f = cam.getFarPlane();
 		}
 	}
 
@@ -680,6 +689,9 @@ namespace Example
 			switch (keycode)
 			{
 			case GLFW_KEY_ESCAPE: window->Close(); break;
+			//case GLFW_KEY_BACKSPACE: softwareRenderer->setVertexShader(0); break;
+			//case GLFW_KEY_ENTER: softwareRenderer->setFragmentShader(0); break;
+			case GLFW_KEY_M: m = action; break;
 			case GLFW_KEY_L: l = action; break;
 
 			case GLFW_KEY_W: w = action; break;
@@ -701,8 +713,8 @@ namespace Example
 		//texture
 		stbi_set_flip_vertically_on_load(true);
 		
-		softwareRenderer->widthImg = widthImg;
-		softwareRenderer->heightImg = heightImg;
+		softwareRenderer->fb.widthImg = widthImg;
+		softwareRenderer->fb.heightImg = heightImg;
 
 		stbi_flip_vertically_on_write(true);
 		if (this->window->Open())
@@ -737,6 +749,45 @@ namespace Example
 	/**
 	 */
 
+	void SoftwareRenderer::defaultVertexShader(Vertex& v)
+	{
+		projectVertex(v.pos);
+
+		moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(v.pos);
+
+		v.pos.x *= 3;
+	}
+
+	vec3 SoftwareRenderer::defaultFragmentShader(unsigned char* texture, vec3 point, vec2 uv, vec3 normal)
+	{
+		vec3 color = getPixelColorFromUV(texture, textureWidth, textureHeight, uv);
+
+		vec3 lit = RasterizeLight(vec3(255, 255, 255), color, point, normal);
+
+		return lit;
+	}
+
+	void SoftwareRenderer::draw(void* handle)
+	{
+		objBuffer* ob = (objBuffer*)handle;
+		for (size_t i = 0; i < ob->indices.size(); i += 3)
+		{
+			Vertex a = ob->vertices[ob->indices[i + 0]];
+			Vertex b = ob->vertices[ob->indices[i + 1]];
+			Vertex c = ob->vertices[ob->indices[i + 2]];
+
+			RasterizeTriangle(a, b, c);
+		}
+	}
+
+	void printVertexShader(Vertex& v)
+	{
+		printf("vertex position:%f %f %f\n", v.pos.x, v.pos.y, v.pos.z);
+		printf("vertex uv:%f %f\n", v.texel.u, v.texel.v);
+		printf("vertex normal:%f %f %f\n", v.normal.x, v.normal.y, v.normal.z);
+		printf("vertex color:%f %f %f %f\n", v.rgba.r, v.rgba.g, v.rgba.b, v.rgba.a);
+	}
+
 	void
 	ExampleApp::Run()
 	{
@@ -752,15 +803,10 @@ namespace Example
 		
 		float camSpeed = .08f;
 
-		loadedVertices = softwareRenderer->getVertexBuffer();
-		loadedIndices = softwareRenderer->getIndexBuffer();
-
-
 		// set identies
 		cubeWorldSpaceTransform = Translate(vec4());
 		cubeProjectionViewTransform = Translate(vec4());
 
-		softwareRenderer->LoadObj("textures/sphere.obj", loadedVertices, loadedIndices, nullptr, nullptr, nullptr, nullptr);
 		while (this->window->IsOpen())
 		{
 			softwareRenderer->clearRender();
@@ -771,39 +817,35 @@ namespace Example
 				softwareRenderer->cam.setPos(softwareRenderer->cam.getPos() + Normalize(vec4((d - a), (q - e), (w - s))) * camSpeed); // move the softwareRenderer Camera
 			}
 
-			softwareRenderer->append_line(
-				widthImg / 2, heightImg / 2,
-				widthImg / 2 + cos(frameIndex / 200.f) * 100,
-				heightImg / 2 + sin(frameIndex / 200.f) * 100,
-				vec3(0, 0, 255));
+			if (m)
+			{
+				timesPressedM++;
+				switch (timesPressedM % 4)
+				{
+				case 0:
+					softwareRenderer->handle = softwareRenderer->LoadObj("textures/triangle.obj", softwareRenderer->ob.vertices, softwareRenderer->ob.indices);
+					break;
+				case 1:
+					softwareRenderer->handle = softwareRenderer->LoadObj("textures/actual_cube.obj", softwareRenderer->ob.vertices, softwareRenderer->ob.indices);
+					break;
+				case 2:
+					softwareRenderer->handle = softwareRenderer->LoadObj("textures/quad.obj", softwareRenderer->ob.vertices, softwareRenderer->ob.indices);
+					break;
+				case 3:
+					softwareRenderer->handle = softwareRenderer->LoadObj("textures/sphere.obj", softwareRenderer->ob.vertices, softwareRenderer->ob.indices);
+					break;
+				}
+				m = false;
+			}
 
-			//for (size_t i = 0; i < loadedVertices.size(); i += 3)
-			//{
-			//	vec3 a = loadedVertices[loadedIndices[i]].pos;
-			//	vec3 b = loadedVertices[loadedIndices[i + 1]].pos;
-			//	vec3 c = loadedVertices[loadedIndices[i + 2]].pos;
-			//	
-			//	softwareRenderer->projectVertex(a);
-			//	softwareRenderer->projectVertex(b);
-			//	softwareRenderer->projectVertex(c);
+			softwareRenderer->draw(softwareRenderer->handle);
 
-			//	vec2 ta = loadedVertices[loadedIndices[i]].texel;
-			//	vec2 tb = loadedVertices[loadedIndices[i + 1]].texel;
-			//	vec2 tc = loadedVertices[loadedIndices[i + 2]].texel;
-			//	
-			//	softwareRenderer->triangle(a, b, c, ta, tb, tc);
-			//}
-
-			// cube world space
-
-			// cube view space
 			cubeProjectionViewTransform = cubeWorldSpaceTransform * cam.pv();
 
-			//--------------------real-time render section--------------------
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			cubeScript->setM4(cam.pv(), "m4ProjViewPos");
-			cubeTexture->LoadFromBuffer(softwareRenderer->getFrameBuffer(), softwareRenderer->widthImg, softwareRenderer->heightImg);
+			cubeTexture->LoadFromBuffer(softwareRenderer->getFrameBuffer(), softwareRenderer->fb.widthImg, softwareRenderer->fb.heightImg);
 			cubeTexture->BindTexture();
 
 			light.setFragShaderUniformVariables(cubeScript, cam.getPos());

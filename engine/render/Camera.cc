@@ -11,6 +11,20 @@ Camera::Camera(float fov, float aspect, float n, float f) : fov(fov), aspect(asp
 	rot = Rotation(vec4(0, 1, 0), 0.f);
 }
 
+void Camera::setNearPlane(float n)
+{
+	this->n = n;
+}
+
+void Camera::setFarPlane(float f)
+{
+	this->f = f;
+}
+
+float Camera::getNearPlane() { return n; }
+
+float Camera::getFarPlane() { return f; }
+
 vec3 Camera::getPos()
 {
 	return pos.toV3();

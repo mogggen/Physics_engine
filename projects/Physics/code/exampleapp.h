@@ -50,8 +50,12 @@ namespace Example
 			q, e, isPressed = false;
 		bool isRotate = false;
 		bool l = false;
-		bool m = false;
-		unsigned timesPressedM;
+		bool o = false;
+		bool f = false;
+		bool v = false;
+		unsigned timesPressedM = 0u;
+		unsigned timesPressedG = 0u;
+		unsigned timesPressedH = 0u;
 		GLuint program;
 		GLuint vertexShader;
 		GLuint pixelShader;

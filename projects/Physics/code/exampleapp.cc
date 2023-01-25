@@ -74,15 +74,17 @@ namespace Example
 		void Init();
 
 		void defaultVertexShader(Vertex& v);
+		void ortographicVertexShader(Vertex& v);
+
 		vec3 defaultFragmentShader(unsigned char* texture, vec3 position, vec2 uv, vec3 normal); // interpolate normals per face
 
-		std::function<vec3(Vertex& v)> vertexShader;
-		std::function<vec3(unsigned char* frame, vec3 pos, vec2 uv)> fragmentShader;
+		std::function<void(Vertex&)> vertexShader;
+		std::function<vec3(unsigned char*, vec3, vec2, vec3)> fragmentShader;
 
 		void SoftwareRenderer::setModel_view_projection(const mat4 mvp);
 
-		void setVertexShader(std::function<vec3(Vertex&)>&vertShader);
-		void setFragmentShader(std::function<vec3(unsigned char*, vec3, vec2)>& fragShader);
+		void setVertexShader(std::function<void(Vertex&)>&vertShader);
+		void setFragmentShader(std::function<vec3(unsigned char*, vec3, vec2, vec3)>& fragShader);
 
 		unsigned char* getFrameBuffer();
 		void setFrameBuffer(unsigned w, unsigned h);
@@ -149,9 +151,11 @@ namespace Example
 
 		handle = LoadObj("textures/sphere.obj", ob.vertices, ob.indices);
 
-		//auto lambda = &defaultVertexShader;
-		//[this](auto lambda) { setVertexShader(lambda); }
-		//setVertexShader(defaultVertexShader);
+		std::function<void(Vertex&)> InitVertShader = [this](Vertex& v) {defaultVertexShader(v); };
+		std::function<vec3(unsigned char*, vec3, vec2, vec3)> InitFragShader = [this](unsigned char* texture, vec3 pos, vec2 uv, vec3 norm) { return defaultFragmentShader(texture, pos, uv, norm); };
+
+		setVertexShader(InitVertShader);
+		setFragmentShader(InitFragShader);
 	}
 
 	void SoftwareRenderer::setFrameBuffer(unsigned w, unsigned h)
@@ -172,14 +176,14 @@ namespace Example
 		loadTexture(pathToResource);
 	}
 
-	void SoftwareRenderer::setVertexShader(std::function<vec3(Vertex&)>& vertShader)
+	void SoftwareRenderer::setVertexShader(std::function<void(Vertex&)>& vertShader)
 	{
-		this->vertexShader = vertShader;
+		vertexShader = vertShader;
 	}
 
-	void SoftwareRenderer::setFragmentShader(std::function<vec3(unsigned char*, vec3, vec2)>& fragShader)
+	void SoftwareRenderer::setFragmentShader(std::function<vec3(unsigned char*, vec3, vec2, vec3)>& fragShader)
 	{
-		this->fragmentShader = fragShader;
+		fragmentShader = fragShader;
 	}
 
 	void SoftwareRenderer::setModel_view_projection(const mat4 mvp)
@@ -509,9 +513,10 @@ namespace Example
 
 		vec3 norm = Normalize(normalOut);
 
-		float diff = Dot(norm, lightDir) > 0.f ? Dot(norm, lightDir) : 0.f;
+		float diff = Dot(norm, lightDir);
+		if (diff <= 0.f) diff = 0.f;
 		vec3 diffuse = diff * light.getColor();
-
+		
 		float spec = powf(Dot(norm, halfwayDir) > 0.f ? Dot(norm, halfwayDir) : 0.f, 64);
 		vec3 specular = light.getColor() * spec * light.getIntensity();
 
@@ -521,10 +526,6 @@ namespace Example
 		if (out.y > 255.f) out.y = 255.f;
 		if (out.z > 255.f) out.z = 255.f;
 		
-		//if (out.x < 0.f) out.x = 0.f;
-		//if (out.y < 0.f) out.y = 0.f;
-		//if (out.z < 0.f) out.z = 0.f;
-
 		return out;
 	}
 
@@ -554,18 +555,19 @@ namespace Example
 	void SoftwareRenderer::RasterizeTriangle(Vertex a, Vertex b, Vertex c) {
 		if (a.pos.y == b.pos.y && a.pos.y == c.pos.y) return;
 
-		defaultVertexShader(a); // vertexShader(a); //projectVertex()
-		defaultVertexShader(b);
-		defaultVertexShader(c);
+		vertexShader(a);
+		vertexShader(b);
+		vertexShader(c);
 
 		// to keep the the positions of the triangles relelative to the triangle
-		vec2 ba = vec2(a.pos.x , a.pos.y);
-		vec2 bb = vec2(b.pos.x, b.pos.y);
-		vec2 bc = vec2(c.pos.x, c.pos.y);
 
 		if (a.pos.y > b.pos.y) std::swap(a, b);
 		if (a.pos.y > c.pos.y) std::swap(a, c);
 		if (b.pos.y > c.pos.y) std::swap(b, c);
+
+		vec2 ba = vec2(a.pos.x , a.pos.y);
+		vec2 bb = vec2(b.pos.x, b.pos.y);
+		vec2 bc = vec2(c.pos.x, c.pos.y);
 		for (int i = 0; i < c.pos.y - a.pos.y; i++)
 		{
 			bool lower_half = i > b.pos.y - a.pos.y || b.pos.y == a.pos.y;
@@ -576,17 +578,17 @@ namespace Example
 			vec2 B = lower_half ? vec2(b.pos.x, b.pos.y) + (vec2(c.pos.x, c.pos.y) - vec2(b.pos.x, b.pos.y)) * sub_ratio : vec2(a.pos.x, a.pos.y) + (vec2(b.pos.x, b.pos.y) - vec2(a.pos.x, a.pos.y)) * sub_ratio;
 			if (A.x > B.x) std::swap(A, B);
 
-			for (int j = (int)(A.x) * 3; j <= (int)(B.x) * 3; j += 3)
+			for (int j = (int)(A.x); j <= (int)(B.x); j++)
 			{
 				vec2 point = vec2((int)j, (int)a.pos.y + i);
 				float depth = getDepthFromPixel(point, a.pos, b.pos, c.pos);
-				vec3 normal = getBarycentricCoord(point, vec2(ba.x, ba.y), vec2(bb.x, bb.y), vec2(bc.x, bc.y));
-				vec3 barycentric = getBarycentricCoord(vec2(point.x * 1 / 3.f, point.y), vec2(ba.x, ba.y), vec2(bb.x, bb.y), vec2(bc.x, bc.y));
+				vec3 normal = getBarycentricCoord(point, ba, bb, bc);
+				vec3 barycentric = getBarycentricCoord(point, ba, bb, bc);
 				vec2 textureSample = UVmapping(barycentric, a.texel, b.texel, c.texel);
 				if (!DrawToDepthBuffer(point.x, point.y, depth)) continue;
-				vec3 color = defaultFragmentShader(texture, vec3(point, depth), textureSample, normal);
+				vec3 color = fragmentShader(texture, vec3(point, depth), textureSample, normal);
 
-				int index = point.x + point.y * fb.widthImg * 3;
+				int index = point.x * 3 + point.y * fb.widthImg * 3;
 
 				fb.colorBuffer[index + 0] = unsigned char(color.x);
 				fb.colorBuffer[index + 1] = unsigned char(color.y);
@@ -689,10 +691,10 @@ namespace Example
 			switch (keycode)
 			{
 			case GLFW_KEY_ESCAPE: window->Close(); break;
-			//case GLFW_KEY_BACKSPACE: softwareRenderer->setVertexShader(0); break;
-			//case GLFW_KEY_ENTER: softwareRenderer->setFragmentShader(0); break;
-			case GLFW_KEY_M: m = action; break;
-			case GLFW_KEY_L: l = action; break;
+			case GLFW_KEY_F: f = action; break; // changes fragmentShader
+			case GLFW_KEY_V: v = action; break; // changes vertexShader
+			case GLFW_KEY_O: o = action; break; // changes obj
+			case GLFW_KEY_L: l = action; break; // moves CPU camera
 
 			case GLFW_KEY_W: w = action; break;
 			case GLFW_KEY_S: s = action; break;
@@ -749,13 +751,22 @@ namespace Example
 	/**
 	 */
 
+	void test(std::function<void(Vertex&)> fp)
+	{
+		Vertex v = Vertex(vec3(1, 2, 3), vec3(0x69, 255, 128));
+		fp(v);
+	}
+
 	void SoftwareRenderer::defaultVertexShader(Vertex& v)
 	{
 		projectVertex(v.pos);
 
 		moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(v.pos);
+	}
 
-		v.pos.x *= 3;
+	void SoftwareRenderer::ortographicVertexShader(Vertex& v)
+	{
+		moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(v.pos);
 	}
 
 	vec3 SoftwareRenderer::defaultFragmentShader(unsigned char* texture, vec3 point, vec2 uv, vec3 normal)
@@ -788,6 +799,16 @@ namespace Example
 		printf("vertex color:%f %f %f %f\n", v.rgba.r, v.rgba.g, v.rgba.b, v.rgba.a);
 	}
 
+	vec3 printFragShader(unsigned char* texture, vec3 pos, vec2 uv, vec3 normal)
+	{
+		const char* f = (const char*)texture;
+		printf(f);
+		printf("vertex position:%f %f %f\n", pos.x, pos.y, pos.z);
+		printf("vertex uv:%f %f\n", uv.u, uv.v);
+		printf("vertex normal:%f %f %f\n", normal.x, normal.y, normal.z);
+		return vec3();
+	}
+
 	void
 	ExampleApp::Run()
 	{
@@ -803,6 +824,14 @@ namespace Example
 		
 		float camSpeed = .08f;
 
+		std::function<vec3(unsigned char*, vec3, vec2, vec3)> frag_case_0 = [this](unsigned char* texture, vec3 pos, vec2 uv, vec3 normal) { return softwareRenderer->defaultFragmentShader(texture, pos, uv, normal); };
+		std::function<vec3(unsigned char*, vec3, vec2, vec3)> frag_case_1 = [this](unsigned char* texture, vec3 pos, vec2 uv, vec3 normal) { return printFragShader(texture, pos, uv, normal); };
+		//std::function<vec3(unsigned char*, vec3, vec2, vec3)> frag_case_2 = [this](unsigned char* texture, vec3 pos, vec2 uv, vec3 normal) { return printFragShader(texture, pos, uv, normal); };
+
+		std::function<void(Vertex&)> vert_case_0 = [this](Vertex& v) {softwareRenderer->defaultVertexShader(v); };
+		std::function<void(Vertex&)> vert_case_1 = [this](Vertex& v) {softwareRenderer->ortographicVertexShader(v); };
+		std::function<void(Vertex&)> vert_case_2 = [this](Vertex& v) {printVertexShader(v); };
+
 		// set identies
 		cubeWorldSpaceTransform = Translate(vec4());
 		cubeProjectionViewTransform = Translate(vec4());
@@ -817,10 +846,40 @@ namespace Example
 				softwareRenderer->cam.setPos(softwareRenderer->cam.getPos() + Normalize(vec4((d - a), (q - e), (w - s))) * camSpeed); // move the softwareRenderer Camera
 			}
 
-			if (m)
+			if (f)
+			{
+				timesPressedG++;
+				switch (timesPressedG % 2)
+				{
+				case 0:
+					softwareRenderer->setFragmentShader(frag_case_0);
+					break;
+				case 1:
+					softwareRenderer->setFragmentShader(frag_case_1);
+					break;
+				}
+			}
+
+			if (v)
+			{
+				timesPressedH++;
+				switch (timesPressedH % 3)
+				{
+				case 0:
+					softwareRenderer->setVertexShader(vert_case_0);
+					break;
+				case 1:
+					softwareRenderer->setVertexShader(vert_case_1);
+					break;
+				case 2:
+					softwareRenderer->setVertexShader(vert_case_2);
+				}
+			}
+
+			if (o)
 			{
 				timesPressedM++;
-				switch (timesPressedM % 4)
+				switch (timesPressedM % 6)
 				{
 				case 0:
 					softwareRenderer->handle = softwareRenderer->LoadObj("textures/triangle.obj", softwareRenderer->ob.vertices, softwareRenderer->ob.indices);
@@ -834,8 +893,13 @@ namespace Example
 				case 3:
 					softwareRenderer->handle = softwareRenderer->LoadObj("textures/sphere.obj", softwareRenderer->ob.vertices, softwareRenderer->ob.indices);
 					break;
+				case 4:
+					softwareRenderer->handle = softwareRenderer->LoadObj("textures/depth.obj", softwareRenderer->ob.vertices, softwareRenderer->ob.indices);
+					break;
+				case 5:
+					softwareRenderer->handle = softwareRenderer->LoadObj("textures/width.obj", softwareRenderer->ob.vertices, softwareRenderer->ob.indices);
+					break;
 				}
-				m = false;
 			}
 
 			softwareRenderer->draw(softwareRenderer->handle);

@@ -80,12 +80,13 @@ namespace Example
 
 		std::function<void(Vertex&)> vertexShader;
 		std::function<vec3(unsigned char*, vec3, vec2, vec3)> fragmentShader;
-
+		bool wireFrame, raster;
 		void SoftwareRenderer::setModel_view_projection(const mat4 mvp);
 
 		void setVertexShader(std::function<void(Vertex&)>&vertShader);
 		void setFragmentShader(std::function<vec3(unsigned char*, vec3, vec2, vec3)>& fragShader);
-
+		void drawline(int x0, int y0, int x1, int y1);
+		void putpixel(int x, int y);
 		unsigned char* getFrameBuffer();
 		void setFrameBuffer(unsigned w, unsigned h);
 		void setFrameBuffer(unsigned char* frame);
@@ -133,6 +134,9 @@ namespace Example
 	{
 		stbi_set_flip_vertically_on_load(true);
 		stbi_flip_vertically_on_write(true);
+
+		wireFrame = false;
+		raster = true;
 
 		fb.depthBuffer.resize(fb.widthImg * fb.heightImg);
 
@@ -534,7 +538,7 @@ namespace Example
 	{
 		if (x + fb.widthImg * y >= fb.depthBuffer.size() || x + fb.widthImg * y < 0) return false;
 
-		if (fb.depthBuffer[x + fb.widthImg * y] > depth)
+		if (fb.depthBuffer[x + fb.widthImg * y] > depth && depth > cam.getNearPlane())
 		{
 			fb.depthBuffer[x + fb.widthImg * y] = depth;
 			return true;
@@ -542,14 +546,52 @@ namespace Example
 		return false;
 	}
 
-	const unsigned min(const unsigned lhs, const unsigned rhs)
+	void SoftwareRenderer::putpixel(int x, int y)
 	{
-		return lhs < rhs ? lhs : rhs;
+		int index = x * 3 + y * fb.widthImg * 3;
+
+		fb.colorBuffer[index + 0] = 255;
+		fb.colorBuffer[index + 1] = 255;
+		fb.colorBuffer[index + 2] = 255;
 	}
 
-	const unsigned max(const unsigned lhs, const unsigned rhs)
-	{
-		return lhs > rhs ? lhs : rhs;
+	void SoftwareRenderer::drawline(int x0, int y0, int x1, int y1) {
+		bool steep = false;
+		if (std::abs(x0 - x1) < std::abs(y0 - y1)) {
+			std::swap(x0, y0);
+			std::swap(x1, y1);
+			steep = true;
+		}
+		if (x0 > x1) {
+			std::swap(x0, x1);
+			std::swap(y0, y1);
+		}
+		int dx = x1 - x0;
+		int dy = y1 - y0;
+		int derror2 = std::abs(dy) * 2;
+		int error2 = 0;
+		int y = y0;
+		if (steep) {
+
+			for (int x = x0; x <= x1; x++) {
+				putpixel(y, x);
+				error2 += derror2;
+				if (error2 > dx) {
+					y += (y1 > y0 ? 1 : -1);
+					error2 -= dx * 2;
+				}
+			}
+		}
+		else {
+			for (int x = x0; x <= x1; x++) {
+				putpixel(x, y);
+				error2 += derror2;
+				if (error2 > dx) {
+					y += (y1 > y0 ? 1 : -1);
+					error2 -= dx * 2;
+				}
+			}
+		}
 	}
 
 	void SoftwareRenderer::RasterizeTriangle(Vertex a, Vertex b, Vertex c) {
@@ -565,34 +607,48 @@ namespace Example
 		if (a.pos.y > c.pos.y) std::swap(a, c);
 		if (b.pos.y > c.pos.y) std::swap(b, c);
 
-		vec2 ba = vec2(a.pos.x , a.pos.y);
-		vec2 bb = vec2(b.pos.x, b.pos.y);
-		vec2 bc = vec2(c.pos.x, c.pos.y);
-		for (int i = 0; i < c.pos.y - a.pos.y; i++)
+		if (wireFrame)
 		{
-			bool lower_half = i > b.pos.y - a.pos.y || b.pos.y == a.pos.y;
-			int subpart_height = lower_half ? c.pos.y - b.pos.y : b.pos.y - a.pos.y;
-			float total_ratio = (float)i / (c.pos.y - a.pos.y);
-			float sub_ratio = safeDivide((float)(i - (lower_half ? b.pos.y - a.pos.y : 0)), subpart_height);
-			vec2 A = vec2(a.pos.x, a.pos.y) + (vec2(c.pos.x, c.pos.y) - vec2(a.pos.x, a.pos.y)) * total_ratio;
-			vec2 B = lower_half ? vec2(b.pos.x, b.pos.y) + (vec2(c.pos.x, c.pos.y) - vec2(b.pos.x, b.pos.y)) * sub_ratio : vec2(a.pos.x, a.pos.y) + (vec2(b.pos.x, b.pos.y) - vec2(a.pos.x, a.pos.y)) * sub_ratio;
-			if (A.x > B.x) std::swap(A, B);
+			// render white wireframe
+			drawline(a.pos.x, a.pos.y, b.pos.x, b.pos.y);
+			drawline(a.pos.x, a.pos.y, c.pos.x, c.pos.y);
+			drawline(c.pos.x, c.pos.y, b.pos.x, b.pos.y);
+		}
+		if (raster)
+		{
+			// render textured and lit triangles
+			vec2 ba = vec2(a.pos.x, a.pos.y);
+			vec2 bb = vec2(b.pos.x, b.pos.y);
+			vec2 bc = vec2(c.pos.x, c.pos.y);
 
-			for (int j = (int)(A.x); j <= (int)(B.x); j++)
+			for (int i = 0; i < c.pos.y - a.pos.y; i++)
 			{
-				vec2 point = vec2((int)j, (int)a.pos.y + i);
-				float depth = getDepthFromPixel(point, a.pos, b.pos, c.pos);
-				vec3 normal = getBarycentricCoord(point, ba, bb, bc);
-				vec3 barycentric = getBarycentricCoord(point, ba, bb, bc);
-				vec2 textureSample = UVmapping(barycentric, a.texel, b.texel, c.texel);
-				if (!DrawToDepthBuffer(point.x, point.y, depth)) continue;
-				vec3 color = fragmentShader(texture, vec3(point, depth), textureSample, normal);
+				bool lower_half = i > b.pos.y - a.pos.y || b.pos.y == a.pos.y;
+				int subpart_height = lower_half ? c.pos.y - b.pos.y : b.pos.y - a.pos.y;
+				float total_ratio = (float)i / (c.pos.y - a.pos.y);
+				float sub_ratio = safeDivide((float)(i - (lower_half ? b.pos.y - a.pos.y : 0)), subpart_height);
+				vec2 A = vec2(a.pos.x, a.pos.y) + (vec2(c.pos.x, c.pos.y) - vec2(a.pos.x, a.pos.y)) * total_ratio;
+				vec2 B = lower_half ? vec2(b.pos.x, b.pos.y) + (vec2(c.pos.x, c.pos.y) - vec2(b.pos.x, b.pos.y)) * sub_ratio : vec2(a.pos.x, a.pos.y) + (vec2(b.pos.x, b.pos.y) - vec2(a.pos.x, a.pos.y)) * sub_ratio;
+				if (A.x > B.x) std::swap(A, B);
 
-				int index = point.x * 3 + point.y * fb.widthImg * 3;
+				for (int j = (int)(A.x); j <= (int)(B.x); j++)
+				{
+					vec2 point = vec2((int)j, (int)a.pos.y + i);
+					float depth = getDepthFromPixel(point, a.pos, b.pos, c.pos);
+					vec3 normal = getBarycentricCoord(point, ba, bb, bc);
+					vec3 barycentric = getBarycentricCoord(point, ba, bb, bc);
+					vec2 textureSample = UVmapping(barycentric, a.texel, b.texel, c.texel);
+					if (!DrawToDepthBuffer(point.x, point.y, depth)) continue;
+					vec3 color = fragmentShader(texture, vec3(point, depth), textureSample, normal);
 
-				fb.colorBuffer[index + 0] = unsigned char(color.x);
-				fb.colorBuffer[index + 1] = unsigned char(color.y);
-				fb.colorBuffer[index + 2] = unsigned char(color.z);
+					int index = point.x * 3 + point.y * fb.widthImg * 3;
+					if (index + 2 > fb.widthImg * 3 * fb.heightImg) break;
+					if (index < 0) continue;
+
+					fb.colorBuffer[index + 0] = unsigned char(color.x);
+					fb.colorBuffer[index + 1] = unsigned char(color.y);
+					fb.colorBuffer[index + 2] = unsigned char(color.z);
+				}
 			}
 		}
 	}
@@ -694,6 +750,8 @@ namespace Example
 			case GLFW_KEY_F: f = action; break; // changes fragmentShader
 			case GLFW_KEY_V: v = action; break; // changes vertexShader
 			case GLFW_KEY_O: o = action; break; // changes obj
+			case GLFW_KEY_C: c = action; break; // changes wireframe visiblity
+
 			case GLFW_KEY_L: l = action; break; // moves CPU camera
 
 			case GLFW_KEY_W: w = action; break;
@@ -725,7 +783,7 @@ namespace Example
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
 			// MeshResource
-			cubeMesh = MeshResource::LoadObj("textures/actual_cube.obj");
+			cubeMesh = MeshResource::LoadObj("textures/quad.obj");
 
 			// shaderResource
 			cubeScript = std::make_shared<ShaderResource>();
@@ -750,12 +808,6 @@ namespace Example
 	//------------------------------------------------------------------------------
 	/**
 	 */
-
-	void test(std::function<void(Vertex&)> fp)
-	{
-		Vertex v = Vertex(vec3(1, 2, 3), vec3(0x69, 255, 128));
-		fp(v);
-	}
 
 	void SoftwareRenderer::defaultVertexShader(Vertex& v)
 	{
@@ -817,7 +869,7 @@ namespace Example
 
 		Camera cam(90, (float)width / height, 0.01f, 100.0f);
 		cam.setPos(vec4(0, 2, 5));
-		cam.addRot(vec4(0, 0, 1), -M_PI / 2);
+		cam.addRot(vec4(0, 0, 1), -M_PI * .5f);
 		cam.addRot(vec4(0, 1, 0), M_PI);
 
 		Lightning light(vec3(10, 10, 10), vec3(1, 1, 1), .01f);
@@ -828,20 +880,20 @@ namespace Example
 		std::function<vec3(unsigned char*, vec3, vec2, vec3)> frag_case_1 = [this](unsigned char* texture, vec3 pos, vec2 uv, vec3 normal) { return printFragShader(texture, pos, uv, normal); };
 		//std::function<vec3(unsigned char*, vec3, vec2, vec3)> frag_case_2 = [this](unsigned char* texture, vec3 pos, vec2 uv, vec3 normal) { return printFragShader(texture, pos, uv, normal); };
 
-		std::function<void(Vertex&)> vert_case_0 = [this](Vertex& v) {softwareRenderer->defaultVertexShader(v); };
-		std::function<void(Vertex&)> vert_case_1 = [this](Vertex& v) {softwareRenderer->ortographicVertexShader(v); };
-		std::function<void(Vertex&)> vert_case_2 = [this](Vertex& v) {printVertexShader(v); };
+		std::function<void(Vertex&)> vert_case_0 = [this](Vertex& v) { softwareRenderer->defaultVertexShader(v); };
+		std::function<void(Vertex&)> vert_case_1 = [this](Vertex& v) { softwareRenderer->ortographicVertexShader(v); };
+		std::function<void(Vertex&)> vert_case_2 = [this](Vertex& v) { printVertexShader(v); };
 
 		// set identies
-		cubeWorldSpaceTransform = Translate(vec4());
+		cubeWorldSpaceTransform = Rotation(vec4(0, 0, 1), M_PI * 3 / 2);
 		cubeProjectionViewTransform = Translate(vec4());
 
 		while (this->window->IsOpen())
 		{
 			softwareRenderer->clearRender();
 			frameIndex++;
-			if (!l) // hold the L key to
-				cam.setPos(cam.getPos() + Normalize(vec4((e - q), (d - a), (w - s))) * camSpeed); // move the openGL camera
+			if (l) // hold the L key to
+				cam.setPos(cam.getPos() + Normalize(vec4((a - d), (q - e), (w - s))) * camSpeed); // move the openGL camera
 			else{
 				softwareRenderer->cam.setPos(softwareRenderer->cam.getPos() + Normalize(vec4((d - a), (q - e), (w - s))) * camSpeed); // move the softwareRenderer Camera
 			}
@@ -858,6 +910,7 @@ namespace Example
 					softwareRenderer->setFragmentShader(frag_case_1);
 					break;
 				}
+				f = false;
 			}
 
 			if (v)
@@ -874,12 +927,13 @@ namespace Example
 				case 2:
 					softwareRenderer->setVertexShader(vert_case_2);
 				}
+				v = false;
 			}
 
 			if (o)
 			{
 				timesPressedM++;
-				switch (timesPressedM % 6)
+				switch (timesPressedM % 4)
 				{
 				case 0:
 					softwareRenderer->handle = softwareRenderer->LoadObj("textures/triangle.obj", softwareRenderer->ob.vertices, softwareRenderer->ob.indices);
@@ -893,13 +947,29 @@ namespace Example
 				case 3:
 					softwareRenderer->handle = softwareRenderer->LoadObj("textures/sphere.obj", softwareRenderer->ob.vertices, softwareRenderer->ob.indices);
 					break;
-				case 4:
-					softwareRenderer->handle = softwareRenderer->LoadObj("textures/depth.obj", softwareRenderer->ob.vertices, softwareRenderer->ob.indices);
+				}
+				o = false;
+			}
+
+			if (c)
+			{
+				timesPressedC++;
+				switch(timesPressedC % 3)
+				{
+				case 0:
+					softwareRenderer->wireFrame = true;
+					softwareRenderer->raster = false;
 					break;
-				case 5:
-					softwareRenderer->handle = softwareRenderer->LoadObj("textures/width.obj", softwareRenderer->ob.vertices, softwareRenderer->ob.indices);
+				case 1:
+					softwareRenderer->wireFrame = false;
+					softwareRenderer->raster = true;
+					break;
+				case 2:
+					softwareRenderer->wireFrame = true;
+					softwareRenderer->raster = true;
 					break;
 				}
+				c = false;
 			}
 
 			softwareRenderer->draw(softwareRenderer->handle);

@@ -62,6 +62,8 @@ namespace Example
 		unsigned char* texture = nullptr;
 		int textureWidth, textureHeight;	
 	public:
+		int testLeft = 300, testRight = 900, testUp = 100, testDown = 800;
+		int pixelCounter = 0;
 		void* handle;
 		objBuffer ob;
 		FrameBuffer fb;
@@ -80,13 +82,12 @@ namespace Example
 
 		std::function<void(Vertex&)> vertexShader;
 		std::function<vec3(unsigned char*, vec3, vec2, vec3)> fragmentShader;
-		bool wireFrame, raster;
 		void SoftwareRenderer::setModel_view_projection(const mat4 mvp);
 
 		void setVertexShader(std::function<void(Vertex&)>&vertShader);
 		void setFragmentShader(std::function<vec3(unsigned char*, vec3, vec2, vec3)>& fragShader);
-		void drawline(int x0, int y0, int x1, int y1);
-		void putpixel(int x, int y);
+		void drawline(int x0, int y0, int x1, int y1, const Vertex& a, const Vertex& b, const Vertex& c, const vec2& ba, const vec2& bb, const vec2& bc);
+		bool putpixel(int x, int y, const Vertex& a, const Vertex& b, const Vertex& c, const vec2& ba, const vec2& bb, const vec2& bc);
 		unsigned char* getFrameBuffer();
 		void setFrameBuffer(unsigned w, unsigned h);
 		void setFrameBuffer(unsigned char* frame);
@@ -96,7 +97,7 @@ namespace Example
 		void moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(vec3& norm);
 		void projectModel(const mat4& pvm);
 		void clearRender();
-		vec3 RasterizeLight(const vec3& lightSourceColor, const vec3& TextureRGB, const vec3& fragPosOut, const vec3& normalOut);
+		vec3 RasterizeLight(const vec3& TextureRGB, const vec3& fragPosOut, const vec3& normalOut);
 		void loadTexture(const char* pathToFile);
 		void* LoadObj(const char* pathToFile, std::vector<Vertex>& vertices, std::vector<unsigned>& indices);
 		int saveRender(int w = 1920, int h = 1200, const char* pathToFile="textures/res.jpg");
@@ -135,8 +136,9 @@ namespace Example
 		stbi_set_flip_vertically_on_load(true);
 		stbi_flip_vertically_on_write(true);
 
-		wireFrame = false;
-		raster = true;
+		testLeft = testUp = 0;
+		testRight = fb.widthImg;
+		testDown = fb.heightImg;
 
 		fb.depthBuffer.resize(fb.widthImg * fb.heightImg);
 
@@ -144,14 +146,14 @@ namespace Example
 		fb.colorBuffer = new unsigned char[fb.widthImg * fb.heightImg * 3];
 
 		cam = Camera(90, (float)fb.widthImg / fb.heightImg, 0.01f, 1000.0f);
-		cam.setPos(vec4(0, 2, 5));
+		cam.setPos(vec4(0, 0, 2.5));
 		cam.addRot(vec4(0, 1, 0), M_PI);
 		for (float& f: fb.depthBuffer)
 		{
 			f = cam.getFarPlane();
 		}
 
-		light = Lightning(vec3(10, 10, 10), vec3(1, 1, 1), .01f);
+		light = Lightning(vec3(10, 0, 10), vec3(255, 255, 255), .1f);
 
 		handle = LoadObj("textures/sphere.obj", ob.vertices, ob.indices);
 
@@ -504,11 +506,13 @@ namespace Example
 	}
 
 	vec3 SoftwareRenderer::RasterizeLight(
-		const vec3& lightSourceColor,
 		const vec3& TextureRGB,
 		const vec3& fragPosOut,
 		const vec3& normalOut)
 	{
+		vec3 c = light.getPos();
+		light.setPos(vec3(c.x * cosf(pixelCounter / 30.f), c.y * sinf(pixelCounter / 30.f), c.z));
+
 		vec3 viewDir = Normalize(fragPosOut - cam.getPos());
 		vec3 lightDir = Normalize(light.getPos() - fragPosOut);
 
@@ -524,12 +528,13 @@ namespace Example
 		float spec = powf(Dot(norm, halfwayDir) > 0.f ? Dot(norm, halfwayDir) : 0.f, 64);
 		vec3 specular = light.getColor() * spec * light.getIntensity();
 
-		vec3 out = TextureRGB * (lightSourceColor * .7f) * vec3(ambientlight + diffuse + specular);
+		vec3 out = TextureRGB * (light.getColor() * 10.f) * vec3(ambientlight + diffuse + specular);
 		
+		// clamping char value overflow
 		if (out.x > 255.f) out.x = 255.f;
 		if (out.y > 255.f) out.y = 255.f;
 		if (out.z > 255.f) out.z = 255.f;
-		
+
 		return out;
 	}
 
@@ -546,16 +551,31 @@ namespace Example
 		return false;
 	}
 
-	void SoftwareRenderer::putpixel(int x, int y)
+	bool SoftwareRenderer::putpixel(int x, int y, const Vertex& a, const Vertex& b, const Vertex& c, const vec2& ba, const vec2& bb, const vec2& bc)
 	{
-		int index = x * 3 + y * fb.widthImg * 3;
+		vec2 point = vec2(x, y);
+		float depth = getDepthFromPixel(point, a.pos, b.pos, c.pos);
+		vec3 normal = getBarycentricCoord(point, vec2(a.normal.x, a.normal.y), vec2(b.normal.x, b.normal.y), vec2(c.normal.x, c.normal.y));
+		vec3 barycentric = getBarycentricCoord(point, ba, bb, bc);
+		vec2 textureSample = UVmapping(barycentric, a.texel, b.texel, c.texel);
+		if (!DrawToDepthBuffer(point.x, point.y, depth)) return false;
+		vec3 color = fragmentShader(texture, vec3(point, depth), textureSample, normal);
 
-		fb.colorBuffer[index + 0] = 255;
-		fb.colorBuffer[index + 1] = 255;
-		fb.colorBuffer[index + 2] = 255;
+		if (point.x < testLeft) return true;
+		if (point.x >= testRight) return true;
+		if (point.y < testUp) return false;
+		if (point.y >= testDown) return false;
+
+		int index = (point.x + point.y * fb.widthImg) * 3;
+
+		fb.colorBuffer[index + 0] = unsigned char(color.x);
+		fb.colorBuffer[index + 1] = unsigned char(color.y);
+		fb.colorBuffer[index + 2] = unsigned char(color.z);
+		return false;
 	}
 
-	void SoftwareRenderer::drawline(int x0, int y0, int x1, int y1) {
+	void SoftwareRenderer::drawline(int x0, int y0, int x1, int y1, const Vertex& a, const Vertex& b, const Vertex& c, const vec2& ba, const vec2& bb, const vec2& bc) {
+
 		bool steep = false;
 		if (std::abs(x0 - x1) < std::abs(y0 - y1)) {
 			std::swap(x0, y0);
@@ -574,7 +594,7 @@ namespace Example
 		if (steep) {
 
 			for (int x = x0; x <= x1; x++) {
-				putpixel(y, x);
+				if (putpixel(y, x, a, b, c, ba, bb, bc)) return;
 				error2 += derror2;
 				if (error2 > dx) {
 					y += (y1 > y0 ? 1 : -1);
@@ -584,7 +604,7 @@ namespace Example
 		}
 		else {
 			for (int x = x0; x <= x1; x++) {
-				putpixel(x, y);
+				if (putpixel(x, y, a, b, c, ba, bb, bc)) return;
 				error2 += derror2;
 				if (error2 > dx) {
 					y += (y1 > y0 ? 1 : -1);
@@ -601,55 +621,29 @@ namespace Example
 		vertexShader(b);
 		vertexShader(c);
 
-		// to keep the the positions of the triangles relelative to the triangle
-
 		if (a.pos.y > b.pos.y) std::swap(a, b);
 		if (a.pos.y > c.pos.y) std::swap(a, c);
 		if (b.pos.y > c.pos.y) std::swap(b, c);
 
-		if (wireFrame)
+		// render textured and lit triangles
+		vec2 ba = vec2(a.pos.x, a.pos.y);
+		vec2 bb = vec2(b.pos.x, b.pos.y);
+		vec2 bc = vec2(c.pos.x, c.pos.y);
+
+		for (int i = 0; i < c.pos.y - a.pos.y; i++)
 		{
-			// render white wireframe
-			drawline(a.pos.x, a.pos.y, b.pos.x, b.pos.y);
-			drawline(a.pos.x, a.pos.y, c.pos.x, c.pos.y);
-			drawline(c.pos.x, c.pos.y, b.pos.x, b.pos.y);
-		}
-		if (raster)
-		{
-			// render textured and lit triangles
-			vec2 ba = vec2(a.pos.x, a.pos.y);
-			vec2 bb = vec2(b.pos.x, b.pos.y);
-			vec2 bc = vec2(c.pos.x, c.pos.y);
+			bool lower_half = i > b.pos.y - a.pos.y || b.pos.y == a.pos.y;
+			int subpart_height = lower_half ? c.pos.y - b.pos.y : b.pos.y - a.pos.y;
+			float total_ratio = (float)i / (c.pos.y - a.pos.y);
+			float sub_ratio = safeDivide((float)(i - (lower_half ? b.pos.y - a.pos.y : 0)), subpart_height);
+			int left = a.pos.x + (c.pos.x - a.pos.x) * total_ratio;
+			int right = lower_half ? b.pos.x + (c.pos.x - b.pos.x) * sub_ratio : a.pos.x + (b.pos.x - a.pos.x) * sub_ratio;
+			if (left > right) std::swap(left, right);
+				
+			left = left >= testLeft ? left : testLeft;
+			right = right < testRight ? right : testRight;
 
-			for (int i = 0; i < c.pos.y - a.pos.y; i++)
-			{
-				bool lower_half = i > b.pos.y - a.pos.y || b.pos.y == a.pos.y;
-				int subpart_height = lower_half ? c.pos.y - b.pos.y : b.pos.y - a.pos.y;
-				float total_ratio = (float)i / (c.pos.y - a.pos.y);
-				float sub_ratio = safeDivide((float)(i - (lower_half ? b.pos.y - a.pos.y : 0)), subpart_height);
-				vec2 A = vec2(a.pos.x, a.pos.y) + (vec2(c.pos.x, c.pos.y) - vec2(a.pos.x, a.pos.y)) * total_ratio;
-				vec2 B = lower_half ? vec2(b.pos.x, b.pos.y) + (vec2(c.pos.x, c.pos.y) - vec2(b.pos.x, b.pos.y)) * sub_ratio : vec2(a.pos.x, a.pos.y) + (vec2(b.pos.x, b.pos.y) - vec2(a.pos.x, a.pos.y)) * sub_ratio;
-				if (A.x > B.x) std::swap(A, B);
-
-				for (int j = (int)(A.x); j <= (int)(B.x); j++)
-				{
-					vec2 point = vec2((int)j, (int)a.pos.y + i);
-					float depth = getDepthFromPixel(point, a.pos, b.pos, c.pos);
-					vec3 normal = getBarycentricCoord(point, ba, bb, bc);
-					vec3 barycentric = getBarycentricCoord(point, ba, bb, bc);
-					vec2 textureSample = UVmapping(barycentric, a.texel, b.texel, c.texel);
-					if (!DrawToDepthBuffer(point.x, point.y, depth)) continue;
-					vec3 color = fragmentShader(texture, vec3(point, depth), textureSample, normal);
-
-					int index = point.x * 3 + point.y * fb.widthImg * 3;
-					if (index + 2 > fb.widthImg * 3 * fb.heightImg) break;
-					if (index < 0) continue;
-
-					fb.colorBuffer[index + 0] = unsigned char(color.x);
-					fb.colorBuffer[index + 1] = unsigned char(color.y);
-					fb.colorBuffer[index + 2] = unsigned char(color.z);
-				}
-			}
+			drawline(left, (int)a.pos.y + i, right, (int)a.pos.y + i, a, b, c, ba, bb, bc);
 		}
 	}
 
@@ -679,6 +673,9 @@ namespace Example
 	{
 		norm.x = (fb.widthImg >> 1) * (norm.x + 1);
 		norm.y = (fb.heightImg >> 1) * (norm.y + 1);
+
+		// i guess
+		norm.z = (fb.heightImg >> 1) * norm.z;
 	}
 
 	const int Fit(int input, int outputStart, int outputEnd, int inputStart, int inputEnd)
@@ -750,7 +747,6 @@ namespace Example
 			case GLFW_KEY_F: f = action; break; // changes fragmentShader
 			case GLFW_KEY_V: v = action; break; // changes vertexShader
 			case GLFW_KEY_O: o = action; break; // changes obj
-			case GLFW_KEY_C: c = action; break; // changes wireframe visiblity
 
 			case GLFW_KEY_L: l = action; break; // moves CPU camera
 
@@ -761,6 +757,11 @@ namespace Example
 			
 			case GLFW_KEY_Q: q = action; break;
 			case GLFW_KEY_E: e = action; break;
+
+			case GLFW_KEY_7: n7 = action; break;
+			case GLFW_KEY_0: n0 = action; break;
+			case GLFW_KEY_8: n8 = action; break;
+			case GLFW_KEY_9: n9 = action; break;
 			}
 		});
 		
@@ -825,7 +826,7 @@ namespace Example
 	{
 		vec3 color = getPixelColorFromUV(texture, textureWidth, textureHeight, uv);
 
-		vec3 lit = RasterizeLight(vec3(255, 255, 255), color, point, normal);
+		vec3 lit = RasterizeLight(color, point, normal);
 
 		return lit;
 	}
@@ -868,7 +869,7 @@ namespace Example
 		glDepthFunc(GL_LEQUAL);
 
 		Camera cam(90, (float)width / height, 0.01f, 100.0f);
-		cam.setPos(vec4(0, 2, 5));
+		cam.setPos(vec4(0, -.15, 0.025));
 		cam.addRot(vec4(0, 0, 1), -M_PI * .5f);
 		cam.addRot(vec4(0, 1, 0), M_PI);
 
@@ -892,6 +893,12 @@ namespace Example
 		{
 			softwareRenderer->clearRender();
 			frameIndex++;
+			softwareRenderer->pixelCounter++;
+
+			vec3 curr = softwareRenderer->light.getPos();
+			//printf("%f %f %f\n", curr.x, curr.y, curr.z);
+
+
 			if (l) // hold the L key to
 				cam.setPos(cam.getPos() + Normalize(vec4((a - d), (q - e), (w - s))) * camSpeed); // move the openGL camera
 			else{
@@ -933,10 +940,10 @@ namespace Example
 			if (o)
 			{
 				timesPressedM++;
-				switch (timesPressedM % 4)
+				switch (timesPressedM % 3)
 				{
 				case 0:
-					softwareRenderer->handle = softwareRenderer->LoadObj("textures/triangle.obj", softwareRenderer->ob.vertices, softwareRenderer->ob.indices);
+					softwareRenderer->handle = softwareRenderer->LoadObj("textures/sphere.obj", softwareRenderer->ob.vertices, softwareRenderer->ob.indices);
 					break;
 				case 1:
 					softwareRenderer->handle = softwareRenderer->LoadObj("textures/actual_cube.obj", softwareRenderer->ob.vertices, softwareRenderer->ob.indices);
@@ -944,32 +951,28 @@ namespace Example
 				case 2:
 					softwareRenderer->handle = softwareRenderer->LoadObj("textures/quad.obj", softwareRenderer->ob.vertices, softwareRenderer->ob.indices);
 					break;
-				case 3:
-					softwareRenderer->handle = softwareRenderer->LoadObj("textures/sphere.obj", softwareRenderer->ob.vertices, softwareRenderer->ob.indices);
-					break;
 				}
 				o = false;
 			}
 
-			if (c)
+			if (n7)
 			{
-				timesPressedC++;
-				switch(timesPressedC % 3)
-				{
-				case 0:
-					softwareRenderer->wireFrame = true;
-					softwareRenderer->raster = false;
-					break;
-				case 1:
-					softwareRenderer->wireFrame = false;
-					softwareRenderer->raster = true;
-					break;
-				case 2:
-					softwareRenderer->wireFrame = true;
-					softwareRenderer->raster = true;
-					break;
-				}
-				c = false;
+				softwareRenderer->light.setIntensity(softwareRenderer->light.getIntensity() * .1f);
+			}
+
+			if (n0)
+			{
+				softwareRenderer->light.setIntensity(softwareRenderer->light.getIntensity() * 10.f);
+			}
+
+			if (n8)
+			{
+				softwareRenderer->light.setColor(softwareRenderer->light.getColor() * .1f);
+			}
+
+			if (n9)
+			{
+				softwareRenderer->light.setColor(softwareRenderer->light.getColor() * 10.f);
 			}
 
 			softwareRenderer->draw(softwareRenderer->handle);

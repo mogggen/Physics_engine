@@ -53,11 +53,11 @@ namespace Example
 		bool o = false;
 		bool f = false;
 		bool v = false;
-		bool c = false;
+
+		bool n7 = false, n8 = false, n9 = false, n0 = false;
 		unsigned timesPressedM = 0u;
 		unsigned timesPressedG = 0u;
 		unsigned timesPressedH = 0u;
-		unsigned timesPressedC = 0u;
 		GLuint program;
 		GLuint vertexShader;
 		GLuint pixelShader;

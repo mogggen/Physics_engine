@@ -153,7 +153,7 @@ namespace Example
 			f = cam.getFarPlane();
 		}
 
-		light = Lightning(vec3(10, 0, 10), vec3(255, 255, 255), .1f);
+		light = Lightning(vec3(0, 0, 0), vec3(2.55f, 2.55f, 2.55f), .01f);
 
 		handle = LoadObj("textures/sphere.obj", ob.vertices, ob.indices);
 
@@ -505,36 +505,42 @@ namespace Example
 
 	}
 
+	void Print(vec3 v)
+	{
+		printf("%f %f %f\n", v.x, v.y, v.z);
+	}
+
 	vec3 SoftwareRenderer::RasterizeLight(
 		const vec3& TextureRGB,
 		const vec3& fragPosOut,
 		const vec3& normalOut)
 	{
-		vec3 c = light.getPos();
-		light.setPos(vec3(c.x * cosf(pixelCounter / 30.f), c.y * sinf(pixelCounter / 30.f), c.z));
+		const float specularIntensity = .5f;
 
-		vec3 viewDir = Normalize(fragPosOut - cam.getPos());
-		vec3 lightDir = Normalize(light.getPos() - fragPosOut);
+		vec3 la = light.getPos();
+		light.setPos(vec3(la.x + cosf(pixelCounter / 20.f) * 5.f, la.y, la.z + sinf(pixelCounter / 20.f) * 5.f));
+		
+		vec3 viewDir = Normalize(Normalize(fragPosOut) - cam.getPos());
+		vec3 lightDir = Normalize(light.getPos() - Normalize(fragPosOut));
 
 		vec3 halfwayDir = Normalize(lightDir + viewDir);
 		vec3 ambientlight = light.getIntensity() * light.getColor();
 
 		vec3 norm = Normalize(normalOut);
-
-		float diff = Dot(norm, lightDir);
-		if (diff <= 0.f) diff = 0.f;
-		vec3 diffuse = diff * light.getColor();
 		
-		float spec = powf(Dot(norm, halfwayDir) > 0.f ? Dot(norm, halfwayDir) : 0.f, 64);
-		vec3 specular = light.getColor() * spec * light.getIntensity();
+		float diff = Dot(norm, lightDir);
+		if (diff < 0.f) diff = 0.f;
+		vec3 diffuse = diff * light.getColor();
 
-		vec3 out = TextureRGB * (light.getColor() * 10.f) * vec3(ambientlight + diffuse + specular);
+		float spec = powf(Dot(norm, halfwayDir) > 0.f ? Dot(norm, halfwayDir) : 0.f, 32);
+		vec3 specular = light.getColor() * spec * specularIntensity;
+		//return spec * light.getColor();
+		vec3 out = TextureRGB * light.getColor() * vec3(ambientlight + diffuse + specular);
 		
 		// clamping char value overflow
 		if (out.x > 255.f) out.x = 255.f;
 		if (out.y > 255.f) out.y = 255.f;
 		if (out.z > 255.f) out.z = 255.f;
-
 		return out;
 	}
 
@@ -555,7 +561,10 @@ namespace Example
 	{
 		vec2 point = vec2(x, y);
 		float depth = getDepthFromPixel(point, a.pos, b.pos, c.pos);
-		vec3 normal = getBarycentricCoord(point, vec2(a.normal.x, a.normal.y), vec2(b.normal.x, b.normal.y), vec2(c.normal.x, c.normal.y));
+		vec3 normal = vec3(
+			(a.normal.x + b.normal.x + c.normal.x) / 3.f,
+			(a.normal.y + b.normal.y + c.normal.y) / 3.f,
+			(a.normal.z + b.normal.z + c.normal.z) / 3.f);
 		vec3 barycentric = getBarycentricCoord(point, ba, bb, bc);
 		vec2 textureSample = UVmapping(barycentric, a.texel, b.texel, c.texel);
 		if (!DrawToDepthBuffer(point.x, point.y, depth)) return false;
@@ -675,7 +684,7 @@ namespace Example
 		norm.y = (fb.heightImg >> 1) * (norm.y + 1);
 
 		// i guess
-		norm.z = (fb.heightImg >> 1) * norm.z;
+		norm.z = (fb.widthImg >> 1) * norm.z;
 	}
 
 	const int Fit(int input, int outputStart, int outputEnd, int inputStart, int inputEnd)
@@ -705,7 +714,10 @@ namespace Example
 			vec4 v = m[i];
 			std::cout << '(';
 			for (char i = 0; i < 4; i++)
-				std::cout << v.data[i] << (i == 3 ? ")\n" : ", ");
+			{
+				printf("%8.4f", v.data[i]);
+				std::cout << (i == 3 ? ")\n" : ", ");
+			}
 		}
 	}
 
@@ -815,6 +827,8 @@ namespace Example
 		projectVertex(v.pos);
 
 		moveNormalizedCoordsToCenterOfScreenAndScaleWithScreen(v.pos);
+
+		v.normal = (mvp * vec4(v.normal, 0)).toV3();
 	}
 
 	void SoftwareRenderer::ortographicVertexShader(Vertex& v)
@@ -893,11 +907,8 @@ namespace Example
 		{
 			softwareRenderer->clearRender();
 			frameIndex++;
-			softwareRenderer->pixelCounter++;
 
 			vec3 curr = softwareRenderer->light.getPos();
-			//printf("%f %f %f\n", curr.x, curr.y, curr.z);
-
 
 			if (l) // hold the L key to
 				cam.setPos(cam.getPos() + Normalize(vec4((a - d), (q - e), (w - s))) * camSpeed); // move the openGL camera
@@ -954,28 +965,42 @@ namespace Example
 				}
 				o = false;
 			}
-
+			Print(softwareRenderer->light.getPos());
+			softwareRenderer->light.setPos(vec3(4, 4, 4));
+			Print(softwareRenderer->light.getPos());
+			printf("%i\n", ++softwareRenderer->pixelCounter);
 			if (n7)
 			{
 				softwareRenderer->light.setIntensity(softwareRenderer->light.getIntensity() * .1f);
+				printf("new intensity: %f\n", softwareRenderer->light.getIntensity());
 			}
 
 			if (n0)
 			{
 				softwareRenderer->light.setIntensity(softwareRenderer->light.getIntensity() * 10.f);
+				printf("new intensity: %f\n", softwareRenderer->light.getIntensity());
 			}
 
 			if (n8)
 			{
 				softwareRenderer->light.setColor(softwareRenderer->light.getColor() * .1f);
+				vec3 lazy = softwareRenderer->light.getColor();
+				printf("new color: %f %f %f\n", lazy.x, lazy.y, lazy.z);
 			}
 
 			if (n9)
 			{
 				softwareRenderer->light.setColor(softwareRenderer->light.getColor() * 10.f);
+				vec3 lazy = softwareRenderer->light.getColor();
+				printf("new color: %f %f %f\n", lazy.x, lazy.y, lazy.z);
 			}
 
 			softwareRenderer->draw(softwareRenderer->handle);
+
+			//printf("%.2f%% (%i / %i)\n", 100.f * softwareRenderer->pixelCounter / (softwareRenderer->fb.widthImg * 3 * softwareRenderer->fb.heightImg),
+			//	softwareRenderer->pixelCounter,
+			//	(softwareRenderer->fb.widthImg * softwareRenderer->fb.heightImg));
+			//softwareRenderer->pixelCounter = 0;
 
 			cubeProjectionViewTransform = cubeWorldSpaceTransform * cam.pv();
 

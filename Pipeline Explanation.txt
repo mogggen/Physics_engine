@@ -1,0 +1,22 @@
+Pipeline Explanation
+
+LoadObj returns a handle to be used by:
+
+RasterizeTriangle() to collect the vertices
+using the indices from the indexBuffer and
+send them as arguments to construct a triangular face
+
+The RasterizeTriangle() function calls the vertexShader(Vertex&) 3 times,
+once for each Vertex of the triangle
+
+The VertexShader(Vertex&) calls putpixel() once for each pixel of the current line,
+interpolating the values between the two end points of that line.
+
+putpixel(int x, int y) calls, in turn, the fragmentshader() that handles lighting calculations,
+returns the pixel color to be written to the color buffer.
+
+putpixel also performs a depth test
+when calling getDepthFromPixel()
+
+full pipeline is:
+LoadObj -> RasterizeTriangle -> vertexShader -> putpixel -> getDepthFromPixel -> fragmentShader -> texture to be drawn onto quad

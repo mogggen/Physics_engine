@@ -58,7 +58,7 @@ namespace Example
 
 	class SoftwareRenderer
 	{
-		// the texture
+		// variable declartaion
 		unsigned char* texture = nullptr;
 		int textureWidth, textureHeight;	
 	public:
@@ -118,6 +118,7 @@ namespace Example
 		void RasterizeTriangle(Vertex a, Vertex b, Vertex c);
 	};
 
+	// Sets default dimensions of the texture if they aren't already set
 	SoftwareRenderer::SoftwareRenderer()
 	{
 		std::cerr << "CAUTION: widthImg and heightImg is set to 1920 by 1080" << std::endl;
@@ -155,6 +156,10 @@ namespace Example
 
 		light = Lightning(vec3(0, 0, 0), vec3(2.55f, 2.55f, 2.55f), .01f);
 
+		// LoadObj returns a handle to be used by Rasterize
+		// RasterizeTriangle() to collect the vertices
+		// using the indices from the indexBuffer and
+		// send them as arguments to construct a triangular face
 		handle = LoadObj("textures/sphere.obj", ob.vertices, ob.indices);
 
 		std::function<void(Vertex&)> InitVertShader = [this](Vertex& v) {defaultVertexShader(v); };
@@ -534,7 +539,7 @@ namespace Example
 
 		float spec = powf(Dot(norm, halfwayDir) > 0.f ? Dot(norm, halfwayDir) : 0.f, 32);
 		vec3 specular = light.getColor() * spec * specularIntensity;
-		//return spec * light.getColor();
+
 		vec3 out = TextureRGB * light.getColor() * vec3(ambientlight + diffuse + specular);
 		
 		// clamping char value overflow
@@ -557,18 +562,29 @@ namespace Example
 		return false;
 	}
 
+
+	// putpixel(int x, int y) calls, in turn, the fragmentshader() that handles lighting calculations,
+	// returns the pixel color to be written to the color buffer.
 	bool SoftwareRenderer::putpixel(int x, int y, const Vertex& a, const Vertex& b, const Vertex& c, const vec2& ba, const vec2& bb, const vec2& bc)
 	{
 		vec2 point = vec2(x, y);
+
+		// putpixel also performs a depth test
+		// when calling getDepthFromPixel()
 		float depth = getDepthFromPixel(point, a.pos, b.pos, c.pos);
+		if (!DrawToDepthBuffer(point.x, point.y, depth)) return false;
+		
 		vec3 normal = vec3(
 			(a.normal.x + b.normal.x + c.normal.x) / 3.f,
 			(a.normal.y + b.normal.y + c.normal.y) / 3.f,
 			(a.normal.z + b.normal.z + c.normal.z) / 3.f);
 		vec3 barycentric = getBarycentricCoord(point, ba, bb, bc);
 		vec2 textureSample = UVmapping(barycentric, a.texel, b.texel, c.texel);
-		if (!DrawToDepthBuffer(point.x, point.y, depth)) return false;
 		vec3 color = fragmentShader(texture, vec3(point, depth), textureSample, normal);
+
+		// full pipeline is:
+		// LoadObj -> RasterizeTriangle -> vertexShader -> putpixel -> getDepthFromPixel -> fragmentShader -> texture to be drawn onto quad
+
 
 		if (point.x < testLeft) return true;
 		if (point.x >= testRight) return true;
@@ -583,35 +599,44 @@ namespace Example
 		return false;
 	}
 
-	void SoftwareRenderer::drawline(int x0, int y0, int x1, int y1, const Vertex& a, const Vertex& b, const Vertex& c, const vec2& ba, const vec2& bb, const vec2& bc) {
+	void SoftwareRenderer::drawline(int x0, int y0, int x1, int y1,
+		const Vertex& a, const Vertex& b, const Vertex& c,
+		const vec2& ba, const vec2& bb, const vec2& bc) {
 
 		bool steep = false;
+		// checks if the slope of the line is less than 1
+		// otherwise swap the order of the points
+		// to avoid gaps in the line drawing by steeping over gaps
 		if (std::abs(x0 - x1) < std::abs(y0 - y1)) {
 			std::swap(x0, y0);
 			std::swap(x1, y1);
 			steep = true;
 		}
+		// make sure the increments are done from left to right
+		// in the loop by sorting them along the x-axis
 		if (x0 > x1) {
 			std::swap(x0, x1);
 			std::swap(y0, y1);
 		}
-		int dx = x1 - x0;
-		int dy = y1 - y0;
+		int dx = x1 - x0; // the diffrence between the points on the x-axis
+		int dy = y1 - y0; // the diffrence between the points on the y-axis
 		int derror2 = std::abs(dy) * 2;
-		int error2 = 0;
+		int error2 = 0; // the current fraction of a whole pixel increment
 		int y = y0;
 		if (steep) {
-
+			// increase y with respect to x
 			for (int x = x0; x <= x1; x++) {
+				// performs numerous checks that are not apart of the algorithm
 				if (putpixel(y, x, a, b, c, ba, bb, bc)) return;
-				error2 += derror2;
-				if (error2 > dx) {
-					y += (y1 > y0 ? 1 : -1);
-					error2 -= dx * 2;
+				error2 += derror2; // increase the current error fraction until...
+				if (error2 > dx) { // the error exceeds dx and
+					y += (y1 > y0 ? 1 : -1); // increment the current y coordinate
+					error2 -= dx * 2; // reset the error progress
 				}
 			}
 		}
 		else {
+			// increase x with respect to y
 			for (int x = x0; x <= x1; x++) {
 				if (putpixel(x, y, a, b, c, ba, bb, bc)) return;
 				error2 += derror2;
@@ -623,9 +648,12 @@ namespace Example
 		}
 	}
 
+
 	void SoftwareRenderer::RasterizeTriangle(Vertex a, Vertex b, Vertex c) {
 		if (a.pos.y == b.pos.y && a.pos.y == c.pos.y) return;
 
+		// The RasterizeTriangle() function calls the vertexShader(Vertex&) 3 times,
+		// once for each Vertex of the triangle
 		vertexShader(a);
 		vertexShader(b);
 		vertexShader(c);
@@ -683,7 +711,6 @@ namespace Example
 		norm.x = (fb.widthImg >> 1) * (norm.x + 1);
 		norm.y = (fb.heightImg >> 1) * (norm.y + 1);
 
-		// i guess
 		norm.z = (fb.widthImg >> 1) * norm.z;
 	}
 
@@ -965,48 +992,19 @@ namespace Example
 				}
 				o = false;
 			}
-			Print(softwareRenderer->light.getPos());
-			softwareRenderer->light.setPos(vec3(4, 4, 4));
-			Print(softwareRenderer->light.getPos());
-			printf("%i\n", ++softwareRenderer->pixelCounter);
-			if (n7)
-			{
-				softwareRenderer->light.setIntensity(softwareRenderer->light.getIntensity() * .1f);
-				printf("new intensity: %f\n", softwareRenderer->light.getIntensity());
-			}
 
-			if (n0)
-			{
-				softwareRenderer->light.setIntensity(softwareRenderer->light.getIntensity() * 10.f);
-				printf("new intensity: %f\n", softwareRenderer->light.getIntensity());
-			}
 
-			if (n8)
-			{
-				softwareRenderer->light.setColor(softwareRenderer->light.getColor() * .1f);
-				vec3 lazy = softwareRenderer->light.getColor();
-				printf("new color: %f %f %f\n", lazy.x, lazy.y, lazy.z);
-			}
-
-			if (n9)
-			{
-				softwareRenderer->light.setColor(softwareRenderer->light.getColor() * 10.f);
-				vec3 lazy = softwareRenderer->light.getColor();
-				printf("new color: %f %f %f\n", lazy.x, lazy.y, lazy.z);
-			}
-
+			softwareRenderer->pixelCounter++;
 			softwareRenderer->draw(softwareRenderer->handle);
-
-			//printf("%.2f%% (%i / %i)\n", 100.f * softwareRenderer->pixelCounter / (softwareRenderer->fb.widthImg * 3 * softwareRenderer->fb.heightImg),
-			//	softwareRenderer->pixelCounter,
-			//	(softwareRenderer->fb.widthImg * softwareRenderer->fb.heightImg));
-			//softwareRenderer->pixelCounter = 0;
 
 			cubeProjectionViewTransform = cubeWorldSpaceTransform * cam.pv();
 
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			cubeScript->setM4(cam.pv(), "m4ProjViewPos");
+			
+			// update The texture with the new texture
+			// calculated by the softwareRenderer in between frames
 			cubeTexture->LoadFromBuffer(softwareRenderer->getFrameBuffer(), softwareRenderer->fb.widthImg, softwareRenderer->fb.heightImg);
 			cubeTexture->BindTexture();
 

@@ -342,11 +342,19 @@ std::vector<V3> MeshResource::LoadVerticesFromFile(const char *pathToFile)
 	{
 		printf("file not found with path \"./%s\"\n", pathToFile);
 	}
-	fclose(fs);
+	if (fs != nullptr)
+	{
+		fclose(fs);
+	}
 	return coords;
 }
 
-std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
+std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile,
+		std::vector<uint32>& _indices,
+		std::vector<V3>& _positions,
+		std::vector<V2>& _texels,
+		std::vector<V3>& _normals,
+		std::vector<Vertex>& _vertices)
 {
 	char buf[1024];
 	FILE *fs;
@@ -482,12 +490,41 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 				}
 			}
 		}
+
+		for (unsigned const& var : indices)
+		{
+			_indices.push_back(var);
+		}
+
+		for (V3 const& var : coords)
+		{
+			_positions.push_back(var);
+		}
+
+		for (V2 const& var : texels)
+		{
+			_texels.push_back(var);
+		}
+
+		for (V3 const& var : normals)
+		{
+			_normals.push_back(var);
+		}
+
+		for (Vertex const& var : vertices)
+		{
+			_vertices.push_back(var);
+		}
+
 	}
 	else
 	{
 		printf("file not found with path \"./%s\"\n", pathToFile);
 	}
-	fclose(fs);
+	if (fs != nullptr)
+	{
+		fclose(fs);
+	}
 	printf("loaded %s\n", pathToFile);
 	return std::make_shared<MeshResource>(&vertices[0], vertices.size(), &indices[0], indices.size());
 }

@@ -24,20 +24,27 @@ namespace Debug
     DebugRenderBuffer triBuf;
     DebugRenderBuffer lineBuf;
 
+    inline void PushRay(DebugRenderBuffer *buf, Vertex vert)
+    {
+        if (buf->verticesAmount < 1024)
+            buf->vertices[buf->verticesAmount] = vert;
+    }
+
     inline void PushVertex(DebugRenderBuffer *buf, Vertex vert)
     {
-        buf->vertices[buf->verticesAmount++] = vert;
+        if (buf->verticesAmount < 1024)
+            buf->vertices[buf->verticesAmount++] = vert;
     }
 
     void DrawBB(const MeshResource& mesh, V4 color, M4 modelMatrix)
     {
-         const float left = mesh.left;
-         const float bottom = mesh.bottom;
-         const float front = mesh.front;
+         const float& left = mesh.left;
+         const float& bottom = mesh.bottom;
+         const float& front = mesh.front;
 
-         const float right = mesh.right;
-         const float top = mesh.top;
-         const float back = mesh.back;
+         const float& right = mesh.right;
+         const float& top = mesh.top;
+         const float& back = mesh.back;
          
          PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(left, top, front, 1), color});
          PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(left, top, back, 1), color});
@@ -152,6 +159,22 @@ namespace Debug
     {
         PushVertex(&lineBuf, Vertex{start, color});
         PushVertex(&lineBuf, Vertex{end, color});
+    }
+
+    void DrawSquare(V4 center, float size, V4 color)
+    {
+        PushVertex(&triBuf, Vertex{ center + V3(-size / 2, 0, -size / 2), color });
+        PushVertex(&triBuf, Vertex{ center + V3(-size / 2, 0, size / 2), color });
+        PushVertex(&triBuf, Vertex{ center + V3(size / 2, 0, size / 2), color });
+
+        PushVertex(&triBuf, Vertex{ center + V3(-size / 2, 0, -size / 2), color });
+        PushVertex(&triBuf, Vertex{ center + V3(size / 2, 0, -size / 2), color });
+        PushVertex(&triBuf, Vertex{ center + V3(size / 2, 0, size / 2), color });
+    }
+
+    void DrawSphere()
+    {
+
     }
 
     void Render(M4 cameraVPMatrix)

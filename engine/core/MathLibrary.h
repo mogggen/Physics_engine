@@ -1,6 +1,7 @@
 ﻿//#include "config.h"
 #pragma once
 #include <cmath>
+#include <vector>
 #include <stdio.h>
 #ifndef M_PI
 #define M_PI 3.141592553584
@@ -255,6 +256,9 @@ struct V3
 	void operator/=(float right);
 	float &operator[](size_t index);
 
+	bool V3::operator==(V3 rhs);
+	bool V3::operator!=(V3 rhs);
+
 	float Dot(V3 right);
 	void Cross(V3 right);
 
@@ -334,12 +338,35 @@ inline float V3::Length()
 	return sqrtf(x * x + y * y + z * z);
 }
 
+inline float V3::Length2()
+{
+	return x * x + y * y + z * z;
+}
+
 inline void V3::Normalize()
 {
 	float length = Length();
 	if (length)
 	for (size_t i = 0; i < 3; i++)
 		data[i] /= length;
+}
+
+inline bool V3::operator==(V3 rhs)
+{
+	if ((isnan(x) &&
+		isnan(y) &&
+		isnan(z)) &&
+
+		(isnan(rhs.x) &&
+			isnan(rhs.y) &&
+			isnan(rhs.z))
+		) return true;
+	return x == rhs.x && y == rhs.y && z == rhs.z;
+}
+
+inline bool V3::operator!=(V3 rhs)
+{
+	return !operator==(rhs);
 }
 
 //	operator functions
@@ -1280,26 +1307,54 @@ inline bool Plane::pointIsOnPlane(const V3& point, float margin)
 
 struct Ray
 {
-	V3 start;
+#define NAN_V3 V3(NAN, NAN, NAN)
+	V3 origin;
 	V3 dir;
-	inline Ray(V3 start, V3 dir);
-	bool Intersect(V3& res, const Plane plane);
+	Ray(V3 origin, V3 dir);
+	const V3 Ray::minDist(const std::vector<V3>& others);
+	const V3 intersect(const Plane& plane, const float& epsilon);
 };
 
-Ray::Ray(V3 start, V3 dir) : start(start), dir(dir)
+inline Ray::Ray(V3 origin, V3 dir) : origin(origin), dir(dir)
 {
 
 }
 
-inline bool Ray::Intersect(V3& res, const Plane plane)
+inline const V3 Ray::intersect(const Plane& plane, const float& epsilon=1e-10f)
 {
-    if (!Dot(plane.normal, dir)) return false;
+	float dotProduct = Dot(plane.normal, dir);
 
-    float d = Dot(plane.normal, start);
-    float t = (d - Dot(plane.normal, start)) / Dot(plane.normal, dir);
-    
-    res = start + Normalize(dir) * t;
-    return true;
+	if (!dotProduct) {
+		return NAN_V3;
+	}
+
+	float t = Dot(plane.point - origin, plane.normal) / dotProduct;
+
+	//if (t < 0) return NAN_V3;
+
+	return origin + t * dir;
+}
+
+inline const V3 Ray::minDist(const std::vector<V3>& others)
+{
+	int min_index = -1;
+	float min = FLT_MAX;
+	for (int i = 0; i < others.size(); i++)
+	{
+		float length_squared = (origin - others[i]).Length2();
+		if (length_squared < min)
+		{
+			min = length_squared;
+			min_index = i;
+		}
+	}
+
+	if (min_index < 0)
+	{
+		return NAN_V3;
+	}
+
+	return others[min_index];
 }
 
 #pragma endregion // Ray

@@ -38,6 +38,73 @@ namespace Example
 	/**
 	 */
 
+	const V3 slow_intersection(
+		Ray& r,
+		M4 WorldSpaceTransform,
+		std::vector<V3>& i_worldSpace_coords,
+		std::vector<unsigned>& i_meshModel_indices,
+		std::vector<V3>* normals = nullptr)
+	{
+		V3 closest_point = NAN_V3;
+
+		//use the world space coordinates for the entire model
+		for (size_t i = 0; i < i_meshModel_indices.size(); i += 3)
+		{
+			if (i_worldSpace_coords.size() - 1 < i_meshModel_indices[i + 2]) break;
+			Plane p = Plane(NAN_V3, NAN_V3);
+			//V3 a = i_worldSpace_coords[i_meshModel_indices[i + 0]];
+			//V3 b = i_worldSpace_coords[i_meshModel_indices[i + 1]];
+			//V3 c = i_worldSpace_coords[i_meshModel_indices[i + 2]];
+
+			V3 a = (Transpose(WorldSpaceTransform) * V4(i_worldSpace_coords[i_meshModel_indices[i + 0]], 1)).toV3();
+			V3 b = (Transpose(WorldSpaceTransform) * V4(i_worldSpace_coords[i_meshModel_indices[i + 1]], 1)).toV3();
+			V3 c = (Transpose(WorldSpaceTransform) * V4(i_worldSpace_coords[i_meshModel_indices[i + 2]], 1)).toV3();
+
+			//create a plane for each of the faces check for intersections
+			if (false && normals != nullptr) // always out of range, probably because the parser is broken
+			{
+				//if the model has normals use them instead
+				p.point = a;
+				p.normal = (*normals)[i_meshModel_indices[i]];
+			}
+			else
+			{
+				//calculate the normals and use them to create a plane
+				p.point = a;
+				p.normal = Cross(b - a, c - a);
+			}
+
+			// point in triangle with cross product
+			V3 currentIntersect = r.intersect(p);
+			if (currentIntersect == NAN_V3) continue;
+
+			//check if it's within the triangle's edges
+			V3 x1 = Cross(b - a, currentIntersect - a);
+			V3 x2 = Cross(c - a, currentIntersect - b);
+			V3 x3 = Cross(a - c, currentIntersect - c);
+			if (Dot(x1, x2) > 0.f && Dot(x2, x3) > 0.f && Dot(x3, x1) > 0.f)
+			{
+				if (closest_point != NAN_V3)
+				{
+					V3 curr_dist = currentIntersect - r.origin;
+					V3 best_dist = closest_point - r.origin;
+
+					// only update if it is the closest point on the mesh.
+					if (Length2(curr_dist) < Length2(best_dist))
+					{
+						closest_point = currentIntersect;
+					}
+				}
+				else
+				{
+					closest_point = currentIntersect;
+				}
+			}
+		}
+
+		return closest_point;
+	}
+
 	void Print(M4 m)
 	{
 		for (size_t i = 0; i < 4; i++)
@@ -93,8 +160,19 @@ namespace Example
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
 			// MeshResource
-			fireHydrantMesh = MeshResource::LoadObj("textures/fireHydrant.obj");
-			fireHydrantMesh->positions = MeshResource::LoadVerticesFromFile("textures/fireHydrant.obj");
+			std::vector<unsigned> fireIndices;
+			std::vector<V3> fireCoords;
+			std::vector<V2> fireTexels;
+			std::vector<V3> fireNormals;
+			std::vector<Vertex> fireVertices;
+			fireHydrantMesh = MeshResource::LoadObj("textures/fireHydrant.obj", fireIndices, fireCoords, fireTexels, fireNormals, fireVertices);
+			fireHydrantMesh->indicesAmount = fireIndices;
+			fireHydrantMesh->positions = fireCoords;
+			fireHydrantMesh->texels = fireTexels;
+			fireHydrantMesh->normals = fireNormals;
+			fireHydrantMesh->vertices = fireVertices;
+			// fireHydrantMesh->positions = MeshResource::LoadVerticesFromFile("textures/fireHydrant.obj");
+			assert(fireCoords.size() == fireHydrantMesh->positions.size());
 
 			// TextureResource
 			fireHydrantTexture = std::make_shared<TextureResource>("textures/cubepic.png");
@@ -112,8 +190,19 @@ namespace Example
 			fireHydrant = std::make_shared<GraphicNode>(fireHydrantMesh, fireHydrantTexture, fireHydrantScript, fireHydrantActor);
 
 			// MeshResource
-			cubeMesh = MeshResource::LoadObj("textures/cube.obj");
-
+			std::vector<unsigned> cubeIndices;
+			std::vector<V3> cubeCoords;
+			std::vector<V2> cubeTexels;
+			std::vector<V3> cubeNormals;
+			std::vector<Vertex> cubeVertices;
+			cubeMesh = MeshResource::LoadObj("textures/cube.obj", cubeIndices, cubeCoords, cubeTexels, cubeNormals, cubeVertices);
+			cubeMesh->indicesAmount = cubeIndices;
+			cubeMesh->positions = cubeCoords;
+			cubeMesh->texels = cubeTexels;
+			cubeMesh->normals = cubeNormals;
+			cubeMesh->vertices = cubeVertices;
+			// cubeMesh->positions = MeshResource::LoadVerticesFromFile("textures/cube.obj");
+			
 			cubeTexture = std::make_shared<TextureResource>("textures/red.png");
 
 			// shaderResource
@@ -129,8 +218,19 @@ namespace Example
 			cube = std::make_shared<GraphicNode>(cubeMesh, cubeTexture, cubeScript, cubeActor);
 
 			// MeshResource
-			quadMesh = MeshResource::LoadObj("textures/quad.obj");
-
+			std::vector<unsigned> quadIndices;
+			std::vector<V3> quadCoords;
+			std::vector<V2> quadTexels;
+			std::vector<V3> quadNormals;
+			std::vector<Vertex> quadVertices;
+			quadMesh = MeshResource::LoadObj("textures/quad.obj", quadIndices, quadCoords, quadTexels, quadNormals, quadVertices);
+			quadMesh->indicesAmount = quadIndices;
+			quadMesh->positions = quadCoords;
+			quadMesh->texels = quadTexels;
+			quadMesh->normals = quadNormals;
+			quadMesh->vertices = quadVertices;
+			// quadMesh->positions = MeshResource::LoadVerticesFromFile("textures/quad.obj");
+			
 			// Actor
 			Actor temp3;
 			Actor *quadActor = &temp3;
@@ -148,6 +248,46 @@ namespace Example
 	//------------------------------------------------------------------------------
 	/**
 	 */
+	
+	void fuck_test()
+	{
+		V3 rayOrigin = V3(0, 0, 0);
+		V3 rayDir = V3(0, 0, 1);
+
+		Ray ray(rayOrigin, rayDir);
+
+		V4 identity[4] = {
+			V4(1, 0, 0, 0),
+			V4(0, 1, 0, 0),
+			V4(0, 0, 1, 0),
+			V4(0, 0, 0, 1)
+		};
+
+		M4 emptyMatrix = M4(identity);
+
+		//Print(emptyMatrix);
+
+		std::vector<V3> vertexPositions;
+
+		V3 bottomLeft = V3(-1, -1, 5);
+		V3 topMiddle = V3(0, 1, 5);
+		V3 bottomRight = V3(1, -1, 5);
+
+		vertexPositions.push_back(bottomLeft);
+		vertexPositions.push_back(topMiddle);
+		vertexPositions.push_back(bottomRight);
+
+		std::vector<uint32> indices;
+
+		indices.push_back(1);
+		indices.push_back(2);
+		indices.push_back(0);
+
+		std::vector<V3>* normals = nullptr;
+
+		V3 hit = slow_intersection(ray, emptyMatrix, vertexPositions, indices, normals); // resulting hit should be 0, 0, 1
+		std::cout << "x: " << hit.x << ", y: " << hit.y << ", z: " << hit.z << std::endl;
+	}
 
 	void
 	ExampleApp::Run()
@@ -155,11 +295,16 @@ namespace Example
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
 
+
 		// gravity
 		const float g = -9.806e-3f;
-
+		std::cout << (bool(NAN) == bool(NAN)) << std::endl;
+		std::cout << (bool(nanf("")) == bool(nanf(""))) << std::endl;
+		std::cout << (bool(NAN) != bool(NAN)) << std::endl;
+		std::cout << (bool(nanf("")) != bool(nanf("")));
+		fuck_test();
 		Camera cam(90, (float)width / height, 0.01f, 1000.0f);
-		cam.setPos(V4(0, 4, 3));
+		// cam.setPos(V4(0, 4, 3));
 		cam.setRot(V4(0, 1, 0), M_PI);
 
 		Lightning light(V3(10, 10, 10), V3(1, 1, 1), .01f);
@@ -167,11 +312,13 @@ namespace Example
 		float camSpeed = .8f;
 
 		// set identies
-		fireHydrantWorldSpaceTransform = fireHydrantProjectionViewTransform = Translate(V4());
+		fireHydrantWorldSpaceTransform = Translate(V4(0, 0, 15));
+		fireHydrantProjectionViewTransform = Translate(V4());
 		fireHydrantMesh->findbounds();
 		
 
-		cubeWorldSpaceTransform = cubeProjectionViewTransform = Translate(V4());
+		cubeWorldSpaceTransform = Translate(V4(0, 0, -5));
+		cubeProjectionViewTransform = Translate(V4());
 
 		M4 quadWorldSpaceTransform[100];
 		M4 quadProjectionViewTransform[100];
@@ -197,17 +344,18 @@ namespace Example
 
 			//--------------------math section--------------------
 			cam.setPos(cam.getPos() + Normalize(V4((d - a), (q - e), (w - s))) * -camSpeed);
+			V3 rayOrigin = cam.getPos() * 1.f;
 
 			// std::cout << "frame " << frameIndex << std::endl;
 			
 			Debug::DrawBB(*fireHydrant->getMesh(), V4(0, 1, 1, 1), fireHydrantWorldSpaceTransform);
 			Debug::DrawAABB(*fireHydrant->getMesh(), V4(1, 0, 0, 1), fireHydrantWorldSpaceTransform);
-			Print(fireHydrantWorldSpaceTransform);
+			//Print(fireHydrantWorldSpaceTransform);
 			//Implement a gravitational acceleration on the fireHydrant
 			fireHydrant->actor->velocity = fireHydrant->actor->velocity + fireHydrant->actor->mass * g;
 
 			//fireHydrant world space
-			fireHydrantWorldSpaceTransform = Rotation(V4(0, 0, 1), -0.012f) * Rotation(V4(0, 1, 0), 0.004f) * fireHydrantWorldSpaceTransform
+			//fireHydrantWorldSpaceTransform = /*Rotation(V4(0, 0, 1), -0.012f) * Rotation(V4(0, 1, 0), 0.004f) */ fireHydrantWorldSpaceTransform
 			
 			// effect of gravity
 			/* *
@@ -217,36 +365,68 @@ namespace Example
 			fireHydrantProjectionViewTransform = cam.pv() * fireHydrantWorldSpaceTransform/* * Scalar(V4(.1, .1, .1))*/;
 
 			// cube world space
-			cubeWorldSpaceTransform = cubeWorldSpaceTransform *
-										Translate(V4(0, 0, cos(frameIndex / 20.f)));
+			cubeWorldSpaceTransform = cubeWorldSpaceTransform
+										//* Translate(V4(0, 0, cos(frameIndex / 20.f)))
+				;
 
 			// // cube view space
 			cubeProjectionViewTransform = cam.pv() * cubeWorldSpaceTransform;
 
-			// equation
-			double mouseWorldX, mouseWorldY;
+			/*for (size_t i = 0; i < countLines; i++)
+			{
+				Debug::DrawLine(start[i], dirSize[i], 1.f, V4(1, 1, 1, 1));
+			}*/
+
+			Debug::DrawBB(*fireHydrant->getMesh(), V4(0, 1, 1, 1), fireHydrantWorldSpaceTransform);
+			Debug::DrawAABB(*fireHydrant->getMesh(), V4(1, 0, 0, 1), fireHydrantWorldSpaceTransform);
+
+			Plane left_plane(V3(fireHydrantMesh->left, 0, 0), V3(fireHydrantMesh->left, 0, 0));
+			Plane right_plane(V3(fireHydrantMesh->right, 0, 0), V3(fireHydrantMesh->right, 0, 0));
+
+			Plane top_plane(V3(0, fireHydrantMesh->top, 0), V3(0, fireHydrantMesh->top, 0));
+			Plane bottom_plane(V3(0, fireHydrantMesh->bottom, 0), V3(0, fireHydrantMesh->bottom, 0));
+
+			Plane front_plane(V3(0, 0, fireHydrantMesh->front), V3(0, 0, fireHydrantMesh->front));
+			Plane back_plane(V3(0, 0, fireHydrantMesh->back), V3(0, 0, fireHydrantMesh->back));
 
 			if (isPressed)
 			{
-				glfwGetCursorPos(this->window->GetHandle(), &mouseWorldX, &mouseWorldY);
-				mouseWorldX = (mouseWorldX / this->width);
-				mouseWorldY = (mouseWorldY / this->width);
-				// std::cout << "x:" << mouseWorldX << " y:" << mouseWorldY << std::endl;
-
+				glfwGetCursorPos(this->window->GetHandle(), &mouseDirX, &mouseDirY);
 				// shot a ray
-				Ray r(cam.getPos(), V3(1, 0, sin(frameIndex / 100.f)));
+				V4 normalizedDeviceCoordinates(mouseDirX / width * 2 - 1, 1 - mouseDirY / height * 2, 1, 1);
+				V4 mousePickingWorldSpace = Inverse(cam.pv()) * normalizedDeviceCoordinates;
+				Ray ray(rayOrigin, mousePickingWorldSpace.toV3() - rayOrigin);
 
-				V3 res;
-				if (r.Intersect(res, *plane))
+				V3 res_left = ray.intersect(left_plane);
+				V3 res_two = ray.intersect(right_plane);
+
+				V3 res_top = ray.intersect(top_plane);
+				V3 res_bottom = ray.intersect(bottom_plane);
+
+				V3 res_front = ray.intersect(front_plane);
+				V3 res_back = ray.intersect(back_plane);
+
+
+				std::vector<V3> tt;
+				tt.push_back(res_left);
+				tt.push_back(res_two);
+
+				tt.push_back(res_top);
+				tt.push_back(res_bottom);
+
+				tt.push_back(res_front);
+				tt.push_back(res_back);
+
+				resultingHit = ray.minDist(tt);
+				if (resultingHit != NAN_V3)
 				{
-					std::cout << r.dir.x << r.dir.y << r.dir.z << std::endl;
-					std::cout << "hit at" << res.x << "," << res.y << "," << res.z << std::endl;
+					Debug::DrawLine(V4(resultingHit - V3(0, 3, 0), 1), V4(resultingHit - V3(0, 0, 0), 1), V4(1, 0, 0, 1));
+					Debug::DrawSquare(V4(resultingHit, 1));
 				}
-				else
-				{
-					std::cout << "none intersecting" << std::endl;
-				}
+				resultingHit = slow_intersection(ray, fireHydrantWorldSpaceTransform, fireHydrantMesh->positions, fireHydrantMesh->indicesAmount, &(fireHydrantMesh)->normals);
 			}
+
+			cubeWorldSpaceTransform = Translate(V4(resultingHit.x, resultingHit.y, resultingHit.z, 1));
 
 			for (size_t i = 0; i < 100; i++)
 			{
@@ -260,10 +440,10 @@ namespace Example
 			cubeScript->setM4(cam.pv(), "m4ProjViewPos");
 
 			light.bindLight(fireHydrantScript, cam.getPos());
-			fireHydrant->DrawScene(fireHydrantProjectionViewTransform, fireHydrantColor);
+			fireHydrant->DrawScene(fireHydrantProjectionViewTransform, fireHydrantColor); // cause
 
 			light.bindLight(cubeScript, cam.getPos());
-			cube->DrawScene(cubeProjectionViewTransform, cubeColor);
+			cube->DrawScene(cubeProjectionViewTransform, cubeColor); // cause
 
 			for (int i = 0; i < 100; i++)
 			{
@@ -302,9 +482,9 @@ namespace Example
 		ImGui::SliderFloat("z", &z, -5.f, 5.f);
 
 		// plane->normal = V3(x, y, z);
-		ImGui::Text("planeNormal: %.3f\t%.3f\t%.3f", plane->normal.x, plane->normal.y, plane->normal.z);
+		ImGui::Text("resultingHit: %.3f\t%.3f\t%.3f", resultingHit.x, resultingHit.y, resultingHit.z);
 
-		ImGui::Text("frames: %d %.0f", frameIndex, (float)1e6 / duration);
+		ImGui::Text("frames: %d %.0f", frameIndex, 1e6f / float(duration));
 
 		ImGui::End();
 	}

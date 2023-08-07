@@ -258,95 +258,46 @@ std::shared_ptr<MeshResource> MeshResource::Cube()
 bool MeshResource::findCenterOfMass()
 {
 	size_t i = 0;
-	V4 sumPositions = V4();
+	V3 sumPositions = V3();
 
 	for (; i < positions.size(); i++)
 	{
 		sumPositions = positions[i];
 	}
-	centerOfMass = sumPositions * (1.f / ++i);
+	center_of_mass = sumPositions * (1.f / ++i);
 	return true;
 }
 
 bool MeshResource::findbounds()
 {
 	// can't be less than the minimum value of 'undefined', so let's not, mate?
-	left = right = positions[0].x;
-	bottom = top = positions[0].y;
-	front = back = positions[0].z;
+	left = right = positions[0][0];
+	bottom = top = positions[0][1];
+	front = back = positions[0][2];
 
 	// I should actually do this for all 6 of them but.. nah
 
 	for (size_t i = 1; i < positions.size(); i++)
 	{
-		if (positions[i].x < left)
-			left = positions[i].x;
+		if (positions[i][0] < left)
+			left = positions[i][0];
 
-		if (positions[i].y < bottom)
-			bottom = positions[i].y;
+		if (positions[i][1] < bottom)
+			bottom = positions[i][1];
 
-		if (positions[i].z < front)
-			front = positions[i].z;
+		if (positions[i][2] < front)
+			front = positions[i][2];
 		
-		if (positions[i].x > right)
-			right = positions[i].x;
+		if (positions[i][0] > right)
+			right = positions[i][0];
 
-		if (positions[i].y > top)
-			top = positions[i].y;
+		if (positions[i][1] > top)
+			top = positions[i][1];
 
-		if (positions[i].z > back)
-			back = positions[i].z;
+		if (positions[i][2] > back)
+			back = positions[i][2];
 	}
 	return true;
-}
-
-// because this can't be done in the constructor :D
-std::vector<V3> MeshResource::LoadVerticesFromFile(const char *pathToFile)
-{
-	char buf[1024];
-	FILE* fs;
-#ifndef __linux__
-	fopen_s(&fs, pathToFile, "r"); // textures/sphere.obj
-#else
-	fs = fopen64(pathToFile, "r"); // "textures/sphere.obj"
-#endif
-
-	unsigned long long verticesUsed = 0ull;
-	std::vector<V3> coords;
-
-	if (fs)
-	{
-		while (true)
-		{
-			int foo = fscanf(fs, "%1024s", buf); // reads one word at a time, seperate by a space or newline, and places it at buf[0] with a trailing '\0'
-			if (foo <= 0)
-			{
-				break;
-			}
-
-			if (buf[0] == 'v' && buf[1] == '\0')
-			{
-				V3 nextCoordinate;
-				if (fscanf(fs, "%f %f %f", &nextCoordinate.x, &nextCoordinate.y, &nextCoordinate.z) == 3)
-				{
-					coords.push_back(nextCoordinate);
-				}
-				else
-				{
-					std::cerr << "missing arguments in vertex, expected 3" << std::endl;
-				}
-			}
-		}
-	}
-	else
-	{
-		printf("file not found with path \"./%s\"\n", pathToFile);
-	}
-	if (fs != nullptr)
-	{
-		fclose(fs);
-	}
-	return coords;
 }
 
 std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile,
@@ -384,7 +335,7 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile,
 			if (buf[0] == 'v' && buf[1] == '\0')
 			{
 				V3 nextCoordinate;
-				if (fscanf(fs, "%f %f %f", &nextCoordinate.x, &nextCoordinate.y, &nextCoordinate.z) == 3)
+				if (fscanf(fs, "%f %f %f", &nextCoordinate[0], &nextCoordinate[1], &nextCoordinate[2]) == 3)
 				{
 					coords.push_back(nextCoordinate);
 				}
@@ -397,7 +348,7 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile,
 			else if (buf[0] == 'v' && buf[1] == 't' && buf[2] == '\0')
 			{
 				V2 nextTexel;
-				if (fscanf(fs, "%f %f", &nextTexel.x, &nextTexel.y) == 2)
+				if (fscanf(fs, "%f %f", &nextTexel[0], &nextTexel[1]) == 2)
 				{
 					texels.push_back(nextTexel);
 				}
@@ -410,7 +361,7 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile,
 			else if (buf[0] == 'v' && buf[1] == 'n' && buf[2] == '\0')
 			{
 				V3 nextNormal;
-				if (fscanf(fs, "%f %f %f", &nextNormal.x, &nextNormal.y, &nextNormal.z) == 3)
+				if (fscanf(fs, "%f %f %f", &nextNormal[0], &nextNormal[1], &nextNormal[2]) == 3)
 				{
 					normals.push_back(nextNormal);
 				}
@@ -445,8 +396,8 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile,
 							});
 					}
 
-					float dist1 = (vertices[vertices.size() - 4].pos - vertices[vertices.size() - 2].pos).Length();
-					float dist2 = (vertices[vertices.size() - 3].pos - vertices[vertices.size() - 1].pos).Length();
+					float dist1 = (vertices[vertices.size() - 4].pos - vertices[vertices.size() - 2].pos).Length2();
+					float dist2 = (vertices[vertices.size() - 3].pos - vertices[vertices.size() - 1].pos).Length2();
 					if (dist1 > dist2)
 					{
 						indices.push_back(vertices.size() - 4);

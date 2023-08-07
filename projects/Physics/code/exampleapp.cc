@@ -38,7 +38,60 @@ namespace Example
 	/**
 	 */
 
-	const V3 slow_intersection(
+	const M4 quaternionToRotationMatrix4x4(const Quaternion& q)
+	{
+		M4 rotationMatrix;
+
+		float w = q.getW();
+		float x = q.getX();
+		float y = q.getY();
+		float z = q.getZ();
+
+		float ww = w * w;
+		float wx = w * x;
+		float wy = w * y;
+		float wz = w * z;
+		float xx = x * x;
+		float xy = x * y;
+		float xz = x * z;
+		float yy = y * y;
+		float yz = y * z;
+		float zz = z * z;
+
+		rotationMatrix[0][0] = 1 - 2 * (yy + zz);
+		rotationMatrix[0][1] = 2 * (xy - wz);
+		rotationMatrix[0][2] = 2 * (xz + wy);
+		rotationMatrix[0][3] = 0.0;
+
+		rotationMatrix[1][0] = 2 * (xy + wz);
+		rotationMatrix[1][1] = 1 - 2 * (xx + zz);
+		rotationMatrix[1][2] = 2 * (yz - wx);
+		rotationMatrix[1][3] = 0.0;
+
+		rotationMatrix[2][0] = 2 * (xz - wy);
+		rotationMatrix[2][1] = 2 * (yz + wx);
+		rotationMatrix[2][2] = 1 - 2 * (xx + yy);
+		rotationMatrix[2][3] = 0.0;
+
+		rotationMatrix[3][0] = 0.0;
+		rotationMatrix[3][1] = 0.0;
+		rotationMatrix[3][2] = 0.0;
+		rotationMatrix[3][3] = 1.0;
+
+		return rotationMatrix;
+	}
+
+
+	const V3 fast_intersection(const Ray& r,
+		M4 WorldSpaceTransform,
+		std::vector<V3>& i_worldSpace_coords,
+		std::vector<unsigned>& i_meshModel_indices,
+		std::vector<V3>* normals = nullptr)
+	{
+		return V3();
+	}
+
+	const const V3 slow_intersection(
 		Ray& r,
 		M4 WorldSpaceTransform,
 		std::vector<V3>& i_worldSpace_coords,
@@ -46,7 +99,7 @@ namespace Example
 		std::vector<V3>* normals = nullptr)
 	{
 		V3 closest_point = NAN_V3;
-
+		bool isUndef = true;
 		//use the world space coordinates for the entire model
 		for (size_t i = 0; i < i_meshModel_indices.size(); i += 3)
 		{
@@ -56,9 +109,13 @@ namespace Example
 			//V3 b = i_worldSpace_coords[i_meshModel_indices[i + 1]];
 			//V3 c = i_worldSpace_coords[i_meshModel_indices[i + 2]];
 
-			V3 a = (Transpose(WorldSpaceTransform) * V4(i_worldSpace_coords[i_meshModel_indices[i + 0]], 1)).toV3();
-			V3 b = (Transpose(WorldSpaceTransform) * V4(i_worldSpace_coords[i_meshModel_indices[i + 1]], 1)).toV3();
-			V3 c = (Transpose(WorldSpaceTransform) * V4(i_worldSpace_coords[i_meshModel_indices[i + 2]], 1)).toV3();
+			V4 a4 = V4(Transpose(WorldSpaceTransform) * V4(i_worldSpace_coords[i_meshModel_indices[i + 0]], 1));
+			V4 b4 = V4(Transpose(WorldSpaceTransform) * V4(i_worldSpace_coords[i_meshModel_indices[i + 1]], 1));
+			V4 c4 = V4(Transpose(WorldSpaceTransform) * V4(i_worldSpace_coords[i_meshModel_indices[i + 2]], 1));
+
+			V3 a = V3(a4.x, a4.y, a4.z);
+			V3 b = V3(b4.x, b4.y, b4.z);
+			V3 c = V3(c4.x, c4.y, c4.z);
 
 			//create a plane for each of the faces check for intersections
 			if (false && normals != nullptr) // always out of range, probably because the parser is broken
@@ -75,22 +132,22 @@ namespace Example
 			}
 
 			// point in triangle with cross product
-			V3 currentIntersect = r.intersect(p);
-			if (currentIntersect == NAN_V3) continue;
+			float epsilon = 1e-5;
+			V3 currentIntersect = r.intersect(p, epsilon);
 
-			//check if it's within the triangle's edges
-			V3 x1 = Cross(b - a, currentIntersect - a);
-			V3 x2 = Cross(c - a, currentIntersect - b);
-			V3 x3 = Cross(a - c, currentIntersect - c);
-			if (Dot(x1, x2) > 0.f && Dot(x2, x3) > 0.f && Dot(x3, x1) > 0.f)
+			// TODO: undefined check
+			if (epsilon == 1337) continue;
+			isUndef = false;
+			
+			if (point_in_triangle_3D(currentIntersect, a, b, c))
 			{
-				if (closest_point != NAN_V3)
+				if (isUndef)
 				{
 					V3 curr_dist = currentIntersect - r.origin;
 					V3 best_dist = closest_point - r.origin;
 
 					// only update if it is the closest point on the mesh.
-					if (Length2(curr_dist) < Length2(best_dist))
+					if (curr_dist.Length2() < best_dist.Length2())
 					{
 						closest_point = currentIntersect;
 					}
@@ -249,13 +306,9 @@ namespace Example
 	/**
 	 */
 	
-	void fuck_test()
+
+	V3 mesh_intersection_test(Ray& ray)
 	{
-		V3 rayOrigin = V3(0, 0, 0);
-		V3 rayDir = V3(0, 0, 1);
-
-		Ray ray(rayOrigin, rayDir);
-
 		V4 identity[4] = {
 			V4(1, 0, 0, 0),
 			V4(0, 1, 0, 0),
@@ -272,21 +325,24 @@ namespace Example
 		V3 bottomLeft = V3(-1, -1, 5);
 		V3 topMiddle = V3(0, 1, 5);
 		V3 bottomRight = V3(1, -1, 5);
-
+		
+		//V3 bottomLeft = V3();
+		//TODO: CONTINUE CODING HERE, ADD ANOTHER FACE TO MAKE SURE DEPTH TEST WORKS
 		vertexPositions.push_back(bottomLeft);
 		vertexPositions.push_back(topMiddle);
 		vertexPositions.push_back(bottomRight);
 
 		std::vector<uint32> indices;
 
+		indices.push_back(0);
 		indices.push_back(1);
 		indices.push_back(2);
-		indices.push_back(0);
 
 		std::vector<V3>* normals = nullptr;
 
 		V3 hit = slow_intersection(ray, emptyMatrix, vertexPositions, indices, normals); // resulting hit should be 0, 0, 1
-		std::cout << "x: " << hit.x << ", y: " << hit.y << ", z: " << hit.z << std::endl;
+		return hit;
+		std::cout << "x: " << hit[0] << ", y: " << hit[1] << ", z: " << hit[2] << std::endl;
 	}
 
 	void
@@ -295,14 +351,14 @@ namespace Example
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
 
+		// deltatime
+		float dt;
+		Ray ray(V3(FLT_MAX, FLT_MAX, FLT_MAX), V3(FLT_MAX, FLT_MAX, FLT_MAX));
 
 		// gravity
 		const float g = -9.806e-3f;
-		std::cout << (bool(NAN) == bool(NAN)) << std::endl;
-		std::cout << (bool(nanf("")) == bool(nanf(""))) << std::endl;
-		std::cout << (bool(NAN) != bool(NAN)) << std::endl;
-		std::cout << (bool(nanf("")) != bool(nanf("")));
-		fuck_test();
+#define GRAVITY V3(0, g, 0)
+
 		Camera cam(90, (float)width / height, 0.01f, 1000.0f);
 		// cam.setPos(V4(0, 4, 3));
 		cam.setRot(V4(0, 1, 0), M_PI);
@@ -331,10 +387,6 @@ namespace Example
 			}			
 		}
 
-		//printf("%f %f %f\n", x, y, z);
-		
-
-
 		plane = new Plane(V3(0, 0, -0), V3(0, 0, 1));
 		while (this->window->IsOpen())
 		{
@@ -350,16 +402,15 @@ namespace Example
 			
 			Debug::DrawBB(*fireHydrant->getMesh(), V4(0, 1, 1, 1), fireHydrantWorldSpaceTransform);
 			Debug::DrawAABB(*fireHydrant->getMesh(), V4(1, 0, 0, 1), fireHydrantWorldSpaceTransform);
-			//Print(fireHydrantWorldSpaceTransform);
-			//Implement a gravitational acceleration on the fireHydrant
-			fireHydrant->actor->velocity = fireHydrant->actor->velocity + fireHydrant->actor->mass * g;
-
-			//fireHydrant world space
-			//fireHydrantWorldSpaceTransform = /*Rotation(V4(0, 0, 1), -0.012f) * Rotation(V4(0, 1, 0), 0.004f) */ fireHydrantWorldSpaceTransform
 			
 			// effect of gravity
-			/* *
-			Translate(V4(0, -1, 0) * fireHydrant->actor->velocity)*/;
+			//fireHydrant->actor->apply_force(GRAVITY, dt);
+
+			//fireHydrant world space
+			fireHydrantWorldSpaceTransform = /*Rotation(V4(0, 0, 1), -0.012f) * Rotation(V4(0, 1, 0), 0.004f) */ fireHydrantWorldSpaceTransform
+			
+			//* Translate(fireHydrant->actor->velocity)
+				;
 
 			//fireHydrant view space
 			fireHydrantProjectionViewTransform = cam.pv() * fireHydrantWorldSpaceTransform/* * Scalar(V4(.1, .1, .1))*/;
@@ -395,30 +446,32 @@ namespace Example
 				// shot a ray
 				V4 normalizedDeviceCoordinates(mouseDirX / width * 2 - 1, 1 - mouseDirY / height * 2, 1, 1);
 				V4 mousePickingWorldSpace = Inverse(cam.pv()) * normalizedDeviceCoordinates;
-				Ray ray(rayOrigin, mousePickingWorldSpace.toV3() - rayOrigin);
+				ray = Ray(rayOrigin, (mousePickingWorldSpace - rayOrigin).toV3());
 
-				V3 res_left = ray.intersect(left_plane);
-				V3 res_two = ray.intersect(right_plane);
+				//resultingHit=mesh_intersection_test(ray);
+				
+				//V3 res_left = ray.intersect(left_plane);
+				//V3 res_two = ray.intersect(right_plane);
 
-				V3 res_top = ray.intersect(top_plane);
-				V3 res_bottom = ray.intersect(bottom_plane);
+				//V3 res_top = ray.intersect(top_plane);
+				//V3 res_bottom = ray.intersect(bottom_plane);
 
-				V3 res_front = ray.intersect(front_plane);
-				V3 res_back = ray.intersect(back_plane);
+				//V3 res_front = ray.intersect(front_plane);
+				//V3 res_back = ray.intersect(back_plane);
 
 
-				std::vector<V3> tt;
-				tt.push_back(res_left);
-				tt.push_back(res_two);
+				//std::vector<V3> tt;
+				//tt.push_back(res_left);
+				//tt.push_back(res_two);
 
-				tt.push_back(res_top);
-				tt.push_back(res_bottom);
+				//tt.push_back(res_top);
+				//tt.push_back(res_bottom);
 
-				tt.push_back(res_front);
-				tt.push_back(res_back);
+				//tt.push_back(res_front);
+				//tt.push_back(res_back);
 
-				resultingHit = ray.minDist(tt);
-				if (resultingHit != NAN_V3)
+				//resultingHit = ray.minDist(tt);
+				if (true)// || isnan(resultingHit.data))
 				{
 					Debug::DrawLine(V4(resultingHit - V3(0, 3, 0), 1), V4(resultingHit - V3(0, 0, 0), 1), V4(1, 0, 0, 1));
 					Debug::DrawSquare(V4(resultingHit, 1));
@@ -426,8 +479,11 @@ namespace Example
 				resultingHit = slow_intersection(ray, fireHydrantWorldSpaceTransform, fireHydrantMesh->positions, fireHydrantMesh->indicesAmount, &(fireHydrantMesh)->normals);
 			}
 
-			cubeWorldSpaceTransform = Translate(V4(resultingHit.x, resultingHit.y, resultingHit.z, 1));
+			cubeWorldSpaceTransform = Translate(V4(resultingHit, 1));
 
+			// TODO create an impulse
+			(*fireHydrant->actor).apply_linear_impulse(ray, (fireHydrantProjectionViewTransform * V4(fireHydrantMesh->center_of_mass, 1)).toV3(), resultingHit);
+			(*fireHydrant->actor).update(dt);
 			for (size_t i = 0; i < 100; i++)
 			{
 				quadProjectionViewTransform[i] = cam.pv() * quadWorldSpaceTransform[i];
@@ -459,7 +515,10 @@ namespace Example
 
 			Debug::Render(cam.pv());
 			this->window->SwapBuffers();
-			auto finish = std::chrono::system_clock::now();
+			
+			auto stop = std::chrono::high_resolution_clock::now();
+			using ms = std::chrono::duration<float, std::milli>;
+			dt = std::chrono::duration_cast<ms>(stop - start).count();
 #ifdef __linux__
 			duration = std::chrono::duration_cast<std::chrono::microseconds>(finish - start).count();
 #endif
@@ -482,7 +541,7 @@ namespace Example
 		ImGui::SliderFloat("z", &z, -5.f, 5.f);
 
 		// plane->normal = V3(x, y, z);
-		ImGui::Text("resultingHit: %.3f\t%.3f\t%.3f", resultingHit.x, resultingHit.y, resultingHit.z);
+		ImGui::Text("resultingHit: %.3f\t%.3f\t%.3f", resultingHit.data[0], resultingHit.data[1], resultingHit.data[2]);
 
 		ImGui::Text("frames: %d %.0f", frameIndex, 1e6f / float(duration));
 

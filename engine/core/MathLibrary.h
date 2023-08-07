@@ -265,6 +265,57 @@ struct V3
 	float Length();
 	float Length2();
 	void Normalize();
+
+	bool operator!=(V3 const& rhs) const {
+		for (size_t i = 0; i < 3; ++i) {
+			if (data[i] + FLT_EPSILON <= rhs.data[i] &&
+				data[i] - FLT_EPSILON >= rhs.data[i]
+				) return false;
+		}
+		return true;
+	}
+
+	bool operator==(V3 const& rhs) const {
+		for (size_t i = 0; i < 3; ++i) {
+			if (data[i] + FLT_EPSILON > rhs.data[i] &&
+				data[i] - FLT_EPSILON < rhs.data[i]
+				) return false;
+		}
+		return true;
+	}
+
+	bool operator<(V3 const& rhs) const {
+		for (size_t i = 0; i < 3; ++i) {
+			if (data[i] - FLT_EPSILON >= rhs.data[i])
+				return false;
+		}
+		return true;
+	}
+
+	bool operator>(V3 const& rhs) const {
+		for (size_t i = 0; i < 3; ++i) {
+			if (data[i] + FLT_EPSILON <= rhs.data[i])
+				return false;
+		}
+		return true;
+	}
+
+	bool operator<=(V3 const& rhs) const {
+		for (size_t i = 0; i < 3; ++i) {
+			if (data[i] + FLT_EPSILON > rhs.data[i])
+				return false;
+		}
+		return true;
+	}
+
+	bool operator>=(V3 const& rhs) const {
+		for (size_t i = 0; i < 3; ++i) {
+			if (data[i] - FLT_EPSILON < rhs.data[i])
+				return false;
+		}
+		return true;
+	}
+
 };
 
 // Vector Constructors
@@ -476,6 +527,74 @@ inline V3 Normalize(V3 vector)
 			vector[i] /= length;
 	return vector;
 }
+
+inline bool point_in_triangle_3D(
+	const V3& p,
+	const V3& a,
+	const V3& b,
+	const V3& c
+)
+{
+	const V3 x1 = Cross(b - a, p - a);
+	const V3 x2 = Cross(c - b, p - b);
+	const V3 x3 = Cross(a - c, p - c);
+	return
+		(Normalize(x1) == Normalize(x2) && Normalize(x2) == Normalize(x3))
+		&&
+		(Dot(x1, x2) > 0.f && Dot(x2, x3) > 0.f && Dot(x3, x1) > 0.f);
+}
+
+// Calculate the signed volume of a tetrahedron formed by four points
+inline const float signedVolume(const V3& a, const V3& b, const V3& c, const V3& d) {
+	return (1.0 / 6.0) * (
+		(d.x - a.x) * ((b.y - a.y) * (c.z - a.z) - (b.z - a.z) * (c.y - a.y)) +
+		(d.y - a.y) * ((b.z - a.z) * (c.x - a.x) - (b.x - a.x) * (c.z - a.z)) +
+		(d.z - a.z) * ((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x))
+		);
+}
+
+// Calculate barycentric coordinates of point P with respect to the tetrahedron defined by a, b, c, and d
+inline void barycentricCoordinates(const V3& a, const V3& b, const V3& c, const V3& d, const V3& p,
+	float& w0, float& w1, float& w2, float& w3) {
+	// Calculate the signed volumes of four tetrahedra
+	float volPABC = signedVolume(p, a, b, c);
+	float volPABD = signedVolume(p, a, b, d);
+	float volPACD = signedVolume(p, a, c, d);
+	float volPBCD = signedVolume(p, b, c, d);
+
+	// Calculate the sum of the absolute values of the signed volumes
+	float sumVolumes = std::abs(volPABC) + std::abs(volPABD) + std::abs(volPACD) + std::abs(volPBCD);
+
+
+
+	// Calculate the normalized barycentric coordinates
+	w0 = std::abs(volPABD) / sumVolumes;
+	w1 = std::abs(volPACD) / sumVolumes;
+	w2 = std::abs(volPBCD) / sumVolumes;
+	w3 = std::abs(volPABC) / sumVolumes;
+}
+
+inline const V3 supportFunction(const std::vector<V3>& shapeVertices, const V3& direction)
+{
+	V3 farthestPoint = shapeVertices[0];
+	float maxDotProduct = farthestPoint.Dot(direction);
+
+	// Loop through the remaining vertices to find the farthest point
+	for (size_t i = 1; i < shapeVertices.size(); ++i)
+	{
+		const V3& currentPoint = shapeVertices[i];
+		float dotProduct = Dot(currentPoint, direction);
+
+		if (dotProduct > maxDotProduct)
+		{
+			maxDotProduct = dotProduct;
+			farthestPoint = currentPoint;
+
+		}
+	}
+	return farthestPoint;
+}
+
 
 #pragma endregion // Vector3
 
@@ -1236,43 +1355,85 @@ inline M4 projection(float fov, float aspect, float n, float f)
 
 #pragma endregion // Matrix
 
-#pragma region Quaternions
-
-struct Quat
+class Quaternion
 {
-	float scalar;
-	union
+private:
+	float w, x, y, z; // Components of the quaternion: w + xi + yj + zk
+
+public:
+	// Constructor
+	Quaternion(float w = 1.0, float x = 0.0, float y = 0.0, float z = 0.0)
+		: w(w), x(x), y(y), z(z) {}
+
+	// Getters for components
+	float getW() const { return w; }
+	float getX() const { return x; }
+	float getY() const { return y; }
+	float getZ() const { return z; }
+
+	// Quaternion operations
+	float norm() const
 	{
-		struct
-		{
-			float x, y, z, w;
-		};
-		struct
-		{
-			float data[4];
-		};
-	};
+		return std::sqrt(w * w + x * x + y * y + z * z);
+	}
 
-	inline Quat();
-	inline Quat(float x, float y, float z, float w);
+	Quaternion normalized() const
+	{
+		float magnitude = norm();
+		return Quaternion(w / magnitude, x / magnitude, y / magnitude, z / magnitude);
+	}
 
-	// to Euler angles
+	Quaternion conjugate() const
+	{
+		return Quaternion(w, -x, -y, -z);
+	}
 
-	// http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-17-quaternions/
+
+	// Quaternion arithmetic
+	Quaternion operator+(const Quaternion& other) const
+	{
+		return Quaternion(w + other.w, x + other.x, y + other.y, z + other.z);
+	}
+
+	Quaternion operator-(const Quaternion& other) const
+	{
+		return Quaternion(w - other.w, x - other.x, y - other.y, z - other.z);
+	}
+
+	Quaternion operator*(const Quaternion& other) const
+	{
+		double newW = w * other.w - x * other.x - y * other.y - z * other.z;
+		double newX = w * other.x + x * other.w + y * other.z - z * other.y;
+		double newY = w * other.y - x * other.z + y * other.w + z * other.x;
+		double newZ = w * other.z + x * other.y - y * other.x + z * other.w;
+		return Quaternion(newW, newX, newY, newZ);
+	}
+
+	// Rotate a 3D vector using the quaternion
+	// The input vector must be a 3D vector represented as a Quaternion with w = 0
+	Quaternion rotate(const Quaternion& vector) const
+	{
+		Quaternion conjugateQ = this->conjugate();
+		return (*this) * vector * conjugateQ;
+	}
+
+	Quaternion QuaternionLookAt(const V3& from, const V3& to)
+	{
+		// Calculate the direction vector from the 'from' position to the 'to' position
+		V3 direction = Normalize(to - from);
+
+		// Create a rotation Quaternion that rotates the 'forward' vector (0, 0, 1) to the 'direction' vector
+		V3 forward(0.0, 0.0, 1.0);
+		V3 axis = Normalize(Cross(forward, direction));
+		float angle = std::acos(Dot(forward, direction));
+		Quaternion rotation(std::cos(angle / 2.0), axis[0] * std::sin(angle / 2.0),
+			axis[1] * std::sin(angle / 2.0), axis[2] * std::sin(angle / 2.0));
+
+		return rotation;
+	}
 };
 
-Quat::Quat()
-{
-	x = 0;
-	y = 0;
-	z = 0;
-	w = 0;
-}
-
-Quat::Quat(float x, float y, float z, float w) : x(x), y(y), z(z), w(w)
-{
-
-}
+// If the quaternion is not normalized, make sure to normalize it before converting it to a rotation matrix.
 
 #pragma endregion // Quaternions
 
@@ -1284,10 +1445,9 @@ struct Plane
 {
 	V3 normal;
 	V3 point;
-	float MARGIN = 1.e-5f;
 	
 	inline Plane(V3 point, V3 normal);
-	bool pointIsOnPlane(const V3& point, float margin);
+	bool pointIsOnPlane(const V3& point, float epsilon=FLT_EPSILON);
 };
 
 Plane::Plane(V3 point, V3 normal) : point(point), normal(normal)
@@ -1295,10 +1455,10 @@ Plane::Plane(V3 point, V3 normal) : point(point), normal(normal)
 
 }
 
-inline bool Plane::pointIsOnPlane(const V3& point, float margin)
+inline bool Plane::pointIsOnPlane(const V3& point, float epsion)
 {
-	return Dot(normal, point - this->point) <= margin ||
-	Dot(normal, point - this->point) >= -margin;
+	float res = Dot(normal, point - this->point);
+	return res <= epsion || res >= -epsion;
 }
 
 #pragma endregion // Plane
@@ -1312,7 +1472,7 @@ struct Ray
 	V3 dir;
 	Ray(V3 origin, V3 dir);
 	const V3 Ray::minDist(const std::vector<V3>& others);
-	const V3 intersect(const Plane& plane, const float& epsilon);
+	const V3 intersect(const Plane& plane, float& epsilon);
 };
 
 inline Ray::Ray(V3 origin, V3 dir) : origin(origin), dir(dir)
@@ -1320,11 +1480,12 @@ inline Ray::Ray(V3 origin, V3 dir) : origin(origin), dir(dir)
 
 }
 
-inline const V3 Ray::intersect(const Plane& plane, const float& epsilon=1e-10f)
+inline const V3 Ray::intersect(const Plane& plane, float& epsilon)
 {
 	float dotProduct = Dot(plane.normal, dir);
 
 	if (!dotProduct) {
+		epsilon = 1337;
 		return NAN_V3;
 	}
 

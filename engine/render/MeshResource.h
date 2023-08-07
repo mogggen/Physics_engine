@@ -12,12 +12,14 @@ class MeshResource
 	GLuint indexBuffer;
 
 public:
+
 	std::vector<V3> positions;
 	std::vector<unsigned> indicesAmount;
 	std::vector<V2> texels;
 	std::vector<V3> normals;
 	std::vector<Vertex> vertices;
-	V4 centerOfMass;
+
+	V3 center_of_mass;
 	
 	// end points
 	float left;
@@ -31,7 +33,6 @@ public:
 	static std::shared_ptr<MeshResource> Cube();
 	bool findCenterOfMass();
 	bool findbounds();
-	static std::vector<V3> LoadVerticesFromFile(const char *pathToFile);
 	static std::shared_ptr<MeshResource> LoadObj(const char *pathToFile,
 		std::vector<uint32>& _indices,
 		std::vector<V3>& _positions,

@@ -89,31 +89,31 @@ namespace Debug
      {
 		 float data[6] = { mesh.left, mesh.right, mesh.bottom, mesh.top, mesh.back, mesh.front };
 		 V3 current = (Transpose(modelMatrix) * V4(data[0], data[2], data[4], 1)).toV3();
-          float left = current.x;
-          float bottom = current.y;
-          float front = current.z;
+          float left = current[0];
+          float bottom = current[1];
+          float front = current[2];
 
-          float right = current.x;
-          float top = current.y;
-          float back = current.z;
+          float right = current[0];
+          float top = current[1];
+          float back = current[2];
 
          
          for (size_t i = 1; i < 8; i++)
          {
              V3 current = (Transpose(modelMatrix) * V4(data[i / 4], data[2 + (i / 2) % 2], data[4 + i % 2], 1)).toV3();
-             if (current.x < left)
-                 left = current.x;
-             if (current.y < bottom)
-                 bottom = current.y;
-             if (current.z < front)
-                 front = current.z;
+             if (current[0] < left)
+                 left = current[0];
+             if (current[1] < bottom)
+                 bottom = current[1];
+             if (current[2] < front)
+                 front = current[2];
 
-             if (current.x > right)
-                 right = current.x;
-             if (current.y > top)
-                 top = current.y;
-             if (current.z > back)
-                 back = current.z;
+             if (current[0] > right)
+                 right = current[0];
+             if (current[1] > top)
+                 top = current[1];
+             if (current[2] > back)
+                 back = current[2];
          }
          
          PushVertex(&lineBuf, Vertex{V4(left, top, front, 1), color });
@@ -172,7 +172,7 @@ namespace Debug
         PushVertex(&triBuf, Vertex{ center + V3(size / 2, 0, size / 2), color });
     }
 
-    void DrawSphere()
+    void DrawSphere(V4 center, float size, V4 color)
     {
 
     }

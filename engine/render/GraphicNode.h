@@ -8,6 +8,9 @@
 
 class GraphicNode
 {
+protected:
+	float mass;
+	V3 center_of_mass;
 	std::shared_ptr<MeshResource> Mesh;
 	std::shared_ptr<TextureResource> Texture;
 	std::shared_ptr<ShaderResource> Shader;

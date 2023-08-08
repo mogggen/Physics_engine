@@ -474,14 +474,6 @@ inline V3 operator/(V3 left, float right)
 	return left;
 }
 
-inline V3 operator/(float left, V3 right)
-{
-	for (size_t i = 0; i < 3; i++)
-	{
-		right[i] /= left;
-	}
-	return right;
-}
 
 inline float Dot(V3 left, V3 right)
 {
@@ -589,12 +581,165 @@ inline const V3 supportFunction(const std::vector<V3>& shapeVertices, const V3& 
 		{
 			maxDotProduct = dotProduct;
 			farthestPoint = currentPoint;
-
 		}
 	}
 	return farthestPoint;
 }
 
+inline const V3 support(
+    std::vector<V3>&const lhs,
+    std::vector<V3>&const rhs,
+    const V3 dir)
+{
+    return supportFunction(lhs, dir) - supportFunction(rhs, dir * -1.f);
+}
+
+bool same_direction(const V3& direction, const V3& other)
+{
+	return Dot(direction, other) > 0;
+}
+
+inline bool line(
+	std::vector<V3>& simplex,
+	V3& newDir)
+{
+	V3 a = simplex[0];
+	V3 b = simplex[1];
+
+	V3 ab = b - a;
+	V3 ao = a * -1.f;
+
+	if (same_direction(ab, ao))
+	{
+		newDir = Cross(Cross(ab, ao), ab);
+	}
+	else
+	{
+		simplex = {a};
+		newDir = ao;
+	}
+}
+
+inline bool triangle(std::vector<V3>& simplex,
+	V3& newDir)
+{
+	V3 a = simplex[0];
+	V3 b = simplex[1];
+	V3 c = simplex[2];
+
+	V3 ab = b - a;
+	V3 ac = c - a;
+	V3 ao = a * -1.f;
+
+	V3 abc = Cross(ab, ac);
+
+	if (same_direction(Cross(abc, ac), ao))
+	{
+		if (same_direction(ac, ao))
+		{
+			simplex = {a, c};
+			newDir = Cross(Cross(ac, ao), ac);
+		}
+		else
+		{
+			return line(simplex = {a, b}, newDir);
+		}
+	}
+	else
+	{
+		if (same_direction(Cross(ab, abc), ao))
+		{
+			return line(simplex = {a, b}, newDir);
+		}
+		else
+		{
+			if (same_direction(abc, ao))
+			{
+				newDir = abc;
+			}
+			else
+			{
+				simplex = {a, c, b};
+				newDir = abc * -1.f;
+			}
+		}
+	}
+	return false;
+}
+
+inline bool tetrahedron(std::vector<V3>& simplex,
+	V3& newDir)
+{
+	V3 a = simplex[0];
+	V3 b = simplex[1];
+	V3 c = simplex[2];
+	V3 d = simplex[3];
+
+	V3 ab = b - a;
+	V3 ac = c - a;
+	V3 ad = d - a;
+	V3 ao = a * -1.f;
+
+	V3 abc = Cross(ab, ac);
+	V3 acd = Cross(ac, ad);
+	V3 adb = Cross(ad, ab);
+
+	if (same_direction(abc, ao))
+	{
+		return triangle(simplex = {a, b, c}, newDir);
+	}
+	if (same_direction(acd, ao))
+	{
+		return triangle(simplex = {a, c, d}, newDir);
+	}
+	if (same_direction(adb, ao))
+	{
+		return triangle(simplex = {a, d, b}, newDir);
+	}
+	return true;
+}
+
+bool next_simplex(std::vector<V3>& simplex,
+V3 newDir)
+{
+	switch (simplex.size())
+	{
+	case 2: return line(simplex, newDir);
+	case 3: return triangle(simplex, newDir);
+	case 4: return tetrahedron(simplex, newDir);
+	
+	default:
+		assert(simplex.size());
+		break;
+	}
+	return false;
+}
+
+inline bool gjk(std::vector<V3>&const lhs,
+std::vector<V3>&const rhs)
+{
+	std::vector<V3> simplex(4);
+	V3 curr = support(lhs, rhs, V3(1.f, 1.f, 1.f));
+	V3 newDir = curr * -1.f;
+
+	simplex.insert(simplex.begin(), curr);
+
+	for (size_t i = 0; i < lhs.size() + rhs.size(); i++)
+	{
+		curr = support(lhs, rhs, newDir);
+
+		if (curr.Dot(newDir) <= 0.f)
+		{
+			return false;
+		}
+		simplex.insert(simplex.begin(), curr);
+
+		if (next_simplex(simplex, newDir))
+		{
+			return true;
+		}
+	}
+}
 
 #pragma endregion // Vector3
 

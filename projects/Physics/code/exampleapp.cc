@@ -38,7 +38,7 @@ namespace Example
 	/**
 	 */
 
-	const M4 quaternionToRotationMatrix4x4(const Quaternion& q)
+	const M4 quaternionToRotationMatrix(const Quaternion& q)
 	{
 		M4 rotationMatrix;
 
@@ -81,15 +81,6 @@ namespace Example
 		return rotationMatrix;
 	}
 
-
-	const V3 fast_intersection(const Ray& r,
-		M4 WorldSpaceTransform,
-		std::vector<V3>& i_worldSpace_coords,
-		std::vector<unsigned>& i_meshModel_indices,
-		std::vector<V3>* normals = nullptr)
-	{
-		return V3();
-	}
 
 	const const V3 slow_intersection(
 		Ray& r,

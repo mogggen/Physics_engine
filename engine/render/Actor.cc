@@ -85,8 +85,8 @@ void Actor::update(const float& dt)
 
 V3 calculateCollisionImpulse(const V3& relativeVelocity,
                                   const V3& contactNormal,
-                                  double restitutionCoefficient,
-                                  double totalInverseMass) {
+                                  float restitutionCoefficient,
+                                  float totalInverseMass) {
     V3 f = relativeVelocity;
     V3 u = contactNormal;
     // Calculate the relative velocity along the contact normal
@@ -98,7 +98,7 @@ V3 calculateCollisionImpulse(const V3& relativeVelocity,
     }
 
     // Calculate the impulse scalar (change in momentum)
-    double impulseScalar = -(1.0 + restitutionCoefficient) * relativeVelocityAlongNormal;
+    float impulseScalar = -(1.0 + restitutionCoefficient) * relativeVelocityAlongNormal;
     impulseScalar /= totalInverseMass;
 
     // Calculate the impulse vector (collision response)

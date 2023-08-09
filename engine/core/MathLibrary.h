@@ -1,8 +1,10 @@
 ﻿//#include "config.h"
 #pragma once
 #include <cmath>
+#include <iostream>
 #include <vector>
 #include <stdio.h>
+#include <cassert>
 #ifndef M_PI
 #define M_PI 3.141592553584
 #endif
@@ -594,7 +596,7 @@ inline const V3 support(
     return supportFunction(lhs, dir) - supportFunction(rhs, dir * -1.f);
 }
 
-bool same_direction(const V3& direction, const V3& other)
+inline bool same_direction(const V3& direction, const V3& other)
 {
 	return Dot(direction, other) > 0;
 }
@@ -618,6 +620,7 @@ inline bool line(
 		simplex = {a};
 		newDir = ao;
 	}
+	return false;
 }
 
 inline bool triangle(std::vector<V3>& simplex,
@@ -699,7 +702,7 @@ inline bool tetrahedron(std::vector<V3>& simplex,
 	return true;
 }
 
-bool next_simplex(std::vector<V3>& simplex,
+inline bool next_simplex(std::vector<V3>& simplex,
 V3 newDir)
 {
 	switch (simplex.size())
@@ -715,8 +718,8 @@ V3 newDir)
 	return false;
 }
 
-inline bool gjk(std::vector<V3>&const lhs,
-std::vector<V3>&const rhs)
+inline bool gjk(std::vector<V3>& lhs,
+std::vector<V3>& rhs)
 {
 	std::vector<V3> simplex(4);
 	V3 curr = support(lhs, rhs, V3(1.f, 1.f, 1.f));
@@ -730,15 +733,189 @@ std::vector<V3>&const rhs)
 
 		if (curr.Dot(newDir) <= 0.f)
 		{
+			std::cout << "max iterations: " << i << std::endl;
 			return false;
 		}
 		simplex.insert(simplex.begin(), curr);
 
 		if (next_simplex(simplex, newDir))
 		{
+			std::cout << "max iterations: " << i << std::endl;
 			return true;
 		}
 	}
+}
+
+// That’s it for the main piece of the algorithm.
+// Don’t think I forgot about the helper functions…
+// GetFaceNormals is just a slightly more complex version of the loop from the 2D version. Instead of i and j, we now get three vertices by first looking up their index in the faces list. In 3D the normal is found by taking the cross product of the vectors between the face’s vertices. The winding order is now controlled by the index, instead of where we put some negative sign. Even though it’s well defined, we don’t check when adding new faces, so we still need the check here. Determining the winding involves finding the normal so there is no reason to not have this check here.
+// I’ve chosen to pack the distance and normal into a single vector4 to keep the code shorter.
+
+inline size_t get_face_normals_and_index(std::vector<V3>& normals_out,
+std::vector<float>& distances_out,
+
+	const std::vector<V3>& polytope,
+	const std::vector<size_t>& faces)
+{
+	assert(normals_out.size() + distances_out.size());
+
+	size_t minTriangle = 0;
+	float  minDistance = FLT_MAX;
+
+	for (size_t i = 0; i < faces.size(); i += 3)
+	{
+		V3 a = polytope[faces[i]];
+		V3 b = polytope[faces[i + 1]];
+		V3 c = polytope[faces[i + 2]];
+
+		V3 normal = Normalize(Cross(b - a, c - a));
+		float distance = Dot(normal, a);
+
+		if (distance < 0) {
+			normal *= -1;
+			distance *= -1.f;
+		}
+
+		normals_out.push_back(normal);
+		distances_out.push_back(distance);
+
+		if (distance < minDistance) {
+			minTriangle = i / 3;
+			minDistance = distance;
+		}
+	}
+	return minTriangle;
+}
+
+inline void AddIfUniqueEdge(
+	std::vector<size_t>& edges_a,
+	std::vector<size_t>& edges_b,
+
+	const std::vector<size_t>& faces,
+	size_t a,
+	size_t b)
+{
+	//      0--<--3
+	//     / \ B /   A: 2-0
+	//    / A \ /    B: 0-2
+	//   1-->--2
+	assert(edges_a.size() == edges_b.size());
+
+	size_t discard = size_t(-1);
+	for (size_t i = 0; i < edges_a.size(); i++)
+	{
+		if (edges_a[i] == faces[b] && edges_b[i] == faces[a])
+		{
+			discard = i;
+		}
+	}
+ 
+	if (discard != size_t(-1)) {
+		edges_a.erase(edges_a.begin() + discard);
+		edges_b.erase(edges_b.begin() + discard);
+	}
+	else
+	{
+		edges_a.push_back(faces[a]);
+		edges_b.push_back(faces[b]);
+	}
+}
+
+// returns collision points
+inline void epa(
+	V3& normal_out,
+	float& penetration_depth_out,
+
+	const std::vector<V3>& simplex,
+	std::vector<V3>& lhs,
+	std::vector<V3>& rhs)
+{
+	std::vector<V3> polytope(simplex.begin(), simplex.end());
+	std::vector<size_t>  faces = {
+		0, 1, 2,
+		0, 3, 1,
+		0, 2, 3,
+		1, 3, 2
+	};
+
+	std::vector<V3> normals;
+	std::vector<float> distances;
+
+	size_t minFace = get_face_normals_and_index(normals, distances, polytope, faces);
+
+	V3 minNormal;
+	float minDistance = FLT_MAX;
+
+	while (minDistance == FLT_MAX) {
+		minNormal = normals[minFace];
+		minDistance = distances[minFace];
+
+		V3 supportPoint = support(lhs, rhs, minNormal);
+		float sDistance = Dot(minNormal, supportPoint);
+
+		if (abs(sDistance - minDistance) > 0.001f) {
+			minDistance = FLT_MAX;
+
+			std::vector<size_t> unique_edges_a;
+			std::vector<size_t> unique_edges_b;
+
+			for (size_t i = 0; i < normals.size(); i++)
+			{
+				if (same_direction(normals[i], supportPoint))
+				{
+					AddIfUniqueEdge(unique_edges_a, unique_edges_b, faces, (i * 3), (i * 3) + 1);
+					AddIfUniqueEdge(unique_edges_a, unique_edges_b, faces, (i * 3) + 1, (i * 3) + 2);
+					AddIfUniqueEdge(unique_edges_a, unique_edges_b, faces, (i * 3) + 2, (i * 3));
+
+					faces[(i * 3) + 2] = faces.back(); faces.pop_back();
+					faces[(i * 3) + 1] = faces.back(); faces.pop_back();
+					faces[(i * 3)] = faces.back(); faces.pop_back();
+
+					normals[i] = normals.back(); normals.pop_back();
+					distances[i] = distances.back(); distances.pop_back();
+					i--;
+				}
+			}
+
+			std::vector<size_t> new_faces;
+
+			for (size_t i = 0; i < unique_edges_a.size(); i++)
+			{
+				new_faces.push_back(unique_edges_a[i]);
+				new_faces.push_back(unique_edges_b[i]);
+				new_faces.push_back(polytope.size());
+			}
+
+			polytope.push_back(supportPoint);
+
+			std::vector<V3> new_normals;
+			std::vector<float> new_distances;
+
+			size_t newMinFace = get_face_normals_and_index(new_normals, new_distances, polytope, new_faces);
+
+			float oldMinDistance = FLT_MAX;
+			for (size_t i = 0; i < normals.size(); i++)
+			{
+				if (new_distances[i] < oldMinDistance)
+				{
+					oldMinDistance = new_distances[i];
+					minFace = i;
+				}
+			}
+
+			if (new_distances[newMinFace] < oldMinDistance)
+			{
+				minFace = newMinFace + normals.size();
+			}
+
+			faces.insert(faces.end(), new_faces.begin(), new_faces.end());
+			normals.insert(normals.end(), new_normals.begin(), new_normals.end());
+			distances.insert(distances.end(), new_distances.begin(), new_distances.end());
+		}
+	}
+
+	normal_out = minNormal;
+	penetration_depth_out = minDistance + 0.001f;
 }
 
 #pragma endregion // Vector3

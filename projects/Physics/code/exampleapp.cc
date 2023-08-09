@@ -82,7 +82,7 @@ namespace Example
 	}
 
 
-	const const V3 slow_intersection(
+	const const V3 ray_intersection(
 		Ray& r,
 		M4 WorldSpaceTransform,
 		std::vector<V3>& i_worldSpace_coords,
@@ -213,7 +213,7 @@ namespace Example
 			std::vector<V2> fireTexels;
 			std::vector<V3> fireNormals;
 			std::vector<Vertex> fireVertices;
-			fireHydrantMesh = MeshResource::LoadObj("textures/fireHydrant.obj", fireIndices, fireCoords, fireTexels, fireNormals, fireVertices);
+			fireHydrantMesh = MeshResource::LoadObj("textures/cube.obj", fireIndices, fireCoords, fireTexels, fireNormals, fireVertices);
 			fireHydrantMesh->indicesAmount = fireIndices;
 			fireHydrantMesh->positions = fireCoords;
 			fireHydrantMesh->texels = fireTexels;
@@ -331,7 +331,7 @@ namespace Example
 
 		std::vector<V3>* normals = nullptr;
 
-		V3 hit = slow_intersection(ray, emptyMatrix, vertexPositions, indices, normals); // resulting hit should be 0, 0, 1
+		V3 hit = ray_intersection(ray, emptyMatrix, vertexPositions, indices, normals); // resulting hit should be 0, 0, 1
 		return hit;
 		std::cout << "x: " << hit[0] << ", y: " << hit[1] << ", z: " << hit[2] << std::endl;
 	}
@@ -467,7 +467,7 @@ namespace Example
 					Debug::DrawLine(V4(resultingHit - V3(0, 3, 0), 1), V4(resultingHit - V3(0, 0, 0), 1), V4(1, 0, 0, 1));
 					Debug::DrawSquare(V4(resultingHit, 1));
 				}
-				resultingHit = slow_intersection(ray, fireHydrantWorldSpaceTransform, fireHydrantMesh->positions, fireHydrantMesh->indicesAmount, &(fireHydrantMesh)->normals);
+				resultingHit = ray_intersection(ray, fireHydrantWorldSpaceTransform, fireHydrantMesh->positions, fireHydrantMesh->indicesAmount, &(fireHydrantMesh)->normals);
 			}
 
 			cubeWorldSpaceTransform = Translate(V4(resultingHit, 1));

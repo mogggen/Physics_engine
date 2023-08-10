@@ -1,6 +1,7 @@
 ﻿//#include "config.h"
 #pragma once
 #include <cmath>
+#include <algorithm>
 #include <iostream>
 #include <vector>
 #include <stdio.h>
@@ -745,11 +746,6 @@ std::vector<V3>& rhs)
 		}
 	}
 }
-
-// That’s it for the main piece of the algorithm.
-// Don’t think I forgot about the helper functions…
-// GetFaceNormals is just a slightly more complex version of the loop from the 2D version. Instead of i and j, we now get three vertices by first looking up their index in the faces list. In 3D the normal is found by taking the cross product of the vectors between the face’s vertices. The winding order is now controlled by the index, instead of where we put some negative sign. Even though it’s well defined, we don’t check when adding new faces, so we still need the check here. Determining the winding involves finding the normal so there is no reason to not have this check here.
-// I’ve chosen to pack the distance and normal into a single vector4 to keep the code shorter.
 
 inline size_t get_face_normals_and_index(std::vector<V3>& normals_out,
 std::vector<float>& distances_out,
@@ -1841,3 +1837,200 @@ inline const V3 Ray::minDist(const std::vector<V3>& others)
 }
 
 #pragma endregion // Ray
+
+
+struct Node {
+	float value;
+	Node* left;
+	Node* right;
+	int height;
+};
+
+inline int getHeight(Node* node) {
+	return (node == nullptr) ? -1 : node->height;
+}
+
+inline void updateHeight(Node* node) {
+	if (node == nullptr) {
+		return;
+	}
+	node->height = 1 + std::max(getHeight(node->left), getHeight(node->right));
+}
+
+
+inline Node* findMin(Node* root) {
+	if (root == nullptr) {
+		return nullptr;
+	}
+	while (root->left != nullptr) {
+		root = root->left;
+	}
+	return root;
+}
+
+
+inline Node* rotateLeft(Node* root) {
+	Node* newRoot = root->right;
+	root->right = newRoot->left;
+	newRoot->left = root;
+	updateHeight(root);
+	updateHeight(newRoot);
+	return newRoot;
+}
+
+inline Node* rotateRight(Node* root) {
+	Node* newRoot = root->left;
+	root->left = newRoot->right;
+	newRoot->right = root;
+	updateHeight(root);
+	updateHeight(newRoot);
+	return newRoot;
+}
+
+inline int getBalance(Node* node) {
+	return getHeight(node->left) - getHeight(node->right);
+}
+
+inline Node* insert(Node * root, float value) {
+	if (root == nullptr) {
+		return new Node{ value, nullptr, nullptr, 0 };
+	}
+
+	if (value < root->value) {
+		root->left = insert(root->left, value);
+	}
+	else if (value > root->value) {
+		root->right = insert(root->right, value);
+	}
+	else {
+		// Value already exists
+		return root;
+	}
+
+	updateHeight(root);
+	int balance = getBalance(root);
+
+	if (balance > 1) {
+		if (value < root->left->value) {
+			return rotateRight(root);
+		}
+		else {
+			root->left = rotateLeft(root->left);
+			return rotateRight(root);
+		}
+	}
+
+	if (balance < -1) {
+		if (value > root->right->value) {
+			return rotateLeft(root);
+		}
+		else {
+			root->right = rotateRight(root->right);
+			return rotateLeft(root);
+		}
+	}
+
+	return root;
+}
+
+inline Node* remove(Node * root, int value) {
+	if (root == nullptr) {
+		return nullptr;
+	}
+
+	if (value < root->value) {
+		root->left = remove(root->left, value);
+	}
+	else if (value > root->value) {
+		root->right = remove(root->right, value);
+	}
+	else {
+		if (root->left == nullptr || root->right == nullptr) {
+			Node* temp = (root->left) ? root->left : root->right;
+			delete root;
+			root = temp;
+		}
+		else {
+			Node* temp = findMin(root->right);
+			root->value = temp->value;
+			root->right = remove(root->right, temp->value);
+		}
+	}
+
+	if (root == nullptr) {
+		return root;
+	}
+
+	updateHeight(root);
+	int balance = getBalance(root);
+
+	if (balance > 1) {
+		if (getBalance(root->left) >= 0) {
+			return rotateRight(root);
+		}
+		else {
+			root->left = rotateLeft(root->left);
+			return rotateRight(root);
+		}
+	}
+
+	if (balance < -1) {
+		if (getBalance(root->right) <= 0) {
+			return rotateLeft(root);
+		}
+		else {
+			root->right = rotateRight(root->right);
+			return rotateLeft(root);
+		}
+	}
+
+	return root;
+}
+
+inline void inOrderTraversal(Node * root) {
+	if (root == nullptr) {
+		return;
+	}
+	inOrderTraversal(root->left);
+	std::cout << root->value << " ";
+	inOrderTraversal(root->right);
+}
+
+#pragma region AABB
+
+struct AABB
+{
+	V3 min, max;
+
+    bool intersects(const AABB& other) const {
+        return !(max.x < other.min.x || min.x > other.max.x ||
+                 max.y < other.min.y || min.y > other.max.y ||
+				 max.z < other.min.z || min.z > other.max.z);
+    }
+};
+
+inline std::vector<std::pair<size_t, size_t>> aabbPlaneSweep(std::vector<AABB>& AABBs)
+{
+	std::vector<std::pair<size_t, size_t>> intersections;
+
+	// sort to find smallest x
+	std::sort(AABBs.begin(), AABBs.end(),
+		[](const AABB& a, const AABB& b) { return a.min.x < b.min.x; });
+
+	// TODO: replace with AVL-TREE
+	// loop all AABBs along x axis
+	for (size_t i = 0; i < AABBs.size(); i++)
+	{
+		for (size_t j = 0; j < AABBs.size(); j++)
+		{
+			if (i == j) continue;
+			if (AABBs[i].intersects(AABBs[j]))
+			{
+				intersections.push_back(std::pair<size_t, size_t>(i, j));
+			}
+		}
+	}
+	return intersections;
+}
+
+#pragma endregion // AABB

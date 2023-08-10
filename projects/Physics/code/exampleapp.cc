@@ -339,6 +339,23 @@ namespace Example
 	void
 	ExampleApp::Run()
 	{
+		AABB aabb1 = { V3(12, 63, 52), V3(150, 200, 139) };
+		AABB aabb2 = { V3(63, 65, 95), V3(187, 173, 183) };
+		AABB aabb3 = { V3(23, 93, 24), V3(139, 161, 160) };
+		AABB aabb4 = { V3(53, 16, 70), V3(182, 118, 136)};
+
+		std::vector<AABB> aabb =
+		{
+			aabb1,
+			aabb2,
+			aabb3,
+			aabb4
+		};
+
+		aabbPlaneSweep(aabb);
+		exit(0);
+
+
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
 
@@ -398,7 +415,7 @@ namespace Example
 			//fireHydrant->actor->apply_force(GRAVITY, dt);
 
 			//fireHydrant world space
-			fireHydrantWorldSpaceTransform = /*Rotation(V4(0, 0, 1), -0.012f) * Rotation(V4(0, 1, 0), 0.004f) */ fireHydrantWorldSpaceTransform
+			fireHydrantWorldSpaceTransform = Rotation(V4(0, 0, 1), -0.012f) * Rotation(V4(0, 1, 0), 0.004f) * fireHydrantWorldSpaceTransform
 			
 			//* Translate(fireHydrant->actor->velocity)
 				;
@@ -504,7 +521,10 @@ namespace Example
 			this->window->Update();
 			frameIndex++;
 
-			Debug::Render(cam.pv());
+			if (showDebugRender)
+			{
+				Debug::Render(cam.pv());
+			}
 			this->window->SwapBuffers();
 			
 			auto stop = std::chrono::high_resolution_clock::now();
@@ -527,6 +547,7 @@ namespace Example
 		}
 		ImGui::Text("cube: %.3f\t%.3f\t%.3f", cube[0], cube[1], cube[2]);
 
+		ImGui::Checkbox("Debug Mode: ", &showDebugRender);
 		ImGui::SliderFloat("x", &x, -5.f, 5.f);
 		ImGui::SliderFloat("y", &y, -5.f, 5.f);
 		ImGui::SliderFloat("z", &z, -5.f, 5.f);

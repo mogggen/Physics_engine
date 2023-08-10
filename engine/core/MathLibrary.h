@@ -914,6 +914,22 @@ inline void epa(
 	penetration_depth_out = minDistance + 0.001f;
 }
 
+inline const V3 get_collision_point_in_model_space(
+	V3 norm_collision_normal, // Normalized collision normal
+	float penetrationDepth)
+{
+	// Assuming you have identified the support vertex
+	V3 supportVertexLocal; // Local coordinates of the support vertex
+
+	// Backtrack along the collision normal by the penetration depth
+	V3 collisionPointLocal = supportVertexLocal - norm_collision_normal * penetrationDepth;
+
+	// Convert the collision point to world space
+	V3 collisionPointWorld = /*shapeTransform*/1.f * collisionPointLocal; // Apply shape's transformation matrix
+
+	// Now 'collisionPointWorld' contains the collision point in world space
+}
+
 #pragma endregion // Vector3
 
 #pragma region Vector4

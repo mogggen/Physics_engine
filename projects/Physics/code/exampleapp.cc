@@ -436,6 +436,7 @@ namespace Example
 				Debug::DrawLine(start[i], dirSize[i], 1.f, V4(1, 1, 1, 1));
 			}*/
 
+			// TODO: turn this into a function
 			Debug::DrawBB(*fireHydrant->getMesh(), V4(0, 1, 1, 1), fireHydrantWorldSpaceTransform);
 			Debug::DrawAABB(*fireHydrant->getMesh(), V4(1, 0, 0, 1), fireHydrantWorldSpaceTransform);
 
@@ -488,6 +489,24 @@ namespace Example
 			}
 
 			cubeWorldSpaceTransform = Translate(V4(resultingHit, 1));
+
+			//TODO: here
+			std::vector<std::pair<size_t, size_t>> in = aabbPlaneSweep(aabb);
+			for (size_t i = 0; i < in.size(); i++)
+			{
+				if (gjk(/*i:th model * worldspaceTransform*/, /*j:th model * j:th worldspaceTransform */))
+				{
+					V3 normal;
+					float depth;
+					epa(normal, depth,
+						/*i:th model * worldspaceTransform*/, /*j:th model * j:th worldspaceTransform */);
+					V3 p = get_collision_point_in_model_space(normal, depth);
+					// draw a line along the normal where the collision happened (allegedly)
+					Debug::DrawLine(V4(p, 1), V4(p + normal * depth, 1), V4(0, 1, 0, 1));
+
+					// handle COllision responses here
+				}
+			}
 
 			// TODO create an impulse
 			(*fireHydrant->actor).apply_linear_impulse(ray, (fireHydrantProjectionViewTransform * V4(fireHydrantMesh->center_of_mass, 1)).toV3(), resultingHit);

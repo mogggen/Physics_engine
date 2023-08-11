@@ -36,124 +36,114 @@ namespace Debug
             buf->vertices[buf->verticesAmount++] = vert;
     }
 
-    void DrawBB(const MeshResource& mesh, V4 color, M4 modelMatrix)
+    void DrawBB(MeshResource &mesh, V4 color, M4 modelMatrix)
     {
-         const float& left = mesh.left;
-         const float& bottom = mesh.bottom;
-         const float& front = mesh.front;
+        V3 &min = mesh.min;
+        V3 &max = mesh.max;
 
-         const float& right = mesh.right;
-         const float& top = mesh.top;
-         const float& back = mesh.back;
-         
-         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(left, top, front, 1), color});
-         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(left, top, back, 1), color});
-         
-         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(right, top, front, 1), color});
-         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(right, top, back, 1), color});
+        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(min[0], max[1], min[2], 1), color});
+        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(min[0], max[1], max[2], 1), color});
 
-         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(left, top, front, 1), color});
-         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(right, top, front, 1), color});
+        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(max[0], max[1], min[2], 1), color});
+        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(max[0], max[1], max[2], 1), color});
 
-         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(left, top, back, 1), color });
-         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(right, top, back, 1), color });
+        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(min[0], max[1], min[2], 1), color});
+        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(max[0], max[1], min[2], 1), color});
 
+        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(min[0], max[1], max[2], 1), color});
+        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(max[0], max[1], max[2], 1), color});
 
-         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(left, bottom, front, 1), color });
-         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(left, bottom, back, 1), color });
+        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(min[0], min[1], min[2], 1), color});
+        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(min[0], min[1], max[2], 1), color});
 
-         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(right, bottom, front, 1), color });
-         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(right, bottom, back, 1), color });
+        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(max[0], min[1], min[2], 1), color});
+        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(max[0], min[1], max[2], 1), color});
 
-         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(left, bottom, front, 1), color });
-         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(right, bottom, front, 1), color });
+        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(min[0], min[1], min[2], 1), color});
+        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(max[0], min[1], min[2], 1), color});
 
-         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(left, bottom, back, 1), color });
-         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(right, bottom, back, 1), color });
+        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(min[0], min[1], max[2], 1), color});
+        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(max[0], min[1], max[2], 1), color});
 
+        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(min[0], max[1], min[2], 1), color});
+        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(min[0], min[1], min[2], 1), color});
 
-         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(left, top, front, 1), color });
-         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(left, bottom, front, 1), color });
+        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(max[0], max[1], min[2], 1), color});
+        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(max[0], min[1], min[2], 1), color});
 
-         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(right, top, front, 1), color });
-         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(right, bottom, front, 1), color });
+        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(min[0], max[1], max[2], 1), color});
+        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(min[0], min[1], max[2], 1), color});
 
-         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(left, top, back, 1), color });
-         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(left, bottom, back, 1), color });
-
-         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(right, top, back, 1), color });
-         PushVertex(&lineBuf, Vertex{ Transpose(modelMatrix) * V4(right, bottom, back, 1), color });
+        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(max[0], max[1], max[2], 1), color});
+        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(max[0], min[1], max[2], 1), color});
     }
 
-    void DrawAABB(const MeshResource& mesh, V4 color, M4 modelMatrix)
-     {
-		 float data[6] = { mesh.left, mesh.right, mesh.bottom, mesh.top, mesh.back, mesh.front };
-		 V3 current = (Transpose(modelMatrix) * V4(data[0], data[2], data[4], 1)).toV3();
-          float left = current[0];
-          float bottom = current[1];
-          float front = current[2];
+    void DrawAABB(MeshResource &mesh, V4 color, M4 modelMatrix)
+    {
+        float data[6] = {mesh.min[0], mesh.max[0], mesh.min[1], mesh.max[1], mesh.min[2], mesh.max[2]};
+        V3 current = (Transpose(modelMatrix) * V4(data[0], data[2], data[4], 1)).toV3();
+        float left = current[0];
+        float bottom = current[1];
+        float front = current[2];
 
-          float right = current[0];
-          float top = current[1];
-          float back = current[2];
+        float right = current[0];
+        float top = current[1];
+        float back = current[2];
 
-         
-         for (size_t i = 1; i < 8; i++)
-         {
-             V3 current = (Transpose(modelMatrix) * V4(data[i / 4], data[2 + (i / 2) % 2], data[4 + i % 2], 1)).toV3();
-             if (current[0] < left)
-                 left = current[0];
-             if (current[1] < bottom)
-                 bottom = current[1];
-             if (current[2] < front)
-                 front = current[2];
+        for (size_t i = 1; i < 8; i++)
+        {
+            V3 current = (Transpose(modelMatrix) * V4(data[i / 4], data[2 + (i / 2) % 2], data[4 + i % 2], 1)).toV3();
+            if (current[0] < left)
+                left = current[0];
+            if (current[1] < bottom)
+                bottom = current[1];
+            if (current[2] < front)
+                front = current[2];
 
-             if (current[0] > right)
-                 right = current[0];
-             if (current[1] > top)
-                 top = current[1];
-             if (current[2] > back)
-                 back = current[2];
-         }
-         
-         PushVertex(&lineBuf, Vertex{V4(left, top, front, 1), color });
-         PushVertex(&lineBuf, Vertex{V4(left, top, back, 1), color });
+            if (current[0] > right)
+                right = current[0];
+            if (current[1] > top)
+                top = current[1];
+            if (current[2] > back)
+                back = current[2];
+        }
 
-         PushVertex(&lineBuf, Vertex{V4(right, top, front, 1), color });
-         PushVertex(&lineBuf, Vertex{V4(right, top, back, 1), color });
+        PushVertex(&lineBuf, Vertex{V4(left, top, front, 1), color});
+        PushVertex(&lineBuf, Vertex{V4(left, top, back, 1), color});
 
-         PushVertex(&lineBuf, Vertex{V4(left, top, front, 1), color });
-         PushVertex(&lineBuf, Vertex{V4(right, top, front, 1), color });
+        PushVertex(&lineBuf, Vertex{V4(right, top, front, 1), color});
+        PushVertex(&lineBuf, Vertex{V4(right, top, back, 1), color});
 
-         PushVertex(&lineBuf, Vertex{V4(left, top, back, 1), color });
-         PushVertex(&lineBuf, Vertex{V4(right, top, back, 1), color });
+        PushVertex(&lineBuf, Vertex{V4(left, top, front, 1), color});
+        PushVertex(&lineBuf, Vertex{V4(right, top, front, 1), color});
 
+        PushVertex(&lineBuf, Vertex{V4(left, top, back, 1), color});
+        PushVertex(&lineBuf, Vertex{V4(right, top, back, 1), color});
 
-         PushVertex(&lineBuf, Vertex{V4(left, bottom, front, 1), color });
-         PushVertex(&lineBuf, Vertex{V4(left, bottom, back, 1), color });
+        PushVertex(&lineBuf, Vertex{V4(left, bottom, front, 1), color});
+        PushVertex(&lineBuf, Vertex{V4(left, bottom, back, 1), color});
 
-         PushVertex(&lineBuf, Vertex{V4(right, bottom, front, 1), color });
-         PushVertex(&lineBuf, Vertex{V4(right, bottom, back, 1), color });
+        PushVertex(&lineBuf, Vertex{V4(right, bottom, front, 1), color});
+        PushVertex(&lineBuf, Vertex{V4(right, bottom, back, 1), color});
 
-         PushVertex(&lineBuf, Vertex{V4(left, bottom, front, 1), color });
-         PushVertex(&lineBuf, Vertex{V4(right, bottom, front, 1), color });
+        PushVertex(&lineBuf, Vertex{V4(left, bottom, front, 1), color});
+        PushVertex(&lineBuf, Vertex{V4(right, bottom, front, 1), color});
 
-         PushVertex(&lineBuf, Vertex{V4(left, bottom, back, 1), color });
-         PushVertex(&lineBuf, Vertex{V4(right, bottom, back, 1), color });
+        PushVertex(&lineBuf, Vertex{V4(left, bottom, back, 1), color});
+        PushVertex(&lineBuf, Vertex{V4(right, bottom, back, 1), color});
 
+        PushVertex(&lineBuf, Vertex{V4(left, top, front, 1), color});
+        PushVertex(&lineBuf, Vertex{V4(left, bottom, front, 1), color});
 
-         PushVertex(&lineBuf, Vertex{V4(left, top, front, 1), color });
-         PushVertex(&lineBuf, Vertex{V4(left, bottom, front, 1), color });
+        PushVertex(&lineBuf, Vertex{V4(right, top, front, 1), color});
+        PushVertex(&lineBuf, Vertex{V4(right, bottom, front, 1), color});
 
-         PushVertex(&lineBuf, Vertex{V4(right, top, front, 1), color });
-         PushVertex(&lineBuf, Vertex{V4(right, bottom, front, 1), color });
+        PushVertex(&lineBuf, Vertex{V4(left, top, back, 1), color});
+        PushVertex(&lineBuf, Vertex{V4(left, bottom, back, 1), color});
 
-         PushVertex(&lineBuf, Vertex{V4(left, top, back, 1), color });
-         PushVertex(&lineBuf, Vertex{V4(left, bottom, back, 1), color });
-
-         PushVertex(&lineBuf, Vertex{V4(right, top, back, 1), color });
-         PushVertex(&lineBuf, Vertex{V4(right, bottom, back, 1), color });
-     }
+        PushVertex(&lineBuf, Vertex{V4(right, top, back, 1), color});
+        PushVertex(&lineBuf, Vertex{V4(right, bottom, back, 1), color});
+    }
 
     void DrawLine(V4 start, V4 end, V4 color)
     {
@@ -163,18 +153,17 @@ namespace Debug
 
     void DrawSquare(V4 center, float size, V4 color)
     {
-        PushVertex(&triBuf, Vertex{ center + V3(-size / 2, 0, -size / 2), color });
-        PushVertex(&triBuf, Vertex{ center + V3(-size / 2, 0, size / 2), color });
-        PushVertex(&triBuf, Vertex{ center + V3(size / 2, 0, size / 2), color });
+        PushVertex(&triBuf, Vertex{center + V3(-size / 2, 0, -size / 2), color});
+        PushVertex(&triBuf, Vertex{center + V3(-size / 2, 0, size / 2), color});
+        PushVertex(&triBuf, Vertex{center + V3(size / 2, 0, size / 2), color});
 
-        PushVertex(&triBuf, Vertex{ center + V3(-size / 2, 0, -size / 2), color });
-        PushVertex(&triBuf, Vertex{ center + V3(size / 2, 0, -size / 2), color });
-        PushVertex(&triBuf, Vertex{ center + V3(size / 2, 0, size / 2), color });
+        PushVertex(&triBuf, Vertex{center + V3(-size / 2, 0, -size / 2), color});
+        PushVertex(&triBuf, Vertex{center + V3(size / 2, 0, -size / 2), color});
+        PushVertex(&triBuf, Vertex{center + V3(size / 2, 0, size / 2), color});
     }
 
     void DrawSphere(V4 center, float size, V4 color)
     {
-
     }
 
     void Render(M4 cameraVPMatrix)

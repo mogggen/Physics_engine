@@ -237,6 +237,8 @@ namespace Example
 			// GraphicNode
 			fireHydrant = std::make_shared<GraphicNode>(fireHydrantMesh, fireHydrantTexture, fireHydrantScript, fireHydrantActor);
 
+			all_loaded.push_back(fireHydrant);
+
 			// MeshResource
 			std::vector<unsigned> cubeIndices;
 			std::vector<V3> cubeCoords;
@@ -265,6 +267,8 @@ namespace Example
 			// GraphicNode
 			cube = std::make_shared<GraphicNode>(cubeMesh, cubeTexture, cubeScript, cubeActor);
 
+			all_loaded.push_back(cube);
+
 			// MeshResource
 			std::vector<unsigned> quadIndices;
 			std::vector<V3> quadCoords;
@@ -285,6 +289,8 @@ namespace Example
 
 			// GraphicNode
 			quad = std::make_shared<GraphicNode>(quadMesh, cubeTexture, cubeScript, quadActor);
+
+			all_loaded.push_back(quad);
 
 			this->window->SetUiRender([this]()
 									  { this->RenderUI(); });
@@ -344,7 +350,7 @@ namespace Example
 		AABB aabb3 = { V3(23, 93, 24), V3(139, 161, 160) };
 		AABB aabb4 = { V3(53, 16, 70), V3(182, 118, 136)};
 
-		std::vector<AABB> aabb =
+		std::vector<AABB> aabbs =
 		{
 			aabb1,
 			aabb2,
@@ -352,7 +358,7 @@ namespace Example
 			aabb4
 		};
 
-		aabbPlaneSweep(aabb);
+		aabbPlaneSweep(aabbs);
 		exit(0);
 
 
@@ -440,46 +446,19 @@ namespace Example
 			Debug::DrawBB(*fireHydrant->getMesh(), V4(0, 1, 1, 1), fireHydrantWorldSpaceTransform);
 			Debug::DrawAABB(*fireHydrant->getMesh(), V4(1, 0, 0, 1), fireHydrantWorldSpaceTransform);
 
-			Plane left_plane(V3(fireHydrantMesh->left, 0, 0), V3(fireHydrantMesh->left, 0, 0));
-			Plane right_plane(V3(fireHydrantMesh->right, 0, 0), V3(fireHydrantMesh->right, 0, 0));
-
-			Plane top_plane(V3(0, fireHydrantMesh->top, 0), V3(0, fireHydrantMesh->top, 0));
-			Plane bottom_plane(V3(0, fireHydrantMesh->bottom, 0), V3(0, fireHydrantMesh->bottom, 0));
-
-			Plane front_plane(V3(0, 0, fireHydrantMesh->front), V3(0, 0, fireHydrantMesh->front));
-			Plane back_plane(V3(0, 0, fireHydrantMesh->back), V3(0, 0, fireHydrantMesh->back));
 
 			if (isPressed)
 			{
 				glfwGetCursorPos(this->window->GetHandle(), &mouseDirX, &mouseDirY);
 				// shot a ray
+
+
 				V4 normalizedDeviceCoordinates(mouseDirX / width * 2 - 1, 1 - mouseDirY / height * 2, 1, 1);
 				V4 mousePickingWorldSpace = Inverse(cam.pv()) * normalizedDeviceCoordinates;
 				ray = Ray(rayOrigin, (mousePickingWorldSpace - rayOrigin).toV3());
 
 				//resultingHit=mesh_intersection_test(ray);
 				
-				//V3 res_left = ray.intersect(left_plane);
-				//V3 res_two = ray.intersect(right_plane);
-
-				//V3 res_top = ray.intersect(top_plane);
-				//V3 res_bottom = ray.intersect(bottom_plane);
-
-				//V3 res_front = ray.intersect(front_plane);
-				//V3 res_back = ray.intersect(back_plane);
-
-
-				//std::vector<V3> tt;
-				//tt.push_back(res_left);
-				//tt.push_back(res_two);
-
-				//tt.push_back(res_top);
-				//tt.push_back(res_bottom);
-
-				//tt.push_back(res_front);
-				//tt.push_back(res_back);
-
-				//resultingHit = ray.minDist(tt);
 				if (true)// || isnan(resultingHit.data))
 				{
 					Debug::DrawLine(V4(resultingHit - V3(0, 3, 0), 1), V4(resultingHit - V3(0, 0, 0), 1), V4(1, 0, 0, 1));
@@ -491,16 +470,25 @@ namespace Example
 			cubeWorldSpaceTransform = Translate(V4(resultingHit, 1));
 
 			//TODO: here
-			std::vector<std::pair<size_t, size_t>> in = aabbPlaneSweep(aabb);
+			std::vector<std::pair<size_t, size_t>> in = aabbPlaneSweep(aabbs);
 			for (size_t i = 0; i < in.size(); i++)
 			{
-				if (gjk(/*i:th model * worldspaceTransform*/, /*j:th model * j:th worldspaceTransform */))
+				std::shared_ptr<GraphicNode>& ith = all_loaded[in[i].first];
+				std::shared_ptr<GraphicNode>& jth = all_loaded[in[i].second];
+				
+				std::vector<V3> i_vertices = ith->getMesh()->positions;
+				apply_worldspace(i_vertices, ith->actor->get_world_space_transform());
+
+				std::vector<V3> j_vertices = jth->getMesh()->positions;
+				apply_worldspace(j_vertices, jth->actor->get_world_space_transform());
+				std::vector<V3> simplex_placeholder;
+				if (gjk(simplex_placeholder, i_vertices, j_vertices))
 				{
 					V3 normal;
 					float depth;
-					epa(normal, depth,
-						/*i:th model * worldspaceTransform*/, /*j:th model * j:th worldspaceTransform */);
-					V3 p = get_collision_point_in_model_space(normal, depth);
+					std::vector<V3> suppe = epa(normal, depth, simplex_placeholder,
+						i_vertices, j_vertices);
+					V3 p = get_collision_point_in_model_space(suppe, normal, depth);
 					// draw a line along the normal where the collision happened (allegedly)
 					Debug::DrawLine(V4(p, 1), V4(p + normal * depth, 1), V4(0, 1, 0, 1));
 

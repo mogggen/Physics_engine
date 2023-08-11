@@ -107,7 +107,7 @@ V3 calculateCollisionImpulse(const V3& relativeVelocity,
     return impulse;
 }
 
-M4 Actor::toM4()
+M4 Actor::get_world_space_transform()
 {
-    return M4();
+    return Translate(position);
 }

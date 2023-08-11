@@ -41,7 +41,9 @@ namespace Example
 		Plane *plane;
 		float x, y, z;
 
+		std::vector<std::shared_ptr<GraphicNode>> all_loaded;
 		V3 resultingHit;
+		
 		double mouseDirX, mouseDirY;
 		float64 prevX = 0, prevY = 0;
 		float64 senseX = 0, senseY = 0;

@@ -539,6 +539,17 @@ inline bool point_in_triangle_3D(
 		(Dot(x1, x2) > 0.f && Dot(x2, x3) > 0.f && Dot(x3, x1) > 0.f);
 }
 
+inline void apply_worldspace(
+	std::vector<V3>& verts,
+	M4 transform
+)
+{
+	for (V4 ff : verts)
+	{
+		ff = (Transpose(transform) * ff).toV3();
+	}
+}
+
 // Calculate the signed volume of a tetrahedron formed by four points
 inline const float signedVolume(const V3& a, const V3& b, const V3& c, const V3& d) {
 	return (1.0 / 6.0) * (
@@ -713,20 +724,19 @@ V3 newDir)
 	case 4: return tetrahedron(simplex, newDir);
 	
 	default:
-		assert(simplex.size());
+		assert(simplex.size() <= 4);
 		break;
 	}
 	return false;
 }
 
-inline bool gjk(std::vector<V3>& lhs,
+inline bool gjk(std::vector<V3>& simplex_out, std::vector<V3>& lhs,
 std::vector<V3>& rhs)
 {
-	std::vector<V3> simplex(4);
 	V3 curr = support(lhs, rhs, V3(1.f, 1.f, 1.f));
 	V3 newDir = curr * -1.f;
 
-	simplex.insert(simplex.begin(), curr);
+	simplex_out.insert(simplex_out.begin(), curr);
 
 	for (size_t i = 0; i < lhs.size() + rhs.size(); i++)
 	{
@@ -737,9 +747,9 @@ std::vector<V3>& rhs)
 			std::cout << "max iterations: " << i << std::endl;
 			return false;
 		}
-		simplex.insert(simplex.begin(), curr);
+		simplex_out.insert(simplex_out.begin(), curr);
 
-		if (next_simplex(simplex, newDir))
+		if (next_simplex(simplex_out, newDir))
 		{
 			std::cout << "max iterations: " << i << std::endl;
 			return true;
@@ -753,7 +763,7 @@ std::vector<float>& distances_out,
 	const std::vector<V3>& polytope,
 	const std::vector<size_t>& faces)
 {
-	assert(normals_out.size() + distances_out.size());
+	assert(normals_out.empty() && distances_out.empty());
 
 	size_t minTriangle = 0;
 	float  minDistance = FLT_MAX;
@@ -817,8 +827,8 @@ inline void AddIfUniqueEdge(
 	}
 }
 
-// returns collision points
-inline void epa(
+// returns non-discarded support points
+inline std::vector<V3> epa(
 	V3& normal_out,
 	float& penetration_depth_out,
 
@@ -912,13 +922,26 @@ inline void epa(
 
 	normal_out = minNormal;
 	penetration_depth_out = minDistance + 0.001f;
+	return polytope;
 }
 
 inline const V3 get_collision_point_in_model_space(
-	V3 norm_collision_normal, // Normalized collision normal
+	std::vector<V3>& support_points, // supposed to be local, shouldn't matter if exactly everything isn't
+	V3 norm_collision_normal,
 	float penetrationDepth)
 {
+	// just do this calculation for every single support point
+	for (V3& supportVertexLocal : support_points)
+	{
+		// Backtrack along the collision normal by the penetration depth
+		supportVertexLocal -= norm_collision_normal * penetrationDepth;
+
+		// render all of them and see if at least one makes sense
+	}
+	
+	
 	// Assuming you have identified the support vertex
+	
 	V3 supportVertexLocal; // Local coordinates of the support vertex
 
 	// Backtrack along the collision normal by the penetration depth
@@ -1806,7 +1829,7 @@ struct Ray
 	V3 dir;
 	Ray(V3 origin, V3 dir);
 	const V3 Ray::minDist(const std::vector<V3>& others);
-	const V3 intersect(const Plane& plane, float& epsilon);
+	const V3 intersect(const Plane& plane, float epsilon);
 };
 
 inline Ray::Ray(V3 origin, V3 dir) : origin(origin), dir(dir)
@@ -1814,7 +1837,7 @@ inline Ray::Ray(V3 origin, V3 dir) : origin(origin), dir(dir)
 
 }
 
-inline const V3 Ray::intersect(const Plane& plane, float& epsilon)
+inline const V3 Ray::intersect(const Plane& plane, float epsilon=1e-5f)
 {
 	float dotProduct = Dot(plane.normal, dir);
 
@@ -1851,6 +1874,39 @@ inline const V3 Ray::minDist(const std::vector<V3>& others)
 
 	return others[min_index];
 }
+
+const V3 find_AABB_intersection(MeshResource& mesh, Ray& ray)
+{
+	Plane left_plane(V3(mesh.min[0], 0, 0), V3(mesh.min[0], 0, 0));
+	Plane right_plane(V3(mesh.max[0], 0, 0), V3(mesh.max[0], 0, 0));
+
+	Plane bottom_plane(V3(0, mesh.min[1], 0), V3(0, mesh.min[1], 0));
+	Plane top_plane(V3(0, mesh.max[1], 0), V3(0, mesh.max[1], 0));
+
+	Plane front_plane(V3(0, 0, mesh.max[2]), V3(0, 0, mesh.max[2]));
+	Plane back_plane(V3(0, 0, mesh.min[2]), V3(0, 0, mesh.min[2]));
+	
+	V3 res_left = ray.intersect(left_plane);
+	V3 res_two = ray.intersect(right_plane);
+
+	V3 res_bottom = ray.intersect(bottom_plane);
+	V3 res_top = ray.intersect(top_plane);
+
+	V3 res_front = ray.intersect(front_plane);
+	V3 res_back = ray.intersect(back_plane);
+
+	std::vector<V3> tt;
+	tt.push_back(res_left);
+	tt.push_back(res_two);
+
+	tt.push_back(res_top);
+	tt.push_back(res_bottom);
+
+	tt.push_back(res_front);
+	tt.push_back(res_back);
+
+	return ray.minDist(tt);
+}				
 
 #pragma endregion // Ray
 

@@ -22,13 +22,14 @@ public:
 	V3 center_of_mass;
 	
 	// end points
-	float left;
-	float bottom;
-	float front;
+	V3 min, max;
+	//float left;
+	//float bottom;
+	//float front;
 
-	float right;
-	float top;
-	float back;
+	//float right;
+	//float top;
+	//float back;
 
 	static std::shared_ptr<MeshResource> Cube();
 	bool findCenterOfMass();

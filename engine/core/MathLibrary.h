@@ -544,9 +544,9 @@ inline void apply_worldspace(
 	M4 transform
 )
 {
-	for (V4 ff : verts)
+	for (V3 ff : verts)
 	{
-		ff = (Transpose(transform) * ff).toV3();
+		ff = (Transpose(transform) * V4(ff, 1)).toV3();
 	}
 }
 
@@ -1830,6 +1830,7 @@ struct Ray
 	Ray(V3 origin, V3 dir);
 	const V3 Ray::minDist(const std::vector<V3>& others);
 	const V3 intersect(const Plane& plane, float epsilon);
+	const V3 find_AABB_intersection(MeshResource& mesh);
 };
 
 inline Ray::Ray(V3 origin, V3 dir) : origin(origin), dir(dir)
@@ -1875,7 +1876,7 @@ inline const V3 Ray::minDist(const std::vector<V3>& others)
 	return others[min_index];
 }
 
-const V3 find_AABB_intersection(MeshResource& mesh, Ray& ray)
+inline const V3 Ray::find_AABB_intersection(MeshResource& mesh)
 {
 	Plane left_plane(V3(mesh.min[0], 0, 0), V3(mesh.min[0], 0, 0));
 	Plane right_plane(V3(mesh.max[0], 0, 0), V3(mesh.max[0], 0, 0));
@@ -1886,14 +1887,14 @@ const V3 find_AABB_intersection(MeshResource& mesh, Ray& ray)
 	Plane front_plane(V3(0, 0, mesh.max[2]), V3(0, 0, mesh.max[2]));
 	Plane back_plane(V3(0, 0, mesh.min[2]), V3(0, 0, mesh.min[2]));
 	
-	V3 res_left = ray.intersect(left_plane);
-	V3 res_two = ray.intersect(right_plane);
+	V3 res_left = intersect(left_plane);
+	V3 res_two = intersect(right_plane);
 
-	V3 res_bottom = ray.intersect(bottom_plane);
-	V3 res_top = ray.intersect(top_plane);
+	V3 res_bottom = intersect(bottom_plane);
+	V3 res_top = intersect(top_plane);
 
-	V3 res_front = ray.intersect(front_plane);
-	V3 res_back = ray.intersect(back_plane);
+	V3 res_front = intersect(front_plane);
+	V3 res_back = intersect(back_plane);
 
 	std::vector<V3> tt;
 	tt.push_back(res_left);
@@ -1905,7 +1906,7 @@ const V3 find_AABB_intersection(MeshResource& mesh, Ray& ray)
 	tt.push_back(res_front);
 	tt.push_back(res_back);
 
-	return ray.minDist(tt);
+	return minDist(tt);
 }				
 
 #pragma endregion // Ray

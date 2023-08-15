@@ -2,6 +2,9 @@
 // exampleapp.cc
 // (C) 2015-2020 Individual contributors, see AUTHORS file
 //------------------------------------------------------------------------------
+// 1. TODO: change all local transform fields so that the Matrices are stored in 'all_loaded[i].actor.position.get_world_space_transform' instead.
+// 2. TODO: make sure that min max is correct
+// 3. TODO: fix remaining bugs
 #include "config.h"
 #include "imgui.h"
 #include "stb_image.h"
@@ -81,6 +84,38 @@ namespace Example
 		return rotationMatrix;
 	}
 
+	inline const V3 find_AABB_intersection(Ray& ray, MeshResource& mesh)
+	{
+		Plane left_plane(V3(mesh.min[0], 0, 0), V3(mesh.min[0], 0, 0));
+		Plane right_plane(V3(mesh.max[0], 0, 0), V3(mesh.max[0], 0, 0));
+
+		Plane bottom_plane(V3(0, mesh.min[1], 0), V3(0, mesh.min[1], 0));
+		Plane top_plane(V3(0, mesh.max[1], 0), V3(0, mesh.max[1], 0));
+
+		Plane front_plane(V3(0, 0, mesh.max[2]), V3(0, 0, mesh.max[2]));
+		Plane back_plane(V3(0, 0, mesh.min[2]), V3(0, 0, mesh.min[2]));
+
+		V3 res_left = ray.intersect(left_plane);
+		V3 res_two = ray.intersect(right_plane);
+
+		V3 res_bottom = ray.intersect(bottom_plane);
+		V3 res_top = ray.intersect(top_plane);
+
+		V3 res_front = ray.intersect(front_plane);
+		V3 res_back = ray.intersect(back_plane);
+
+		std::vector<V3> tt;
+		tt.push_back(res_left);
+		tt.push_back(res_two);
+
+		tt.push_back(res_top);
+		tt.push_back(res_bottom);
+
+		tt.push_back(res_front);
+		tt.push_back(res_back);
+
+		return ray.minDist(tt);
+	}
 
 	const const V3 ray_intersection(
 		Ray& r,
@@ -213,6 +248,7 @@ namespace Example
 			std::vector<V2> fireTexels;
 			std::vector<V3> fireNormals;
 			std::vector<Vertex> fireVertices;
+			//TODO: fix this later if requried
 			fireHydrantMesh = MeshResource::LoadObj("textures/cube.obj", fireIndices, fireCoords, fireTexels, fireNormals, fireVertices);
 			fireHydrantMesh->indicesAmount = fireIndices;
 			fireHydrantMesh->positions = fireCoords;
@@ -359,7 +395,9 @@ namespace Example
 		};
 
 		aabbPlaneSweep(aabbs);
-		exit(0);
+		
+		//TODO: get this uncommented ASAP
+		//exit(0);
 
 
 		glEnable(GL_DEPTH_TEST);
@@ -382,26 +420,11 @@ namespace Example
 		float camSpeed = .8f;
 
 		// set identies
-		fireHydrantWorldSpaceTransform = Translate(V4(0, 0, 15));
-		fireHydrantProjectionViewTransform = Translate(V4());
-		fireHydrantMesh->findbounds();
+		fireHydrant.get()->actor->transform = Translate(V4(0, 0, 15));
+		fireHydrant.get()->getMesh()->findbounds();
 		
+		cube.get()->actor->transform = Translate(V4(0, 0, -5));
 
-		cubeWorldSpaceTransform = Translate(V4(0, 0, -5));
-		cubeProjectionViewTransform = Translate(V4());
-
-		M4 quadWorldSpaceTransform[100];
-		M4 quadProjectionViewTransform[100];
-		for (size_t i = 0; i < 10; i++)
-		{
-			for (size_t j = 0; j < 10; j++)
-			{
-				quadProjectionViewTransform[i * 10 + j] = Translate(V4());
-				quadWorldSpaceTransform[i * 10 + j] = Translate(V4(i * 2, j * 2, 0));
-			}			
-		}
-
-		plane = new Plane(V3(0, 0, -0), V3(0, 0, 1));
 		while (this->window->IsOpen())
 		{
 			//--------------------ImGui section--------------------
@@ -414,20 +437,17 @@ namespace Example
 
 			// std::cout << "frame " << frameIndex << std::endl;
 			
-			Debug::DrawBB(*fireHydrant->getMesh(), V4(0, 1, 1, 1), fireHydrantWorldSpaceTransform);
-			Debug::DrawAABB(*fireHydrant->getMesh(), V4(1, 0, 0, 1), fireHydrantWorldSpaceTransform);
-			
 			// effect of gravity
 			//fireHydrant->actor->apply_force(GRAVITY, dt);
 
 			//fireHydrant world space
-			fireHydrantWorldSpaceTransform = Rotation(V4(0, 0, 1), -0.012f) * Rotation(V4(0, 1, 0), 0.004f) * fireHydrantWorldSpaceTransform
+			fireHydrant.get()->actor->transform = Rotation(V4(0, 0, 1), -0.012f) * Rotation(V4(0, 1, 0), 0.004f) * fireHydrant.get()->actor->transform
 			
 			//* Translate(fireHydrant->actor->velocity)
 				;
 
 			//fireHydrant view space
-			fireHydrantProjectionViewTransform = cam.pv() * fireHydrantWorldSpaceTransform/* * Scalar(V4(.1, .1, .1))*/;
+			fireHydrantProjectionViewTransform = cam.pv() * fireHydrant.get()->actor->transform/* * Scalar(V4(.1, .1, .1))*/;
 
 			// cube world space
 			cubeWorldSpaceTransform = cubeWorldSpaceTransform
@@ -442,10 +462,6 @@ namespace Example
 				Debug::DrawLine(start[i], dirSize[i], 1.f, V4(1, 1, 1, 1));
 			}*/
 
-			// TODO: turn this into a function
-			Debug::DrawBB(*fireHydrant->getMesh(), V4(0, 1, 1, 1), fireHydrantWorldSpaceTransform);
-			Debug::DrawAABB(*fireHydrant->getMesh(), V4(1, 0, 0, 1), fireHydrantWorldSpaceTransform);
-
 
 			if (isPressed)
 			{
@@ -457,7 +473,7 @@ namespace Example
 				V4 mousePickingWorldSpace = Inverse(cam.pv()) * normalizedDeviceCoordinates;
 				ray = Ray(rayOrigin, (mousePickingWorldSpace - rayOrigin).toV3());
 
-				//resultingHit=mesh_intersection_test(ray);
+				resultingHit = find_AABB_intersection(ray, *fireHydrantMesh);
 				
 				if (true)// || isnan(resultingHit.data))
 				{
@@ -467,20 +483,22 @@ namespace Example
 				resultingHit = ray_intersection(ray, fireHydrantWorldSpaceTransform, fireHydrantMesh->positions, fireHydrantMesh->indicesAmount, &(fireHydrantMesh)->normals);
 			}
 
-			cubeWorldSpaceTransform = Translate(V4(resultingHit, 1));
+			cube.get()->actor->transform = Translate(V4(resultingHit, 1));
 
 			//TODO: here
 			std::vector<std::pair<size_t, size_t>> in = aabbPlaneSweep(aabbs);
 			for (size_t i = 0; i < in.size(); i++)
 			{
+				//TODO: have this as a temporary check
+				if (in[i].first >= all_loaded.size() || in[i].second >= all_loaded.size()) continue;
 				std::shared_ptr<GraphicNode>& ith = all_loaded[in[i].first];
 				std::shared_ptr<GraphicNode>& jth = all_loaded[in[i].second];
 				
 				std::vector<V3> i_vertices = ith->getMesh()->positions;
-				apply_worldspace(i_vertices, ith->actor->get_world_space_transform());
+				apply_worldspace(i_vertices, ith->actor->transform);
 
 				std::vector<V3> j_vertices = jth->getMesh()->positions;
-				apply_worldspace(j_vertices, jth->actor->get_world_space_transform());
+				apply_worldspace(j_vertices, jth->actor->transform);
 				std::vector<V3> simplex_placeholder;
 				if (gjk(simplex_placeholder, i_vertices, j_vertices))
 				{
@@ -497,18 +515,18 @@ namespace Example
 			}
 
 			// TODO create an impulse
-			(*fireHydrant->actor).apply_linear_impulse(ray, (fireHydrantProjectionViewTransform * V4(fireHydrantMesh->center_of_mass, 1)).toV3(), resultingHit);
-			(*fireHydrant->actor).update(dt);
-			for (size_t i = 0; i < 100; i++)
+			fireHydrant.get()->actor->apply_linear_impulse(ray, (fireHydrantProjectionViewTransform * V4(fireHydrantMesh->center_of_mass, 1)).toV3(), resultingHit);
+			fireHydrant.get()->actor->update(dt);
+			/*for (size_t i = 0; i < 100; i++)
 			{
 				quadProjectionViewTransform[i] = cam.pv() * quadWorldSpaceTransform[i];
-			}
+			}*/
 
 			//--------------------real-time render section--------------------
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			fireHydrantScript->setM4(cam.pv(), "m4ProjViewPos");
-			cubeScript->setM4(cam.pv(), "m4ProjViewPos");
+			fireHydrant.get()->getShader()->setM4(cam.pv(), "m4ProjViewPos");
+			cube.get()->getShader()->setM4(cam.pv(), "m4ProjViewPos");
 
 			light.bindLight(fireHydrantScript, cam.getPos());
 			fireHydrant->DrawScene(fireHydrantProjectionViewTransform, fireHydrantColor); // cause
@@ -516,13 +534,13 @@ namespace Example
 			light.bindLight(cubeScript, cam.getPos());
 			cube->DrawScene(cubeProjectionViewTransform, cubeColor); // cause
 
-			for (int i = 0; i < 100; i++)
-			{
-				if (true || plane->pointIsOnPlane(quadWorldSpaceTransform[i].toV3(), .0000001))
-				{
-					//cube->DrawScene(quadProjectionViewTransform[i], fireHydrantColor);
-				}
-			}
+			//for (int i = 0; i < 100; i++)
+			//{
+			//	if (true || plane->pointIsOnPlane(quadWorldSpaceTransform[i].toV3(), .0000001))
+			//	{
+			//		//cube->DrawScene(quadProjectionViewTransform[i], fireHydrantColor);
+			//	}
+			//}
 
 			// usleep(10000);
 			this->window->Update();
@@ -530,6 +548,13 @@ namespace Example
 
 			if (showDebugRender)
 			{
+				for (std::shared_ptr<GraphicNode>& a : all_loaded)
+				{
+					M4& wst = a.get()->actor->transform;
+					Debug::DrawBB(*a.get()->getMesh(), V4(0, 1, 1, 1), wst);
+					Debug::DrawAABB(*a.get()->getMesh(), V4(1, 0, 0, 1), wst);
+				}
+
 				Debug::Render(cam.pv());
 			}
 			this->window->SwapBuffers();

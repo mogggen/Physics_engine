@@ -539,17 +539,6 @@ inline bool point_in_triangle_3D(
 		(Dot(x1, x2) > 0.f && Dot(x2, x3) > 0.f && Dot(x3, x1) > 0.f);
 }
 
-inline void apply_worldspace(
-	std::vector<V3>& verts,
-	M4 transform
-)
-{
-	for (V3 ff : verts)
-	{
-		ff = (Transpose(transform) * V4(ff, 1)).toV3();
-	}
-}
-
 // Calculate the signed volume of a tetrahedron formed by four points
 inline const float signedVolume(const V3& a, const V3& b, const V3& c, const V3& d) {
 	return (1.0 / 6.0) * (
@@ -951,6 +940,9 @@ inline const V3 get_collision_point_in_model_space(
 	V3 collisionPointWorld = /*shapeTransform*/1.f * collisionPointLocal; // Apply shape's transformation matrix
 
 	// Now 'collisionPointWorld' contains the collision point in world space
+
+	//TODO: return the correct collision when it is deemed so
+	return V3(NAN, NAN, NAN);
 }
 
 #pragma endregion // Vector3
@@ -1712,6 +1704,20 @@ inline M4 projection(float fov, float aspect, float n, float f)
 
 #pragma endregion // Matrix
 
+
+inline void apply_worldspace(
+	std::vector<V3>& verts,
+	M4 transform
+)
+{
+	for (V3 ff : verts)
+	{
+		ff = (Transpose(transform) * V4(ff, 1)).toV3();
+	}
+}
+
+#pragma region Quaternions
+
 class Quaternion
 {
 private:
@@ -1830,7 +1836,6 @@ struct Ray
 	Ray(V3 origin, V3 dir);
 	const V3 Ray::minDist(const std::vector<V3>& others);
 	const V3 intersect(const Plane& plane, float epsilon);
-	const V3 find_AABB_intersection(MeshResource& mesh);
 };
 
 inline Ray::Ray(V3 origin, V3 dir) : origin(origin), dir(dir)
@@ -1875,39 +1880,6 @@ inline const V3 Ray::minDist(const std::vector<V3>& others)
 
 	return others[min_index];
 }
-
-inline const V3 Ray::find_AABB_intersection(MeshResource& mesh)
-{
-	Plane left_plane(V3(mesh.min[0], 0, 0), V3(mesh.min[0], 0, 0));
-	Plane right_plane(V3(mesh.max[0], 0, 0), V3(mesh.max[0], 0, 0));
-
-	Plane bottom_plane(V3(0, mesh.min[1], 0), V3(0, mesh.min[1], 0));
-	Plane top_plane(V3(0, mesh.max[1], 0), V3(0, mesh.max[1], 0));
-
-	Plane front_plane(V3(0, 0, mesh.max[2]), V3(0, 0, mesh.max[2]));
-	Plane back_plane(V3(0, 0, mesh.min[2]), V3(0, 0, mesh.min[2]));
-	
-	V3 res_left = intersect(left_plane);
-	V3 res_two = intersect(right_plane);
-
-	V3 res_bottom = intersect(bottom_plane);
-	V3 res_top = intersect(top_plane);
-
-	V3 res_front = intersect(front_plane);
-	V3 res_back = intersect(back_plane);
-
-	std::vector<V3> tt;
-	tt.push_back(res_left);
-	tt.push_back(res_two);
-
-	tt.push_back(res_top);
-	tt.push_back(res_bottom);
-
-	tt.push_back(res_front);
-	tt.push_back(res_back);
-
-	return minDist(tt);
-}				
 
 #pragma endregion // Ray
 

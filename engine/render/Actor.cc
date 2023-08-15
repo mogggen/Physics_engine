@@ -5,7 +5,7 @@ Actor::Actor()
 {
     orientation = Quaternion();
     angularVelocity = Quaternion();
-    position = V4();
+    transform = Translate(V4());
     linearVelocity = V4();
     mass = 0.f;
 }
@@ -17,7 +17,7 @@ Actor::Actor(V3 _position,
     V3 _linearVelocity,
     Quaternion _orientation,
     Quaternion _angularVelocity) :
-    position(_position),
+    transform(Translate(V4(_position, 1))),
     mass(_mass),
     linearVelocity(_linearVelocity),
     orientation(_orientation),
@@ -30,21 +30,25 @@ void Actor::apply_force(const V3& force, const float& dt)
 {
     const V3 acceleration = force * (1 / mass);
     linearVelocity = linearVelocity + acceleration * dt;
+    V4 position = V4(transform.toV3(), 1);
     position = position + linearVelocity * dt;
+    transform = Translate(position);
 }
 
 void Actor::apply_force(const V3& direction, const float& magF, const float& dt)
 {
     const V3 acceleration = direction * magF * (1 / mass);
     linearVelocity = linearVelocity + acceleration * dt;
+    V4 position = V4(transform.toV3(), 1);
     position = position + linearVelocity * dt;
+    transform = Translate(position);
 }
 
 // this function is cursed
 void Actor::apply_linear_impulse(const Ray& ray, const V3& center_of_mass, const V3& contactPoint, const float& elasticity)
 {
     // how much should be linear velocity (the rest is angular velocity
-    const float fraction = Dot(Normalize(position - ray.origin), Normalize(center_of_mass - ray.origin));
+    const float fraction = Dot(Normalize(transform.toV3() - ray.origin), Normalize(center_of_mass - ray.origin));
     float linear_impulse = 5.f;
     linearVelocity = linearVelocity + Normalize(ray.dir) * linear_impulse * (1 / mass);
 }
@@ -71,7 +75,9 @@ void Actor::apply_angular_impulse(const Quaternion& impulse, const V4& contactPo
 void Actor::update(const float& dt)
 {
     // Update position and orientation using linear and angular velocities
+    V4 position = V4(transform.toV3(), 1);
     position = position + linearVelocity * dt;
+    transform = Translate(position);
 
     Quaternion deltaOrientation = Quaternion(1.0, angularVelocity.getX() * dt * 0.5,
                                                     angularVelocity.getY() * dt * 0.5,
@@ -105,9 +111,4 @@ V3 calculateCollisionImpulse(const V3& relativeVelocity,
     V3 impulse = contactNormal * impulseScalar;
 
     return impulse;
-}
-
-M4 Actor::get_world_space_transform()
-{
-    return Translate(position);
 }

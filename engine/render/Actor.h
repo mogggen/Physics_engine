@@ -8,7 +8,7 @@ struct Actor
     float elasticity; // Coefficient of restitution
     Quaternion orientation;
     Quaternion angularVelocity;
-    V4 position; // Quaternion representing the object's position in 3D space
+    M4 transform;
     V4 linearVelocity;
 
     Actor();
@@ -20,5 +20,4 @@ struct Actor
     void apply_Momentum();
     void apply_linear_impulse(const Ray & ray, const V3& center_of_mass, const V3& contact_point, const float& elasticity=.5f);
     void apply_angular_impulse(const Quaternion& contactImpuse, const V4& contactPoint, const float& elasticity);
-    M4 get_world_space_transform();
 };

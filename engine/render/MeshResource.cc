@@ -268,7 +268,7 @@ bool MeshResource::findCenterOfMass()
 	return true;
 }
 
-bool MeshResource::findbounds()
+bool MeshResource::find_bounds()
 {
 	// can't be less than the minimum value of 'undefined', so let's not, mate?
 	min[0] = max[0] = positions[0][0];

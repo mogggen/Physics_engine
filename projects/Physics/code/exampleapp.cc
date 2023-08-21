@@ -162,7 +162,11 @@ namespace Example
 			V3 currentIntersect = r.intersect(p, epsilon);
 
 			// TODO: undefined check
-			if (epsilon == 1337) continue;
+			if (epsilon == 1337)
+			{
+				closest_point = V3();
+				continue;
+			}
 			isUndef = false;
 			
 			if (point_in_triangle_3D(currentIntersect, a, b, c))
@@ -255,7 +259,6 @@ namespace Example
 			fireHydrantMesh->texels = fireTexels;
 			fireHydrantMesh->normals = fireNormals;
 			fireHydrantMesh->vertices = fireVertices;
-			// fireHydrantMesh->positions = MeshResource::LoadVerticesFromFile("textures/fireHydrant.obj");
 			assert(fireCoords.size() == fireHydrantMesh->positions.size());
 
 			// TextureResource
@@ -267,13 +270,12 @@ namespace Example
 			fireHydrantScript->LoadShader(fireHydrantScript->vs, fireHydrantScript->ps, "textures/vs.glsl", "textures/ps.glsl");
 
 			// Actor
-			Actor temp;
-			Actor *fireHydrantActor = &temp;
+			Actor *fireHydrantActor = new Actor();
 
 			// GraphicNode
 			fireHydrant = std::make_shared<GraphicNode>(fireHydrantMesh, fireHydrantTexture, fireHydrantScript, fireHydrantActor);
 
-			all_loaded.push_back(fireHydrant);
+			//all_loaded.push_back(fireHydrant);
 
 			// MeshResource
 			std::vector<unsigned> cubeIndices;
@@ -287,18 +289,15 @@ namespace Example
 			cubeMesh->texels = cubeTexels;
 			cubeMesh->normals = cubeNormals;
 			cubeMesh->vertices = cubeVertices;
-			// cubeMesh->positions = MeshResource::LoadVerticesFromFile("textures/cube.obj");
 			
 			cubeTexture = std::make_shared<TextureResource>("textures/red.png");
 
 			// shaderResource
 			cubeScript = std::make_shared<ShaderResource>();
 			cubeScript->LoadShader(cubeScript->vs, cubeScript->ps, "textures/vs.glsl", "textures/psNoTexture.glsl");
-			// note: bindTexture() still requires a texture, but just won't use it
 
 			// Actor
-			Actor temp2;
-			Actor *cubeActor = &temp2;
+			Actor *cubeActor = new Actor();
 
 			// GraphicNode
 			cube = std::make_shared<GraphicNode>(cubeMesh, cubeTexture, cubeScript, cubeActor);
@@ -317,16 +316,14 @@ namespace Example
 			quadMesh->texels = quadTexels;
 			quadMesh->normals = quadNormals;
 			quadMesh->vertices = quadVertices;
-			// quadMesh->positions = MeshResource::LoadVerticesFromFile("textures/quad.obj");
 			
 			// Actor
-			Actor temp3;
-			Actor *quadActor = &temp3;
+			Actor *quadActor = new Actor();
 
 			// GraphicNode
 			quad = std::make_shared<GraphicNode>(quadMesh, cubeTexture, cubeScript, quadActor);
 
-			all_loaded.push_back(quad);
+			//all_loaded.push_back(quad);
 
 			this->window->SetUiRender([this]()
 									  { this->RenderUI(); });
@@ -381,25 +378,6 @@ namespace Example
 	void
 	ExampleApp::Run()
 	{
-		AABB aabb1 = { V3(12, 63, 52), V3(150, 200, 139) };
-		AABB aabb2 = { V3(63, 65, 95), V3(187, 173, 183) };
-		AABB aabb3 = { V3(23, 93, 24), V3(139, 161, 160) };
-		AABB aabb4 = { V3(53, 16, 70), V3(182, 118, 136)};
-
-		std::vector<AABB> aabbs =
-		{
-			aabb1,
-			aabb2,
-			aabb3,
-			aabb4
-		};
-
-		aabbPlaneSweep(aabbs);
-		
-		//TODO: get this uncommented ASAP
-		//exit(0);
-
-
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
 
@@ -412,7 +390,7 @@ namespace Example
 #define GRAVITY V3(0, g, 0)
 
 		Camera cam(90, (float)width / height, 0.01f, 1000.0f);
-		// cam.setPos(V4(0, 4, 3));
+		cam.setPos(V4(0, 4, 3));
 		cam.setRot(V4(0, 1, 0), M_PI);
 
 		Lightning light(V3(10, 10, 10), V3(1, 1, 1), .01f);
@@ -420,10 +398,41 @@ namespace Example
 		float camSpeed = .8f;
 
 		// set identies
-		fireHydrant.get()->actor->transform = Translate(V4(0, 0, 15));
-		fireHydrant.get()->getMesh()->findbounds();
+		/*fireHydrant->actor->transform = Translate(V4(0, 0, 15));
+		fireHydrant->getMesh()->find_bounds();
+		*/
+		cube->actor->transform = Translate(V4(-5, 0, 0));
+		cube->getMesh()->find_bounds();
+
+
+		std::shared_ptr<GraphicNode> child = cube;
+
+		child->actor->transform = Translate(V4(5, 0, 0));
+		child->getMesh()->find_bounds();
+		all_loaded.push_back(child);
+
 		
-		cube.get()->actor->transform = Translate(V4(0, 0, -5));
+
+		for (std::shared_ptr<GraphicNode>& a : all_loaded)
+		{
+			apply_worldspace(a->getMesh()->positions, a->actor->transform);
+			a->getMesh()->find_bounds();
+			//V3 gg = a->actor->transform.toV3();
+			//printf("%f, %f, %f\n", gg.x, gg.y, gg.z);
+			// check intersections to optimize what to compare later
+			AABB the = { a->getMesh()->min, a->getMesh()->max };
+			aabbs.push_back(the);
+		}
+
+		// TODO: setup
+
+		// place cube1 at -5, 0, 0
+		// place cube2 at 5, 0, 0
+		// add velocity for cube1 to the right at 0.5
+		cube->actor->linearVelocity = V3(0.05f, 0, 0);
+		// add velocity for cube2 to the right at -0.5
+		child->actor->linearVelocity = V3(-.05f, 0, 0);
+		// if collision swap directions
 
 		while (this->window->IsOpen())
 		{
@@ -434,40 +443,31 @@ namespace Example
 			//--------------------math section--------------------
 			cam.setPos(cam.getPos() + Normalize(V4((d - a), (q - e), (w - s))) * -camSpeed);
 			V3 rayOrigin = cam.getPos() * 1.f;
-
-			// std::cout << "frame " << frameIndex << std::endl;
 			
 			// effect of gravity
 			//fireHydrant->actor->apply_force(GRAVITY, dt);
 
 			//fireHydrant world space
-			fireHydrant.get()->actor->transform = Rotation(V4(0, 0, 1), -0.012f) * Rotation(V4(0, 1, 0), 0.004f) * fireHydrant.get()->actor->transform
+			fireHydrant->actor->transform = Rotation(V4(0, 0, 1), -0.012f) * Rotation(V4(0, 1, 0), 0.004f) * fireHydrant->actor->transform
 			
 			//* Translate(fireHydrant->actor->velocity)
 				;
 
 			//fireHydrant view space
-			fireHydrantProjectionViewTransform = cam.pv() * fireHydrant.get()->actor->transform/* * Scalar(V4(.1, .1, .1))*/;
+			//fireHydrantProjectionViewTransform = cam.pv() * fireHydrant->actor->transform * Scalar(V4(.1, .1, .1));
 
 			// cube world space
-			cubeWorldSpaceTransform = cubeWorldSpaceTransform
-										//* Translate(V4(0, 0, cos(frameIndex / 20.f)))
+			quad->actor->transform = quad->actor->transform
+										* Translate(V4(0, 0, cos(frameIndex / 20.f)))
 				;
 
-			// // cube view space
-			cubeProjectionViewTransform = cam.pv() * cubeWorldSpaceTransform;
-
-			/*for (size_t i = 0; i < countLines; i++)
-			{
-				Debug::DrawLine(start[i], dirSize[i], 1.f, V4(1, 1, 1, 1));
-			}*/
-
+			// cube view space
+			cubeProjectionViewTransform = cam.pv() * cube->actor->transform;
 
 			if (isPressed)
 			{
 				glfwGetCursorPos(this->window->GetHandle(), &mouseDirX, &mouseDirY);
 				// shot a ray
-
 
 				V4 normalizedDeviceCoordinates(mouseDirX / width * 2 - 1, 1 - mouseDirY / height * 2, 1, 1);
 				V4 mousePickingWorldSpace = Inverse(cam.pv()) * normalizedDeviceCoordinates;
@@ -477,23 +477,29 @@ namespace Example
 				
 				if (true)// || isnan(resultingHit.data))
 				{
+					printf("%f, %f, %f\n", resultingHit.x, resultingHit.y, resultingHit.z);
+					// make sure w is one when multiplying V4 and float
 					Debug::DrawLine(V4(resultingHit - V3(0, 3, 0), 1), V4(resultingHit - V3(0, 0, 0), 1), V4(1, 0, 0, 1));
-					Debug::DrawSquare(V4(resultingHit, 1));
+					//Debug::DrawSquare(V4(resultingHit, 1));
 				}
 				resultingHit = ray_intersection(ray, fireHydrantWorldSpaceTransform, fireHydrantMesh->positions, fireHydrantMesh->indicesAmount, &(fireHydrantMesh)->normals);
 			}
+			cube->actor->transform = Translate(V4(resultingHit, 1));
 
-			cube.get()->actor->transform = Translate(V4(resultingHit, 1));
-
-			//TODO: here
 			std::vector<std::pair<size_t, size_t>> in = aabbPlaneSweep(aabbs);
 			for (size_t i = 0; i < in.size(); i++)
 			{
-				//TODO: have this as a temporary check
-				if (in[i].first >= all_loaded.size() || in[i].second >= all_loaded.size()) continue;
 				std::shared_ptr<GraphicNode>& ith = all_loaded[in[i].first];
 				std::shared_ptr<GraphicNode>& jth = all_loaded[in[i].second];
+
 				
+				float len = Length(aabbs[in[i].first].min - aabbs[in[i].second].max);
+				std::cout << len << std::endl;
+
+				Debug::DrawLine(V4(aabbs[in[i].first].min, 1), V4(aabbs[in[i].second].max, 1), V4(1, 1, 1, 1));
+				Debug::DrawLine(V4(aabbs[in[i].first].max, 1), V4(aabbs[in[i].second].min, 1), V4(1, 1, 1, 1));
+				
+				// this isn't the meshes we want!
 				std::vector<V3> i_vertices = ith->getMesh()->positions;
 				apply_worldspace(i_vertices, ith->actor->transform);
 
@@ -506,89 +512,66 @@ namespace Example
 					float depth;
 					std::vector<V3> suppe = epa(normal, depth, simplex_placeholder,
 						i_vertices, j_vertices);
+					Debug::DrawLine(V4(normal, 1), V4(normal * depth, 1));
 					V3 p = get_collision_point_in_model_space(suppe, normal, depth);
-					// draw a line along the normal where the collision happened (allegedly)
-					Debug::DrawLine(V4(p, 1), V4(p + normal * depth, 1), V4(0, 1, 0, 1));
-
+					
 					// handle COllision responses here
-				}
-			}
+					//e * (ith->actor->linearVelocity * ith->actor->mass * .8f + jth->actor->linearVelocity * jth->actor->mass) = ;
 
-			// TODO create an impulse
-			fireHydrant.get()->actor->apply_linear_impulse(ray, (fireHydrantProjectionViewTransform * V4(fireHydrantMesh->center_of_mass, 1)).toV3(), resultingHit);
-			fireHydrant.get()->actor->update(dt);
-			/*for (size_t i = 0; i < 100; i++)
-			{
-				quadProjectionViewTransform[i] = cam.pv() * quadWorldSpaceTransform[i];
-			}*/
+					// temporary display of the collision working
+					ith->actor->linearVelocity = ith->actor->linearVelocity * -1.f;
+					jth->actor->linearVelocity = jth->actor->linearVelocity * -1.f;
+
+
+					//fireHydrant->actor->apply_linear_impulse(ray, (fireHydrantProjectionViewTransform * V4(fireHydrantMesh->center_of_mass, 1)).toV3(), resultingHit);
+				}
+				// TODO create an impulse
+
+			}
 
 			//--------------------real-time render section--------------------
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			fireHydrant.get()->getShader()->setM4(cam.pv(), "m4ProjViewPos");
-			cube.get()->getShader()->setM4(cam.pv(), "m4ProjViewPos");
+			fireHydrant->getShader()->setM4(cam.pv(), "m4ProjViewPos");
+			cube->getShader()->setM4(cam.pv(), "m4ProjViewPos");
 
-			light.bindLight(fireHydrantScript, cam.getPos());
-			fireHydrant->DrawScene(fireHydrantProjectionViewTransform, fireHydrantColor); // cause
+			std::shared_ptr<ShaderResource>& script = all_loaded[0]->getShader();
+			V4& color = fireHydrantColor;
 
-			light.bindLight(cubeScript, cam.getPos());
-			cube->DrawScene(cubeProjectionViewTransform, cubeColor); // cause
-
-			//for (int i = 0; i < 100; i++)
-			//{
-			//	if (true || plane->pointIsOnPlane(quadWorldSpaceTransform[i].toV3(), .0000001))
-			//	{
-			//		//cube->DrawScene(quadProjectionViewTransform[i], fireHydrantColor);
-			//	}
-			//}
-
-			// usleep(10000);
-			this->window->Update();
-			frameIndex++;
-
+			for (std::shared_ptr<GraphicNode>& a : all_loaded)
+			{
+				a->actor->update(dt);
+				M4& wst = a->actor->transform;
+				if (showDebugRender)
+				{
+					Debug::DrawBB(*a->getMesh(), V4(0, 1, 1, 1), wst);
+					Debug::DrawAABB(*a->getMesh(), V4(1, 0, 0, 1), wst);
+				}
+				//light.bindLight(script, cam.getPos());
+				//a->DrawScene(cam.pv() * wst, color);
+			}
 			if (showDebugRender)
 			{
-				for (std::shared_ptr<GraphicNode>& a : all_loaded)
-				{
-					M4& wst = a.get()->actor->transform;
-					Debug::DrawBB(*a.get()->getMesh(), V4(0, 1, 1, 1), wst);
-					Debug::DrawAABB(*a.get()->getMesh(), V4(1, 0, 0, 1), wst);
-				}
-
+				Debug::DrawLine(V4(1, 1, 1, 1), V4(1, 1, 1, 1), V4(1, 1, 1, 1));
 				Debug::Render(cam.pv());
 			}
+			
+			frameIndex++;
+			this->window->Update();
 			this->window->SwapBuffers();
 			
 			auto stop = std::chrono::high_resolution_clock::now();
 			using ms = std::chrono::duration<float, std::milli>;
 			dt = std::chrono::duration_cast<ms>(stop - start).count();
-#ifdef __linux__
-			duration = std::chrono::duration_cast<std::chrono::microseconds>(finish - start).count();
-#endif
 		}
 	}
 
 	void ExampleApp::RenderUI()
 	{
 		bool show = true;
-		ImGui::Begin("Mega Cringe", &show, ImGuiWindowFlags_NoSavedSettings);
-		float cube[3];
-		for (int i = 0; i < 3; i++)
-		{
-			cube[i] = cubeWorldSpaceTransform[i][3];
-		}
-		ImGui::Text("cube: %.3f\t%.3f\t%.3f", cube[0], cube[1], cube[2]);
-
+		ImGui::Begin("Panel", &show, ImGuiWindowFlags_NoSavedSettings);
 		ImGui::Checkbox("Debug Mode: ", &showDebugRender);
-		ImGui::SliderFloat("x", &x, -5.f, 5.f);
-		ImGui::SliderFloat("y", &y, -5.f, 5.f);
-		ImGui::SliderFloat("z", &z, -5.f, 5.f);
-
-		// plane->normal = V3(x, y, z);
-		ImGui::Text("resultingHit: %.3f\t%.3f\t%.3f", resultingHit.data[0], resultingHit.data[1], resultingHit.data[2]);
-
-		ImGui::Text("frames: %d %.0f", frameIndex, 1e6f / float(duration));
-
+		ImGui::Text("frames: %d %.0f", frameIndex);
 		ImGui::End();
 	}
 

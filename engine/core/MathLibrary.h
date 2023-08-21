@@ -733,14 +733,14 @@ std::vector<V3>& rhs)
 
 		if (curr.Dot(newDir) <= 0.f)
 		{
-			std::cout << "max iterations: " << i << std::endl;
+			// std::cout << "max iterations: " << i << std::endl;
 			return false;
 		}
 		simplex_out.insert(simplex_out.begin(), curr);
 
 		if (next_simplex(simplex_out, newDir))
 		{
-			std::cout << "max iterations: " << i << std::endl;
+			// std::cout << "max iterations: " << i << std::endl;
 			return true;
 		}
 	}
@@ -1022,7 +1022,7 @@ inline void V4::operator*=(V4 right)
 
 inline void V4::operator*=(float right)
 {
-	for (size_t i = 0; i < 4; i++)
+	for (size_t i = 0; i < 3; i++)
 		data[i] *= right;
 }
 
@@ -2057,7 +2057,6 @@ struct AABB
 inline std::vector<std::pair<size_t, size_t>> aabbPlaneSweep(std::vector<AABB>& AABBs)
 {
 	std::vector<std::pair<size_t, size_t>> intersections;
-
 	// sort to find smallest x
 	std::sort(AABBs.begin(), AABBs.end(),
 		[](const AABB& a, const AABB& b) { return a.min.x < b.min.x; });

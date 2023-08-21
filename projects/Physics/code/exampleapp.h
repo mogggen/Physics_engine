@@ -49,10 +49,12 @@ namespace Example
 		float64 senseX = 0, senseY = 0;
 		bool w, a, s, d,
 			q, e, isPressed = false;
-		bool showDebugRender = false;
+		bool showDebugRender = true;
 		GLuint program;
 		GLuint vertexShader;
 		GLuint pixelShader;
+
+		std::vector<AABB> aabbs;
 
 		M4 fireHydrantWorldSpaceTransform;
 		M4 fireHydrantProjectionViewTransform;

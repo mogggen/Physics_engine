@@ -80,6 +80,8 @@ namespace Debug
 
     void DrawAABB(MeshResource &mesh, V4 color, M4 modelMatrix)
     {
+        mesh.find_bounds();
+
         float data[6] = {mesh.min[0], mesh.max[0], mesh.min[1], mesh.max[1], mesh.min[2], mesh.max[2]};
         V3 current = (Transpose(modelMatrix) * V4(data[0], data[2], data[4], 1)).toV3();
         float left = current[0];

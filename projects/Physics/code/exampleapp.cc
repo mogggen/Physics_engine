@@ -275,7 +275,7 @@ namespace Example
 			// GraphicNode
 			fireHydrant = std::make_shared<GraphicNode>(fireHydrantMesh, fireHydrantTexture, fireHydrantScript, fireHydrantActor);
 
-			//all_loaded.push_back(fireHydrant);
+			all_loaded.push_back(fireHydrant);
 
 			// MeshResource
 			std::vector<unsigned> cubeIndices;
@@ -382,7 +382,7 @@ namespace Example
 		glDepthFunc(GL_LEQUAL);
 
 		// deltatime
-		float dt;
+		float dt = 0.01;
 		Ray ray(V3(FLT_MAX, FLT_MAX, FLT_MAX), V3(FLT_MAX, FLT_MAX, FLT_MAX));
 
 		// gravity
@@ -395,21 +395,21 @@ namespace Example
 
 		Lightning light(V3(10, 10, 10), V3(1, 1, 1), .01f);
 
-		float camSpeed = .8f;
+		float camSpeed = .08f;
 
 		// set identies
-		/*fireHydrant->actor->transform = Translate(V4(0, 0, 15));
+		fireHydrant->actor->transform = Translate(V4(7, 0, 0));
 		fireHydrant->getMesh()->find_bounds();
-		*/
-		cube->actor->transform = Translate(V4(-5, 0, 0));
+		
+		cube->actor->transform = Translate(V4(-7, 0, 0));
 		cube->getMesh()->find_bounds();
 
 
-		std::shared_ptr<GraphicNode> child = cube;
+		//std::shared_ptr<GraphicNode> child = cube;
 
-		child->actor->transform = Translate(V4(5, 0, 0));
-		child->getMesh()->find_bounds();
-		all_loaded.push_back(child);
+		//child->actor->transform = Translate(V4(50, 0, 0));
+		//child->getMesh()->find_bounds();
+		//all_loaded.push_back(child);
 
 		
 
@@ -428,10 +428,10 @@ namespace Example
 
 		// place cube1 at -5, 0, 0
 		// place cube2 at 5, 0, 0
-		// add velocity for cube1 to the right at 0.5
-		cube->actor->linearVelocity = V3(0.05f, 0, 0);
 		// add velocity for cube2 to the right at -0.5
-		child->actor->linearVelocity = V3(-.05f, 0, 0);
+		cube->actor->linearVelocity = V3(.0005f, 0, 0);
+		// add velocity for cube1 to the right at 0.5
+		fireHydrant->actor->linearVelocity = V3(-.0005f, 0, 0);
 		// if collision swap directions
 
 		while (this->window->IsOpen())
@@ -448,7 +448,7 @@ namespace Example
 			//fireHydrant->actor->apply_force(GRAVITY, dt);
 
 			//fireHydrant world space
-			fireHydrant->actor->transform = Rotation(V4(0, 0, 1), -0.012f) * Rotation(V4(0, 1, 0), 0.004f) * fireHydrant->actor->transform
+			//fireHydrant->actor->transform = Rotation(V4(0, 0, 1), -0.012f) * Rotation(V4(0, 1, 0), 0.004f) * fireHydrant->actor->transform
 			
 			//* Translate(fireHydrant->actor->velocity)
 				;
@@ -457,9 +457,9 @@ namespace Example
 			//fireHydrantProjectionViewTransform = cam.pv() * fireHydrant->actor->transform * Scalar(V4(.1, .1, .1));
 
 			// cube world space
-			quad->actor->transform = quad->actor->transform
+			/*quad->actor->transform = quad->actor->transform
 										* Translate(V4(0, 0, cos(frameIndex / 20.f)))
-				;
+				;*/
 
 			// cube view space
 			cubeProjectionViewTransform = cam.pv() * cube->actor->transform;
@@ -475,7 +475,7 @@ namespace Example
 
 				resultingHit = find_AABB_intersection(ray, *fireHydrantMesh);
 				
-				if (true)// || isnan(resultingHit.data))
+				if (!isnan(NAN/*resultingHit.data*/))
 				{
 					printf("%f, %f, %f\n", resultingHit.x, resultingHit.y, resultingHit.z);
 					// make sure w is one when multiplying V4 and float
@@ -484,43 +484,64 @@ namespace Example
 				}
 				resultingHit = ray_intersection(ray, fireHydrantWorldSpaceTransform, fireHydrantMesh->positions, fireHydrantMesh->indicesAmount, &(fireHydrantMesh)->normals);
 			}
-			cube->actor->transform = Translate(V4(resultingHit, 1));
+			//cube->actor->transform = Translate(V4(resultingHit, 1));
 
 			std::vector<std::pair<size_t, size_t>> in = aabbPlaneSweep(aabbs);
-			for (size_t i = 0; i < in.size(); i++)
+			for (size_t i = 0; i < 1; i++)
 			{
-				std::shared_ptr<GraphicNode>& ith = all_loaded[in[i].first];
-				std::shared_ptr<GraphicNode>& jth = all_loaded[in[i].second];
-
+				std::shared_ptr<GraphicNode>& ith = all_loaded[0];
+				std::shared_ptr<GraphicNode>& jth = all_loaded[1];
 				
-				float len = Length(aabbs[in[i].first].min - aabbs[in[i].second].max);
-				std::cout << len << std::endl;
+				
+				//float len = Length(aabbs[in[i].first].min - aabbs[in[i].second].max);
+				//std::cout << len << std::endl;
 
-				Debug::DrawLine(V4(aabbs[in[i].first].min, 1), V4(aabbs[in[i].second].max, 1), V4(1, 1, 1, 1));
-				Debug::DrawLine(V4(aabbs[in[i].first].max, 1), V4(aabbs[in[i].second].min, 1), V4(1, 1, 1, 1));
+				//Debug::DrawLine(V4(aabbs[in[i].first].min, 1), V4(aabbs[in[i].second].max, 1), V4(1, 1, 1, 1));
+				//Debug::DrawLine(V4(aabbs[in[i].first].max, 1), V4(aabbs[in[i].second].min, 1), V4(1, 1, 1, 1));
 				
 				// this isn't the meshes we want!
 				std::vector<V3> i_vertices = ith->getMesh()->positions;
 				apply_worldspace(i_vertices, ith->actor->transform);
-
+				
+				//V3 v = i_vertices[0];
+				//Print(Transpose(ith->actor->transform));
+				//Print(ith->actor->transform);
+				//std::cout << " " << v.x << " " << v.y << " " << v.z << std::endl;
+				//V3 bb = (Transpose(ith->actor->transform) * V4(v, 1)).toV3();
+				//std::cout << " " << bb.x << " " << bb.y << " " << bb.z << std::endl;
+				//V3 cc = (ith->actor->transform * V4(v, 1)).toV3();
+				//std::cout << " " << cc.x << " " << cc.y << " " << cc.z << std::endl;
+				//exit(0);
 				std::vector<V3> j_vertices = jth->getMesh()->positions;
 				apply_worldspace(j_vertices, jth->actor->transform);
 				std::vector<V3> simplex_placeholder;
+
 				if (gjk(simplex_placeholder, i_vertices, j_vertices))
 				{
+					for (size_t i = 0; i < simplex_placeholder.size(); ++i)
+					{
+						V4 line1 = V4(V3(simplex_placeholder[i]), 1);
+						V4 line2 = V4(V3(simplex_placeholder[(i + 1) % simplex_placeholder.size()]), 1);
+						Debug::DrawLine(line1, line2, V4(1, 1, 1, 1));
+					}
+					
+					std::cout << "collision detected! frame: " << frameIndex << std::endl;
 					V3 normal;
 					float depth;
 					std::vector<V3> suppe = epa(normal, depth, simplex_placeholder,
 						i_vertices, j_vertices);
-					Debug::DrawLine(V4(normal, 1), V4(normal * depth, 1));
+					//Debug::DrawLine(V4(normal, 1), V4(normal * depth, 1));
 					V3 p = get_collision_point_in_model_space(suppe, normal, depth);
 					
+					std::cout << "normal: " << normal[0] << normal[1] << normal[2] << "\t";
+					std::cout << "point: " << p[0] << p[1] << p[2] << "\t";
+					std::cout << "depth: " << depth << std::endl;
 					// handle COllision responses here
 					//e * (ith->actor->linearVelocity * ith->actor->mass * .8f + jth->actor->linearVelocity * jth->actor->mass) = ;
 
 					// temporary display of the collision working
-					ith->actor->linearVelocity = ith->actor->linearVelocity * -1.f;
-					jth->actor->linearVelocity = jth->actor->linearVelocity * -1.f;
+					//ith->actor->linearVelocity = ith->actor->linearVelocity * -1.f;
+					//jth->actor->linearVelocity = jth->actor->linearVelocity * -1.f;
 
 
 					//fireHydrant->actor->apply_linear_impulse(ray, (fireHydrantProjectionViewTransform * V4(fireHydrantMesh->center_of_mass, 1)).toV3(), resultingHit);
@@ -545,7 +566,7 @@ namespace Example
 				if (showDebugRender)
 				{
 					Debug::DrawBB(*a->getMesh(), V4(0, 1, 1, 1), wst);
-					Debug::DrawAABB(*a->getMesh(), V4(1, 0, 0, 1), wst);
+					//Debug::DrawAABB(*a->getMesh(), V4(1, 0, 0, 1), wst);
 				}
 				//light.bindLight(script, cam.getPos());
 				//a->DrawScene(cam.pv() * wst, color);

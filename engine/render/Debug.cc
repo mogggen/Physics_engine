@@ -41,41 +41,41 @@ namespace Debug
         V3 &min = mesh.min;
         V3 &max = mesh.max;
 
-        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(min[0], max[1], min[2], 1), color});
-        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(min[0], max[1], max[2], 1), color});
+        PushVertex(&lineBuf, Vertex{(modelMatrix) * V4(min[0], max[1], min[2], 1), color});
+        PushVertex(&lineBuf, Vertex{(modelMatrix) * V4(min[0], max[1], max[2], 1), color});
 
-        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(max[0], max[1], min[2], 1), color});
-        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(max[0], max[1], max[2], 1), color});
+        PushVertex(&lineBuf, Vertex{(modelMatrix) * V4(max[0], max[1], min[2], 1), color});
+        PushVertex(&lineBuf, Vertex{(modelMatrix) * V4(max[0], max[1], max[2], 1), color});
 
-        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(min[0], max[1], min[2], 1), color});
-        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(max[0], max[1], min[2], 1), color});
+        PushVertex(&lineBuf, Vertex{(modelMatrix) * V4(min[0], max[1], min[2], 1), color});
+        PushVertex(&lineBuf, Vertex{(modelMatrix) * V4(max[0], max[1], min[2], 1), color});
 
-        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(min[0], max[1], max[2], 1), color});
-        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(max[0], max[1], max[2], 1), color});
+        PushVertex(&lineBuf, Vertex{(modelMatrix) * V4(min[0], max[1], max[2], 1), color});
+        PushVertex(&lineBuf, Vertex{(modelMatrix) * V4(max[0], max[1], max[2], 1), color});
 
-        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(min[0], min[1], min[2], 1), color});
-        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(min[0], min[1], max[2], 1), color});
+        PushVertex(&lineBuf, Vertex{(modelMatrix) * V4(min[0], min[1], min[2], 1), color});
+        PushVertex(&lineBuf, Vertex{(modelMatrix) * V4(min[0], min[1], max[2], 1), color});
 
-        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(max[0], min[1], min[2], 1), color});
-        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(max[0], min[1], max[2], 1), color});
+        PushVertex(&lineBuf, Vertex{(modelMatrix) * V4(max[0], min[1], min[2], 1), color});
+        PushVertex(&lineBuf, Vertex{(modelMatrix) * V4(max[0], min[1], max[2], 1), color});
 
-        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(min[0], min[1], min[2], 1), color});
-        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(max[0], min[1], min[2], 1), color});
+        PushVertex(&lineBuf, Vertex{(modelMatrix) * V4(min[0], min[1], min[2], 1), color});
+        PushVertex(&lineBuf, Vertex{(modelMatrix) * V4(max[0], min[1], min[2], 1), color});
 
-        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(min[0], min[1], max[2], 1), color});
-        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(max[0], min[1], max[2], 1), color});
+        PushVertex(&lineBuf, Vertex{(modelMatrix) * V4(min[0], min[1], max[2], 1), color});
+        PushVertex(&lineBuf, Vertex{(modelMatrix) * V4(max[0], min[1], max[2], 1), color});
 
-        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(min[0], max[1], min[2], 1), color});
-        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(min[0], min[1], min[2], 1), color});
+        PushVertex(&lineBuf, Vertex{(modelMatrix) * V4(min[0], max[1], min[2], 1), color});
+        PushVertex(&lineBuf, Vertex{(modelMatrix) * V4(min[0], min[1], min[2], 1), color});
 
-        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(max[0], max[1], min[2], 1), color});
-        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(max[0], min[1], min[2], 1), color});
+        PushVertex(&lineBuf, Vertex{(modelMatrix) * V4(max[0], max[1], min[2], 1), color});
+        PushVertex(&lineBuf, Vertex{(modelMatrix) * V4(max[0], min[1], min[2], 1), color});
 
-        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(min[0], max[1], max[2], 1), color});
-        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(min[0], min[1], max[2], 1), color});
+        PushVertex(&lineBuf, Vertex{(modelMatrix) * V4(min[0], max[1], max[2], 1), color});
+        PushVertex(&lineBuf, Vertex{(modelMatrix) * V4(min[0], min[1], max[2], 1), color});
 
-        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(max[0], max[1], max[2], 1), color});
-        PushVertex(&lineBuf, Vertex{Transpose(modelMatrix) * V4(max[0], min[1], max[2], 1), color});
+        PushVertex(&lineBuf, Vertex{(modelMatrix) * V4(max[0], max[1], max[2], 1), color});
+        PushVertex(&lineBuf, Vertex{(modelMatrix) * V4(max[0], min[1], max[2], 1), color});
     }
 
     void DrawAABB(MeshResource &mesh, V4 color, M4 modelMatrix)

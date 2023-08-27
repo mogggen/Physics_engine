@@ -1263,7 +1263,7 @@ inline M4 Transpose(M4 matrix)
 	{
 		if (i / 4 == i % 4)
 			continue;
-		matrix[i / 4][i % 4] = temp[i / 4][i % 4];
+		matrix[i % 4][i / 4] = temp[i / 4][i % 4];
 	}
 	return matrix;
 }

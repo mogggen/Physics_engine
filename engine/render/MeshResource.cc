@@ -20,6 +20,7 @@ MeshResource::MeshResource(Vertex vertices[], uint32_t verticesLength, uint32_t 
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
 }
 
 void MeshResource::render()
@@ -268,7 +269,7 @@ bool MeshResource::findCenterOfMass()
 	return true;
 }
 
-bool MeshResource::find_bounds()
+std::pair<V3, V3> MeshResource::find_bounds()
 {
 	// can't be less than the minimum value of 'undefined', so let's not, mate?
 	min[0] = max[0] = positions[0][0];
@@ -297,7 +298,49 @@ bool MeshResource::find_bounds()
 		if (positions[i][2] > max[2])
 			max[2] = positions[i][2];
 	}
-	return true;
+
+	return { min, max };
+}
+
+inline std::pair<V3, V3> MeshResource::findAABB(M4 modelMatrix)
+{
+	std::pair<V3, V3> best = find_bounds();
+	
+	V3 currentMin = (Transpose(modelMatrix) * V4(best.first, 1)).toV3();
+	V3 currentMax = (Transpose(modelMatrix) * V4(best.second, 1)).toV3();
+	
+	if (currentMin[0] < best.first[0])
+		best.first[0] = currentMin[0];
+	if (currentMin[1] < best.first[1])
+		best.first[1] = currentMin[1];
+	if (currentMin[2] < best.first[2])
+		best.first[2] = currentMin[2];
+
+	if (currentMin[0] > best.second[0])
+		best.second[0] = currentMin[0];
+	if (currentMin[1] > best.second[1])
+		best.second[1] = currentMin[1];
+	if (currentMin[2] > best.second[2])
+		best.second[2] = currentMin[2];
+
+
+
+	if (currentMax[0] < best.first[0])
+		best.first[0] = currentMax[0];
+	if (currentMax[1] < best.first[1])
+		best.first[1] = currentMax[1];
+	if (currentMax[2] < best.first[2])
+		best.first[2] = currentMax[2];
+
+	if (currentMax[0] > best.second[0])
+		best.second[0] = currentMax[0];
+	if (currentMax[1] > best.second[1])
+		best.second[1] = currentMax[1];
+	if (currentMax[2] > best.second[2])
+		best.second[2] = currentMax[2];
+	min = best.first;
+	max = best.second;
+	return best;
 }
 
 std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile,

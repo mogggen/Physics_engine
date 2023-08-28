@@ -260,6 +260,8 @@ namespace Example
 			fireHydrantMesh->normals = fireNormals;
 			fireHydrantMesh->vertices = fireVertices;
 			assert(fireCoords.size() == fireHydrantMesh->positions.size());
+			fireHydrantMesh->min = fireHydrantMesh->find_bounds().first;
+			fireHydrantMesh->max = fireHydrantMesh->find_bounds().second;
 
 			// TextureResource
 			fireHydrantTexture = std::make_shared<TextureResource>("textures/cubepic.png");
@@ -289,6 +291,9 @@ namespace Example
 			cubeMesh->texels = cubeTexels;
 			cubeMesh->normals = cubeNormals;
 			cubeMesh->vertices = cubeVertices;
+
+			cubeMesh->min = cubeMesh->find_bounds().first;
+			cubeMesh->max = cubeMesh->find_bounds().second;
 			
 			cubeTexture = std::make_shared<TextureResource>("textures/red.png");
 
@@ -316,7 +321,9 @@ namespace Example
 			quadMesh->texels = quadTexels;
 			quadMesh->normals = quadNormals;
 			quadMesh->vertices = quadVertices;
-			
+			quadMesh->min = quadMesh->find_bounds().first;
+			quadMesh->max = quadMesh->find_bounds().second;
+
 			// Actor
 			Actor *quadActor = new Actor();
 
@@ -399,11 +406,8 @@ namespace Example
 
 		// set identies
 		fireHydrant->actor->transform = Translate(V4(7, 0, 0));
-		fireHydrant->getMesh()->find_bounds();
 		
 		cube->actor->transform = Translate(V4(-7, 0, 0));
-		cube->getMesh()->find_bounds();
-
 
 		//std::shared_ptr<GraphicNode> child = cube;
 
@@ -415,13 +419,11 @@ namespace Example
 
 		for (std::shared_ptr<GraphicNode>& a : all_loaded)
 		{
-			apply_worldspace(a->getMesh()->positions, a->actor->transform);
-			a->getMesh()->find_bounds();
-			//V3 gg = a->actor->transform.toV3();
-			//printf("%f, %f, %f\n", gg.x, gg.y, gg.z);
-			// check intersections to optimize what to compare later
-			AABB the = { a->getMesh()->min, a->getMesh()->max };
-			aabbs.push_back(the);
+			//apply_worldspace(a->getMesh()->positions, a->actor->transform);
+
+			//std::pair<V3, V3> res = (a->getMesh()->find_bounds());
+			//AABB the = { res.first, res.second };
+			//aabbs.push_back(the);
 		}
 
 		// TODO: setup
@@ -474,17 +476,27 @@ namespace Example
 				ray = Ray(rayOrigin, (mousePickingWorldSpace - rayOrigin).toV3());
 
 				resultingHit = find_AABB_intersection(ray, *fireHydrantMesh);
-				
+				if (!isnan(resultingHit.x) || !isinf(resultingHit.y))
 				if (!isnan(NAN/*resultingHit.data*/))
 				{
 					printf("%f, %f, %f\n", resultingHit.x, resultingHit.y, resultingHit.z);
-					// make sure w is one when multiplying V4 and float
+					// make sure w is one when multiplying V4 and float (fixed in mathLib.h)
 					Debug::DrawLine(V4(resultingHit - V3(0, 3, 0), 1), V4(resultingHit - V3(0, 0, 0), 1), V4(1, 0, 0, 1));
 					//Debug::DrawSquare(V4(resultingHit, 1));
 				}
 				resultingHit = ray_intersection(ray, fireHydrantWorldSpaceTransform, fireHydrantMesh->positions, fireHydrantMesh->indicesAmount, &(fireHydrantMesh)->normals);
 			}
 			//cube->actor->transform = Translate(V4(resultingHit, 1));
+
+			for (std::shared_ptr<GraphicNode>& a : all_loaded)
+			{
+				//apply_worldspace(a->getMesh()->positions, a->actor->transform);
+				//a->getMesh()->find_bounds();
+				////V3 gg = a->actor->transform.toV3();
+				////printf("%f, %f, %f\n", gg.x, gg.y, gg.z);
+				//// check intersections to optimize what to compare later
+				//AABB the = { a->getMesh()->min, a->getMesh()->max };
+			}
 
 			std::vector<std::pair<size_t, size_t>> in = aabbPlaneSweep(aabbs);
 			for (size_t i = 0; i < 1; i++)
@@ -501,7 +513,7 @@ namespace Example
 				
 				// this isn't the meshes we want!
 				std::vector<V3> i_vertices = ith->getMesh()->positions;
-				apply_worldspace(i_vertices, ith->actor->transform);
+				apply_worldspace(i_vertices, ith->actor->transform); // transforms not updated
 				
 				//V3 v = i_vertices[0];
 				//Print(Transpose(ith->actor->transform));
@@ -525,7 +537,7 @@ namespace Example
 						Debug::DrawLine(line1, line2, V4(1, 1, 1, 1));
 					}
 					
-					std::cout << "collision detected! frame: " << frameIndex << std::endl;
+					//std::cout << "collision detected! frame: " << frameIndex << std::endl;
 					V3 normal;
 					float depth;
 					std::vector<V3> suppe = epa(normal, depth, simplex_placeholder,
@@ -533,9 +545,9 @@ namespace Example
 					//Debug::DrawLine(V4(normal, 1), V4(normal * depth, 1));
 					V3 p = get_collision_point_in_model_space(suppe, normal, depth);
 					
-					std::cout << "normal: " << normal[0] << normal[1] << normal[2] << "\t";
-					std::cout << "point: " << p[0] << p[1] << p[2] << "\t";
-					std::cout << "depth: " << depth << std::endl;
+					//std::cout << "normal: " << normal[0] << normal[1] << normal[2] << "\t";
+					//std::cout << "point: " << p[0] << p[1] << p[2] << "\t";
+					//std::cout << "depth: " << depth << std::endl;
 					// handle COllision responses here
 					//e * (ith->actor->linearVelocity * ith->actor->mass * .8f + jth->actor->linearVelocity * jth->actor->mass) = ;
 

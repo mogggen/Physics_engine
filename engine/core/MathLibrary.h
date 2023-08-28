@@ -1710,9 +1710,9 @@ inline void apply_worldspace(
 	M4 transform
 )
 {
-	for (V3 ff : verts)
+	for (V3& ff : verts)
 	{
-		ff = (Transpose(transform) * V4(ff, 1)).toV3();
+		ff = ((transform) * V4(ff, 1)).toV3();
 	}
 }
 

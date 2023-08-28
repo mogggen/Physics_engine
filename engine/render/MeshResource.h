@@ -33,13 +33,14 @@ public:
 
 	static std::shared_ptr<MeshResource> Cube();
 	bool findCenterOfMass();
-	bool find_bounds();
+	std::pair<V3, V3> find_bounds();
 	static std::shared_ptr<MeshResource> LoadObj(const char *pathToFile,
 		std::vector<uint32>& _indices,
 		std::vector<V3>& _positions,
 		std::vector<V2>& _texels,
 		std::vector<V3>& _normals,
 		std::vector<Vertex>& _vertices);
+	std::pair<V3, V3> findAABB(M4 modelMatrix);
 	MeshResource();
 	MeshResource(Vertex vertices[], uint32_t verticesLength, uint32_t indices[], uint32_t indicesLength);
 	~MeshResource();

@@ -74,10 +74,7 @@ void Actor::apply_angular_impulse(const Quaternion& impulse, const V4& contactPo
 
 void Actor::update(const float& dt)
 {
-    // Update position and orientation using linear and angular velocities
-    V4 position = V4(transform.toV3(), 1);
-    position = position + linearVelocity * dt;
-    transform = Translate(position);
+    transform = Translate(linearVelocity * dt) * transform;
 
     Quaternion deltaOrientation = Quaternion(1.0, angularVelocity.getX() * dt * 0.5,
                                                     angularVelocity.getY() * dt * 0.5,

@@ -302,46 +302,6 @@ std::pair<V3, V3> MeshResource::find_bounds()
 	return { min, max };
 }
 
-inline std::pair<V3, V3> MeshResource::findAABB(M4 modelMatrix)
-{
-	std::pair<V3, V3> best = find_bounds();
-	
-	V3 currentMin = (Transpose(modelMatrix) * V4(best.first, 1)).toV3();
-	V3 currentMax = (Transpose(modelMatrix) * V4(best.second, 1)).toV3();
-	
-	if (currentMin[0] < best.first[0])
-		best.first[0] = currentMin[0];
-	if (currentMin[1] < best.first[1])
-		best.first[1] = currentMin[1];
-	if (currentMin[2] < best.first[2])
-		best.first[2] = currentMin[2];
-
-	if (currentMin[0] > best.second[0])
-		best.second[0] = currentMin[0];
-	if (currentMin[1] > best.second[1])
-		best.second[1] = currentMin[1];
-	if (currentMin[2] > best.second[2])
-		best.second[2] = currentMin[2];
-
-
-
-	if (currentMax[0] < best.first[0])
-		best.first[0] = currentMax[0];
-	if (currentMax[1] < best.first[1])
-		best.first[1] = currentMax[1];
-	if (currentMax[2] < best.first[2])
-		best.first[2] = currentMax[2];
-
-	if (currentMax[0] > best.second[0])
-		best.second[0] = currentMax[0];
-	if (currentMax[1] > best.second[1])
-		best.second[1] = currentMax[1];
-	if (currentMax[2] > best.second[2])
-		best.second[2] = currentMax[2];
-	min = best.first;
-	max = best.second;
-	return best;
-}
 
 std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile,
 		std::vector<uint32>& _indices,

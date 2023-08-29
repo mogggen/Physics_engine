@@ -78,38 +78,30 @@ namespace Debug
         PushVertex(&lineBuf, Vertex{(modelMatrix) * V4(max[0], min[1], max[2], 1), color});
     }
 
-    void DrawAABB(MeshResource &mesh, V4 color, M4 modelMatrix)
+    void DrawAABB(std::pair<V3, V3> AABB, V4 color)
     {
-        std::pair<V3, V3> AABB = { mesh.min, mesh.max};
-
-        PushVertex(&lineBuf, Vertex{V4(AABB.first[0], AABB.second[1], AABB.second[2], 1), color});
         PushVertex(&lineBuf, Vertex{V4(AABB.first[0], AABB.second[1], AABB.first[2], 1), color});
-
-        PushVertex(&lineBuf, Vertex{V4(AABB.second[0], AABB.second[1], AABB.second[2], 1), color});
-        PushVertex(&lineBuf, Vertex{V4(AABB.second[0], AABB.second[1], AABB.first[2], 1), color});
-
         PushVertex(&lineBuf, Vertex{V4(AABB.first[0], AABB.second[1], AABB.second[2], 1), color});
+
+        PushVertex(&lineBuf, Vertex{V4(AABB.second[0], AABB.second[1], AABB.first[2], 1), color});
         PushVertex(&lineBuf, Vertex{V4(AABB.second[0], AABB.second[1], AABB.second[2], 1), color});
 
         PushVertex(&lineBuf, Vertex{V4(AABB.first[0], AABB.second[1], AABB.first[2], 1), color});
         PushVertex(&lineBuf, Vertex{V4(AABB.second[0], AABB.second[1], AABB.first[2], 1), color});
 
-        PushVertex(&lineBuf, Vertex{V4(AABB.first[0], AABB.first[1], AABB.second[2], 1), color});
-        PushVertex(&lineBuf, Vertex{V4(AABB.first[0], AABB.first[1], AABB.first[2], 1), color});
-
-        PushVertex(&lineBuf, Vertex{V4(AABB.second[0], AABB.first[1], AABB.second[2], 1), color});
-        PushVertex(&lineBuf, Vertex{V4(AABB.second[0], AABB.first[1], AABB.first[2], 1), color});
-
-        PushVertex(&lineBuf, Vertex{V4(AABB.first[0], AABB.first[1], AABB.second[2], 1), color});
-        PushVertex(&lineBuf, Vertex{V4(AABB.second[0], AABB.first[1], AABB.second[2], 1), color});
-
-        PushVertex(&lineBuf, Vertex{V4(AABB.first[0], AABB.first[1], AABB.first[2], 1), color});
-        PushVertex(&lineBuf, Vertex{V4(AABB.second[0], AABB.first[1], AABB.first[2], 1), color});
-
         PushVertex(&lineBuf, Vertex{V4(AABB.first[0], AABB.second[1], AABB.second[2], 1), color});
+        PushVertex(&lineBuf, Vertex{V4(AABB.second[0], AABB.second[1], AABB.second[2], 1), color});
+
+        PushVertex(&lineBuf, Vertex{V4(AABB.first[0], AABB.first[1], AABB.first[2], 1), color});
         PushVertex(&lineBuf, Vertex{V4(AABB.first[0], AABB.first[1], AABB.second[2], 1), color});
 
-        PushVertex(&lineBuf, Vertex{V4(AABB.second[0], AABB.second[1], AABB.second[2], 1), color});
+        PushVertex(&lineBuf, Vertex{V4(AABB.second[0], AABB.first[1], AABB.first[2], 1), color});
+        PushVertex(&lineBuf, Vertex{V4(AABB.second[0], AABB.first[1], AABB.second[2], 1), color});
+
+        PushVertex(&lineBuf, Vertex{V4(AABB.first[0], AABB.first[1], AABB.first[2], 1), color});
+        PushVertex(&lineBuf, Vertex{V4(AABB.second[0], AABB.first[1], AABB.first[2], 1), color});
+
+        PushVertex(&lineBuf, Vertex{V4(AABB.first[0], AABB.first[1], AABB.second[2], 1), color});
         PushVertex(&lineBuf, Vertex{V4(AABB.second[0], AABB.first[1], AABB.second[2], 1), color});
 
         PushVertex(&lineBuf, Vertex{V4(AABB.first[0], AABB.second[1], AABB.first[2], 1), color});
@@ -117,6 +109,12 @@ namespace Debug
 
         PushVertex(&lineBuf, Vertex{V4(AABB.second[0], AABB.second[1], AABB.first[2], 1), color});
         PushVertex(&lineBuf, Vertex{V4(AABB.second[0], AABB.first[1], AABB.first[2], 1), color});
+
+        PushVertex(&lineBuf, Vertex{V4(AABB.first[0], AABB.second[1], AABB.second[2], 1), color});
+        PushVertex(&lineBuf, Vertex{V4(AABB.first[0], AABB.first[1], AABB.second[2], 1), color});
+
+        PushVertex(&lineBuf, Vertex{V4(AABB.second[0], AABB.second[1], AABB.second[2], 1), color});
+        PushVertex(&lineBuf, Vertex{V4(AABB.second[0], AABB.first[1], AABB.second[2], 1), color});
     }
 
     void DrawLine(V4 start, V4 end, V4 color)

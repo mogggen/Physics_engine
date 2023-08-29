@@ -733,14 +733,14 @@ std::vector<V3>& rhs)
 
 		if (curr.Dot(newDir) <= 0.f)
 		{
-			// std::cout << "max iterations: " << i << std::endl;
+			 std::cout << "(false) Degenerate Simplex: " << i << std::endl;
 			return false;
 		}
 		simplex_out.insert(simplex_out.begin(), curr);
 
 		if (next_simplex(simplex_out, newDir))
 		{
-			// std::cout << "max iterations: " << i << std::endl;
+			 std::cout << "(true) Degenerate Simplex: " << i << std::endl;
 			return true;
 		}
 	}
@@ -842,7 +842,7 @@ inline std::vector<V3> epa(
 	float minDistance = FLT_MAX;
 
 	while (minDistance == FLT_MAX) {
-		minNormal = normals[minFace];
+		minNormal = normals[minFace]; // Here
 		minDistance = distances[minFace];
 
 		V3 supportPoint = support(lhs, rhs, minNormal);
@@ -910,7 +910,7 @@ inline std::vector<V3> epa(
 	}
 
 	normal_out = minNormal;
-	penetration_depth_out = minDistance + 0.001f;
+	penetration_depth_out = minDistance;
 	return polytope;
 }
 
@@ -1200,6 +1200,10 @@ M4::M4(V4 v[4])
 
 inline V3 M4::toV3()
 {
+	// - - - x
+	// - - - y
+	// - - - z
+	// - - - -
 	V3 temp;
 	for (size_t i = 0; i < 3; i++)
 	{

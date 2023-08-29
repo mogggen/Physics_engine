@@ -2,9 +2,9 @@
 // exampleapp.cc
 // (C) 2015-2020 Individual contributors, see AUTHORS file
 //------------------------------------------------------------------------------
-// 1. TODO: change all local transform fields so that the Matrices are stored in 'all_loaded[i].actor.position.get_world_space_transform' instead.
-// 2. TODO: make sure that min max is correct
-// 3. TODO: fix remaining bugs
+// 1. TODO: make sure that min max is correct
+// 2. TODO: fix remaining bugs
+// 3. TODO: Debug::DrawSphere()
 #include "config.h"
 #include "imgui.h"
 #include "stb_image.h"
@@ -40,6 +40,25 @@ namespace Example
 	//------------------------------------------------------------------------------
 	/**
 	 */
+
+	std::pair<V3, V3> findAABB(MeshResource& mesh, M4 modelMatrix)
+	{
+		V3 current = (modelMatrix * V4(mesh.min, 1)).toV3();
+		std::pair<V3, V3> ret = {current, current};
+		float data[6] = { mesh.min[0], mesh.max[0], mesh.min[1], mesh.max[1], mesh.min[2], mesh.max[2] };
+
+
+        for (size_t i = 1; i < 8; i++)
+        {
+            current = ((modelMatrix) * V4(data[i / 4], data[2 + (i / 2) % 2], data[4 + i % 2], 1)).toV3();
+			for	(size_t j = 0; j < 3; j++)
+			{
+				if (current[j] < ret.first[j]) ret.first[j] = current[j];
+				if (current[j] > ret.second[j]) ret.second[j] = current[j];
+			}
+        }
+		return ret;
+	}
 
 	const M4 quaternionToRotationMatrix(const Quaternion& q)
 	{
@@ -135,9 +154,9 @@ namespace Example
 			//V3 b = i_worldSpace_coords[i_meshModel_indices[i + 1]];
 			//V3 c = i_worldSpace_coords[i_meshModel_indices[i + 2]];
 
-			V4 a4 = V4(Transpose(WorldSpaceTransform) * V4(i_worldSpace_coords[i_meshModel_indices[i + 0]], 1));
-			V4 b4 = V4(Transpose(WorldSpaceTransform) * V4(i_worldSpace_coords[i_meshModel_indices[i + 1]], 1));
-			V4 c4 = V4(Transpose(WorldSpaceTransform) * V4(i_worldSpace_coords[i_meshModel_indices[i + 2]], 1));
+			V4 a4 = V4(/*Transpose*/(WorldSpaceTransform) * V4(i_worldSpace_coords[i_meshModel_indices[i + 0]], 1));
+			V4 b4 = V4(/*Transpose*/(WorldSpaceTransform) * V4(i_worldSpace_coords[i_meshModel_indices[i + 1]], 1));
+			V4 c4 = V4(/*Transpose*/(WorldSpaceTransform) * V4(i_worldSpace_coords[i_meshModel_indices[i + 2]], 1));
 
 			V3 a = V3(a4.x, a4.y, a4.z);
 			V3 b = V3(b4.x, b4.y, b4.z);
@@ -310,25 +329,25 @@ namespace Example
 			all_loaded.push_back(cube);
 
 			// MeshResource
-			std::vector<unsigned> quadIndices;
-			std::vector<V3> quadCoords;
-			std::vector<V2> quadTexels;
-			std::vector<V3> quadNormals;
-			std::vector<Vertex> quadVertices;
-			quadMesh = MeshResource::LoadObj("textures/quad.obj", quadIndices, quadCoords, quadTexels, quadNormals, quadVertices);
-			quadMesh->indicesAmount = quadIndices;
-			quadMesh->positions = quadCoords;
-			quadMesh->texels = quadTexels;
-			quadMesh->normals = quadNormals;
-			quadMesh->vertices = quadVertices;
-			quadMesh->min = quadMesh->find_bounds().first;
-			quadMesh->max = quadMesh->find_bounds().second;
+			//std::vector<unsigned> quadIndices;
+			//std::vector<V3> quadCoords;
+			//std::vector<V2> quadTexels;
+			//std::vector<V3> quadNormals;
+			//std::vector<Vertex> quadVertices;
+			//quadMesh = MeshResource::LoadObj("textures/quad.obj", quadIndices, quadCoords, quadTexels, quadNormals, quadVertices);
+			//quadMesh->indicesAmount = quadIndices;
+			//quadMesh->positions = quadCoords;
+			//quadMesh->texels = quadTexels;
+			//quadMesh->normals = quadNormals;
+			//quadMesh->vertices = quadVertices;
+			//quadMesh->min = quadMesh->find_bounds().first;
+			//quadMesh->max = quadMesh->find_bounds().second;
 
-			// Actor
-			Actor *quadActor = new Actor();
+			//// Actor
+			//Actor *quadActor = new Actor();
 
-			// GraphicNode
-			quad = std::make_shared<GraphicNode>(quadMesh, cubeTexture, cubeScript, quadActor);
+			//// GraphicNode
+			//quad = std::make_shared<GraphicNode>(quadMesh, cubeTexture, cubeScript, quadActor);
 
 			//all_loaded.push_back(quad);
 
@@ -397,7 +416,7 @@ namespace Example
 #define GRAVITY V3(0, g, 0)
 
 		Camera cam(90, (float)width / height, 0.01f, 1000.0f);
-		cam.setPos(V4(0, 4, 3));
+		cam.setPos(V4(0, 1, 3));
 		cam.setRot(V4(0, 1, 0), M_PI);
 
 		Lightning light(V3(10, 10, 10), V3(1, 1, 1), .01f);
@@ -405,36 +424,12 @@ namespace Example
 		float camSpeed = .08f;
 
 		// set identies
-		fireHydrant->actor->transform = Translate(V4(7, 0, 0));
+		fireHydrant->actor->transform = Translate(V4(3, 0, 0));
 		
-		cube->actor->transform = Translate(V4(-7, 0, 0));
+		cube->actor->transform = Translate(V4(-3, 0, 0));
 
-		//std::shared_ptr<GraphicNode> child = cube;
-
-		//child->actor->transform = Translate(V4(50, 0, 0));
-		//child->getMesh()->find_bounds();
-		//all_loaded.push_back(child);
-
-		
-
-		for (std::shared_ptr<GraphicNode>& a : all_loaded)
-		{
-			//apply_worldspace(a->getMesh()->positions, a->actor->transform);
-
-			//std::pair<V3, V3> res = (a->getMesh()->find_bounds());
-			//AABB the = { res.first, res.second };
-			//aabbs.push_back(the);
-		}
-
-		// TODO: setup
-
-		// place cube1 at -5, 0, 0
-		// place cube2 at 5, 0, 0
-		// add velocity for cube2 to the right at -0.5
 		cube->actor->linearVelocity = V3(.0005f, 0, 0);
-		// add velocity for cube1 to the right at 0.5
-		fireHydrant->actor->linearVelocity = V3(-.0005f, 0, 0);
-		// if collision swap directions
+		//fireHydrant->actor->linearVelocity = V3(-.0005f, 0, 0);
 
 		while (this->window->IsOpen())
 		{
@@ -450,13 +445,13 @@ namespace Example
 			//fireHydrant->actor->apply_force(GRAVITY, dt);
 
 			//fireHydrant world space
-			//fireHydrant->actor->transform = Rotation(V4(0, 0, 1), -0.012f) * Rotation(V4(0, 1, 0), 0.004f) * fireHydrant->actor->transform
+			fireHydrant->actor->transform = Rotation(V4(40, 0, 1), -0.012f) * Rotation(V4(0, 1, 0), 0.004f) * fireHydrant->actor->transform
 			
 			//* Translate(fireHydrant->actor->velocity)
 				;
 
 			//fireHydrant view space
-			//fireHydrantProjectionViewTransform = cam.pv() * fireHydrant->actor->transform * Scalar(V4(.1, .1, .1));
+			fireHydrantProjectionViewTransform = cam.pv() * fireHydrant->actor->transform;// * Scalar(V4(.1, .1, .1));
 
 			// cube world space
 			/*quad->actor->transform = quad->actor->transform
@@ -488,42 +483,25 @@ namespace Example
 			}
 			//cube->actor->transform = Translate(V4(resultingHit, 1));
 
-			for (std::shared_ptr<GraphicNode>& a : all_loaded)
-			{
-				//apply_worldspace(a->getMesh()->positions, a->actor->transform);
-				//a->getMesh()->find_bounds();
-				////V3 gg = a->actor->transform.toV3();
-				////printf("%f, %f, %f\n", gg.x, gg.y, gg.z);
-				//// check intersections to optimize what to compare later
-				//AABB the = { a->getMesh()->min, a->getMesh()->max };
-			}
+			//for (std::shared_ptr<GraphicNode>& a : all_loaded)
+			//{
+			//	apply_worldspace(a->getMesh()->positions, a->actor->transform);
+			//	a->getMesh()->find_bounds();
+			//	V3 gg = a->actor->transform.toV3();
+			//	printf("%f, %f, %f\n", gg.x, gg.y, gg.z);
+			//	// check intersections to optimize what to compare later
+			//	AABB the = { a->getMesh()->min, a->getMesh()->max };
+			//}
 
-			std::vector<std::pair<size_t, size_t>> in = aabbPlaneSweep(aabbs);
+			//std::vector<std::pair<size_t, size_t>> in = aabbPlaneSweep(aabbs);
 			for (size_t i = 0; i < 1; i++)
 			{
-				std::shared_ptr<GraphicNode>& ith = all_loaded[0];
-				std::shared_ptr<GraphicNode>& jth = all_loaded[1];
+				std::shared_ptr<GraphicNode>& ith = cube;//all_loaded[0];
+				std::shared_ptr<GraphicNode>& jth = fireHydrant;//all_loaded[1];
 				
-				
-				//float len = Length(aabbs[in[i].first].min - aabbs[in[i].second].max);
-				//std::cout << len << std::endl;
-
-				//Debug::DrawLine(V4(aabbs[in[i].first].min, 1), V4(aabbs[in[i].second].max, 1), V4(1, 1, 1, 1));
-				//Debug::DrawLine(V4(aabbs[in[i].first].max, 1), V4(aabbs[in[i].second].min, 1), V4(1, 1, 1, 1));
-				
-				// this isn't the meshes we want!
 				std::vector<V3> i_vertices = ith->getMesh()->positions;
-				apply_worldspace(i_vertices, ith->actor->transform); // transforms not updated
+				apply_worldspace(i_vertices, ith->actor->transform);
 				
-				//V3 v = i_vertices[0];
-				//Print(Transpose(ith->actor->transform));
-				//Print(ith->actor->transform);
-				//std::cout << " " << v.x << " " << v.y << " " << v.z << std::endl;
-				//V3 bb = (Transpose(ith->actor->transform) * V4(v, 1)).toV3();
-				//std::cout << " " << bb.x << " " << bb.y << " " << bb.z << std::endl;
-				//V3 cc = (ith->actor->transform * V4(v, 1)).toV3();
-				//std::cout << " " << cc.x << " " << cc.y << " " << cc.z << std::endl;
-				//exit(0);
 				std::vector<V3> j_vertices = jth->getMesh()->positions;
 				apply_worldspace(j_vertices, jth->actor->transform);
 				std::vector<V3> simplex_placeholder;
@@ -542,18 +520,18 @@ namespace Example
 					float depth;
 					std::vector<V3> suppe = epa(normal, depth, simplex_placeholder,
 						i_vertices, j_vertices);
-					//Debug::DrawLine(V4(normal, 1), V4(normal * depth, 1));
 					V3 p = get_collision_point_in_model_space(suppe, normal, depth);
+					Debug::DrawLine(V4(p, 1), V4(p + normal * depth, 1));
 					
 					//std::cout << "normal: " << normal[0] << normal[1] << normal[2] << "\t";
 					//std::cout << "point: " << p[0] << p[1] << p[2] << "\t";
-					//std::cout << "depth: " << depth << std::endl;
+					std::cout << "depth: " << depth << std::endl;
 					// handle COllision responses here
 					//e * (ith->actor->linearVelocity * ith->actor->mass * .8f + jth->actor->linearVelocity * jth->actor->mass) = ;
 
 					// temporary display of the collision working
-					//ith->actor->linearVelocity = ith->actor->linearVelocity * -1.f;
-					//jth->actor->linearVelocity = jth->actor->linearVelocity * -1.f;
+					ith->actor->linearVelocity = ith->actor->linearVelocity * -1.f;
+					jth->actor->linearVelocity = jth->actor->linearVelocity * -1.f;
 
 
 					//fireHydrant->actor->apply_linear_impulse(ray, (fireHydrantProjectionViewTransform * V4(fireHydrantMesh->center_of_mass, 1)).toV3(), resultingHit);
@@ -577,8 +555,16 @@ namespace Example
 				M4& wst = a->actor->transform;
 				if (showDebugRender)
 				{
-					Debug::DrawBB(*a->getMesh(), V4(0, 1, 1, 1), wst);
-					//Debug::DrawAABB(*a->getMesh(), V4(1, 0, 0, 1), wst);
+					if (isPressed)
+					{
+						std::cout << std::endl;
+					}
+
+					MeshResource& m = *a->getMesh();
+					Debug::DrawBB(m, V4(0, 1, 1, 1), wst);
+					
+					std::pair<V3, V3> aabb = findAABB(m, wst);
+					Debug::DrawAABB(aabb, V4(1, 0, 0, 1));
 				}
 				//light.bindLight(script, cam.getPos());
 				//a->DrawScene(cam.pv() * wst, color);

@@ -23,7 +23,7 @@ Actor::Actor(V3 _position,
     orientation(_orientation),
     angularVelocity(_angularVelocity)
 {
-
+    
 }
 
 void Actor::apply_force(const V3& force, const float& dt)

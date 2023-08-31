@@ -914,37 +914,6 @@ inline std::vector<V3> epa(
 	return polytope;
 }
 
-inline const V3 get_collision_point_in_model_space(
-	std::vector<V3>& support_points, // supposed to be local, shouldn't matter if exactly everything isn't
-	V3 norm_collision_normal,
-	float penetrationDepth)
-{
-	// just do this calculation for every single support point
-	for (V3& supportVertexLocal : support_points)
-	{
-		// Backtrack along the collision normal by the penetration depth
-		supportVertexLocal -= norm_collision_normal * penetrationDepth;
-
-		// render all of them and see if at least one makes sense
-	}
-	
-	
-	// Assuming you have identified the support vertex
-	
-	V3 supportVertexLocal; // Local coordinates of the support vertex
-
-	// Backtrack along the collision normal by the penetration depth
-	V3 collisionPointLocal = supportVertexLocal - norm_collision_normal * penetrationDepth;
-
-	// Convert the collision point to world space
-	V3 collisionPointWorld = /*shapeTransform*/1.f * collisionPointLocal; // Apply shape's transformation matrix
-
-	// Now 'collisionPointWorld' contains the collision point in world space
-
-	//TODO: return the correct collision when it is deemed so
-	return V3(NAN, NAN, NAN);
-}
-
 #pragma endregion // Vector3
 
 #pragma region Vector4
@@ -1718,6 +1687,32 @@ inline void apply_worldspace(
 	{
 		ff = ((transform) * V4(ff, 1)).toV3();
 	}
+}
+
+inline const V3 get_collision_point(M4 modelMatrix,
+	std::vector<V3>& support_points, // supposed to be local, shouldn't matter if exactly everything isn't
+	V3 norm_collision_normal,
+	float penetrationDepth)
+{
+	assert(support_points.size() > 0llu, "no support points");
+	// just do this calculation for every single support point
+	V3* supportVertexLocal = nullptr;
+	for (size_t i = 0; i < support_points.size(); ++i)
+	{
+		supportVertexLocal = &support_points[i];
+		
+		// Backtrack along the collision normal by the penetration depth
+		supportVertexLocal = &((*supportVertexLocal) - norm_collision_normal * penetrationDepth);
+
+		V3 collisionPointLocal = *supportVertexLocal - norm_collision_normal * penetrationDepth;
+		//V3 collisionPointWorld
+		supportVertexLocal = &((modelMatrix * V4(collisionPointLocal, 1)).toV3());
+	}
+	// to find the correct one render all of them and see if at least one makes sense
+	
+	// Assuming you have identified the support vertex
+	//TODO: return the correct collision when it is deemed so
+	return *supportVertexLocal;
 }
 
 #pragma region Quaternions

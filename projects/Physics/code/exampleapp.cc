@@ -520,17 +520,36 @@ namespace Example
 					float depth;
 					std::vector<V3> suppe = epa(normal, depth, simplex_placeholder,
 						i_vertices, j_vertices);
-					V3 p = get_collision_point_in_model_space(suppe, normal, depth);
-					Debug::DrawLine(V4(p, 1), V4(p + normal * depth, 1));
+					V3 p_i = get_collision_point_in_model_space(ith->actor->transform, suppe, normal, depth);
 					
-					//std::cout << "normal: " << normal[0] << normal[1] << normal[2] << "\t";
+					for (size_t i = 0; i < suppe.size(); ++i)
+					{
+						V4 line1 = V4(V3(suppe[i]), 1);
+						V4 line2 = V4(V3(suppe[(i + 1) % suppe.size()]), 1);
+						Debug::DrawLine(line1, line2, V4(1, 1, 1, 1));
+					}
+					
+					Debug::DrawLine(V4(p_i, 1), V4(p_i + V3(1, 0, 0), 1), V4(1, .5, .5, 1));
+					
+
+					V3 p_j = get_collision_point_in_model_space(jth->actor->transform, suppe, normal, depth);
+					for (size_t i = 0; i < suppe.size(); ++i)
+					{
+						V4 line1 = V4(V3(suppe[i]), 1);
+						V4 line2 = V4(V3(suppe[(i + 1) % suppe.size()]), 1);
+						Debug::DrawLine(line1, line2, V4(1, 1, 1, 1));
+					}
+					
+					Debug::DrawLine(V4(p_j, 1), V4(p_j + V3(1, 0, 0), 1), V4(0, 0, 1, 1));
+					
+					std::cout << "normal: " << normal[0] << normal[1] << normal[2] << "\t";
 					//std::cout << "point: " << p[0] << p[1] << p[2] << "\t";
 					std::cout << "depth: " << depth << std::endl;
 					// handle COllision responses here
 					//e * (ith->actor->linearVelocity * ith->actor->mass * .8f + jth->actor->linearVelocity * jth->actor->mass) = ;
 
 					// temporary display of the collision working
-					ith->actor->linearVelocity = ith->actor->linearVelocity * -1.f;
+					//ith->actor->linearVelocity = ith->actor->linearVelocity * -1.f;
 					jth->actor->linearVelocity = jth->actor->linearVelocity * -1.f;
 
 

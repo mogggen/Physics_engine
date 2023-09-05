@@ -129,6 +129,9 @@ namespace Example
 		cam.setRot(V4(0, 1, 0), M_PI);
 		Lightning light(V3(10, 10, 10), V3(1, 1, 1), .01f);
 		
+
+		auto mm = MeshResource::LoadGLTF("textures/cube.gltf");
+
 		float speed = .08f;
 
 		M4 scene;

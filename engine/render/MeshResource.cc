@@ -2,6 +2,11 @@
 #include "render/MeshResource.h"
 #include <stdio.h>
 #include <inttypes.h>
+#define TINYGLTF_IMPLEMENTATION
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <render/tiny_gltf.h>
+
 
 MeshResource::MeshResource(Vertex vertices[], uint32_t Verticeslength, uint32_t indices[], uint32_t indicesLength) : indices(indicesLength)
 {
@@ -364,9 +369,45 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 	{
 		printf("file not found with path \"./%s\"\n", pathToFile);
 	}
-	fclose(fs);
+	if (fs)
+		fclose(fs);
 	printf("loaded %s\n", pathToFile);
 	return std::make_shared<MeshResource>(&vertices[0], vertices.size(), &indices[0], indices.size());
+}
+
+std::shared_ptr<MeshResource> MeshResource::LoadGLTF(const std::string& filePath)
+{
+	tinygltf::Model model;
+	tinygltf::TinyGLTF loader;
+	std::string err, warn;
+
+	bool result = loader.LoadASCIIFromFile(&model, &err, &warn, filePath);
+
+	if (!warn.empty()) {
+		// Handle warnings
+	}
+
+	if (!err.empty()) {
+		// Handle errors
+	}
+
+	if (!result) {
+		return nullptr;
+	}
+	std::vector<unsigned char> out;
+	std::string mime_type(model.buffers[0].uri.substr(0, 37));
+	bool succeded = tinygltf::DecodeDataURI(&out, mime_type, model.buffers[0].uri, model.buffers[0].uri.length(), false);
+	if (succeded)
+	{
+		std::string that(out.begin(), out.end());
+		std::cout << that << std::endl;
+	}
+	for (const auto& material : model.materials) {
+		if (material.normalTexture.index >= 0) {
+			int normalMapTextureIndex = material.normalTexture.index;
+		}
+	}
+	return nullptr;
 }
 
 /// <summary>

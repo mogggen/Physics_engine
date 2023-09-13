@@ -2,11 +2,6 @@
 #include "render/MeshResource.h"
 #include <stdio.h>
 #include <inttypes.h>
-#define TINYGLTF_IMPLEMENTATION
-#define STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include <render/tiny_gltf.h>
-
 
 MeshResource::MeshResource(Vertex vertices[], uint32_t Verticeslength, uint32_t indices[], uint32_t indicesLength) : indices(indicesLength)
 {
@@ -190,34 +185,10 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 	return std::make_shared<MeshResource>(&vertices[0], vertices.size(), &indices[0], indices.size());
 }
 
-
-
-std::shared_ptr<MeshResource> MeshResource::LoadGLTF(const std::string& filePath)
+std::shared_ptr<MeshResource> MeshResource::LoadGLTF(const tinygltf::Model& model, std::vector<V3>& tangent3)
 {
-	tinygltf::Model model;
-	tinygltf::TinyGLTF loader;
-	std::string err, warn;
+	assert(tangent3.empty());
 
-	bool result = loader.LoadASCIIFromFile(&model, &err, &warn, filePath);
-
-	if (!warn.empty()) {
-		// Handle warnings
-	}
-
-	if (!err.empty()) {
-		// Handle errors
-	}
-
-	if (!result) {
-		return nullptr;
-	}
-
-	std::vector<unsigned char> binaryData;
-	std::string mime_type = "";
-	bool succeded = tinygltf::DecodeDataURI(&binaryData, mime_type, model.buffers[0].uri, model.buffers[0].uri.length(), false);
-	if (!succeded) return std::shared_ptr<MeshResource>();
-
-	// scenic route
 	for (const tinygltf::Scene& scene : model.scenes)
 	{
 		//whatever
@@ -236,180 +207,232 @@ std::shared_ptr<MeshResource> MeshResource::LoadGLTF(const std::string& filePath
 		}
 	}
 
-	// Assuming you've already loaded the GLTF model and extracted binary data
-	// ...
+	for (const tinygltf::Buffer& buffer : model.buffers)
+	{
+		std::vector<char> binaryData;
+		std::ifstream binFile("textures/Avocado/" + buffer.uri, std::ios::binary | std::ios::ate);
 
-	// Find the "Cube" mesh and its primitive
-	int cubeMeshIndex = 0; // Replace with the correct index for your "Cube" mesh
-	int primitiveIndex = 0; // Assuming there's only one primitive for simplicity
+		if (binFile.is_open()) {
+            // Get the file size and allocate a buffer
+            std::streamsize fileSize = binFile.tellg();
+            binaryData.resize(fileSize);
 
-	if (cubeMeshIndex < model.meshes.size()) {
-		const tinygltf::Mesh& cubeMesh = model.meshes[cubeMeshIndex];
+            // Seek back to the beginning and read the binary data
+            binFile.seekg(0, std::ios::beg);
+            binFile.read(binaryData.data(), fileSize);
+            binFile.close();
 
-		if (primitiveIndex < cubeMesh.primitives.size()) {
-			const tinygltf::Primitive& primitive = cubeMesh.primitives[primitiveIndex];
+            // Now, you can use binaryData as your binary buffer
+		}
+		// if folder structure
+		//std::ifstream bin("textures/Avocado/gltf/Avocado.bin");
+		//std::stringstream ss;
+		//ss << bin.rdbuf();
+		//std::string mime_type = "";
+		//std::string non_empty = ss.str();
+		//tinygltf::DecodeDataURI(&binaryData, mime_type, non_empty, non_empty.size() * 4, false);
+		//// if single file
+		//if (binaryData.empty())
+		//{
+		//	bool succeded = tinygltf::DecodeDataURI(&binaryData, mime_type, buffer.uri, buffer.uri.length(), false);
+		//	if (!succeded)
+		//	{
+		//		std::cerr << "Couldn't read model from gltf" << std::endl;
+		//		return std::shared_ptr<MeshResource>();
+		//	}
+		//}
 
-			// Access the accessor for position data
-			int positionAccessorIndex = primitive.attributes.at("POSITION");
-			const tinygltf::Accessor& positionAccessor = model.accessors[positionAccessorIndex];
-			const tinygltf::BufferView& positionBufferView = model.bufferViews[positionAccessor.bufferView];
-			const unsigned char* positionData = &binaryData[positionBufferView.byteOffset];
-
-			// Access the accessor for normals
-			int normalAccessorIndex = primitive.attributes.at("NORMAL");
-			const tinygltf::Accessor& normalAccessor = model.accessors[normalAccessorIndex];
-			const tinygltf::BufferView& normalBufferView = model.bufferViews[normalAccessor.bufferView];
-			const unsigned char* normalData = &binaryData[normalBufferView.byteOffset];
-
-			// Access the accessor for normals
-			int texelAccessorIndex = primitive.attributes.at("TEXCOORD_0");
-			const tinygltf::Accessor& texelAccessor = model.accessors[texelAccessorIndex];
-			const tinygltf::BufferView& texelBufferView = model.bufferViews[texelAccessor.bufferView];
-			const unsigned char* texelData = &binaryData[texelBufferView.byteOffset];
-
-
-			// Access the accessor for indices (triangles)
-			int indicesAccessorIndex = primitive.indices;
-			if (primitive.mode == TINYGLTF_MODE_TRIANGLES)
+		for (const tinygltf::Mesh& mesh : model.meshes)
+		{
+			for (const tinygltf::Primitive& primitive : mesh.primitives)
 			{
-			}
-			const tinygltf::Accessor& indicesAccessor = model.accessors[indicesAccessorIndex];
-			const tinygltf::BufferView& indicesBufferView = model.bufferViews[indicesAccessor.bufferView];
-			const unsigned char* indicesData = &binaryData[indicesBufferView.byteOffset];
+				// Access the accessor for position data
+				int positionAccessorIndex = primitive.attributes.at("POSITION");
+				const tinygltf::Accessor& positionAccessor = model.accessors[positionAccessorIndex];
+				const tinygltf::BufferView& positionBufferView = model.bufferViews[positionAccessor.bufferView];
+				const  char* positionData = &binaryData[positionBufferView.byteOffset];
 
-			// Create lists to store vertices and indices
+				// Access the accessor for normals
+				int normalAccessorIndex = primitive.attributes.at("NORMAL");
+				const tinygltf::Accessor& normalAccessor = model.accessors[normalAccessorIndex];
+				const tinygltf::BufferView& normalBufferView = model.bufferViews[normalAccessor.bufferView];
+				const  char* normalData = &binaryData[normalBufferView.byteOffset];
 
-			std::vector<Vertex> resVert; // complete
+				int tangentAccessorIndex = primitive.attributes.at("TANGENT");
+				const tinygltf::Accessor& tangentAccessor = model.accessors[tangentAccessorIndex];
+				const tinygltf::BufferView& tangentBufferView = model.bufferViews[tangentAccessor.bufferView];
+				const  char* tangentData = &binaryData[tangentBufferView.byteOffset];
+
+				// Access the accessor for normals
+				int texelAccessorIndex = primitive.attributes.at("TEXCOORD_0");
+				const tinygltf::Accessor& texelAccessor = model.accessors[texelAccessorIndex];
+				const tinygltf::BufferView& texelBufferView = model.bufferViews[texelAccessor.bufferView];
+				const  char* texelData = &binaryData[texelBufferView.byteOffset];
+
+
+				// Access the accessor for indices (triangles)
+				int indicesAccessorIndex = primitive.indices;
+				if (primitive.mode == TINYGLTF_MODE_TRIANGLES)
+				{
+				}
+				const tinygltf::Accessor& indicesAccessor = model.accessors[indicesAccessorIndex];
+				const tinygltf::BufferView& indicesBufferView = model.bufferViews[indicesAccessor.bufferView];
+				const  char* indicesData = &binaryData[indicesBufferView.byteOffset];
+
+				// Create lists to store vertices and indices
+
+				std::vector<Vertex> resVert; // complete
 			
-			std::vector<float> tempPositionBuffer;
-			std::vector<float> tempNormalBuffer; 
-			std::vector<float> tempTexelBuffer;
+				std::vector<float> tempPositionBuffer;
+				std::vector<float> tempNormalBuffer;
+				std::vector<float> tempTangentBuffer;
+				std::vector<float> tempTexelBuffer;
 
-			std::vector<V3> position3;
-			std::vector<V3> normal3;
-			std::vector<V2> texel2;
+				std::vector<V3> position3;
+				std::vector<V3> normal3;
+				std::vector<V2> texel2;
 
-			std::vector<unsigned int> tri_indices; // Store triangle indices
+				std::vector<unsigned int> tri_indices; // Store triangle indices
 
-			// Iterate through position data and convert to vertices
-			for (size_t i = 0; i < positionAccessor.count; ++i) {
-				const void* positionPtr = positionData + i * positionAccessor.ByteStride(positionBufferView);
+				// Iterate through position data and convert to vertices
+				for (size_t i = 0; i < positionAccessor.count; ++i) {
+					const void* positionPtr = positionData + i * positionAccessor.ByteStride(positionBufferView);
 
-				// Assuming positions are 3D (x, y, z)
-				const float* position = reinterpret_cast<const float*>(positionPtr);
-				for (int j = 0; j < 3; ++j) {
-					tempPositionBuffer.push_back(position[j]);
+					// Assuming positions are 3D (x, y, z)
+					const float* position = reinterpret_cast<const float*>(positionPtr);
+					for (int j = 0; j < 3; ++j) {
+						tempPositionBuffer.push_back(position[j]);
+					}
 				}
-			}
 
-			for (size_t i = 0; i < normalAccessor.count; ++i) {
-				const void* normalPtr = normalData + i * normalAccessor.ByteStride(normalBufferView);
+				for (size_t i = 0; i < normalAccessor.count; ++i) {
+					const void* normalPtr = normalData + i * normalAccessor.ByteStride(normalBufferView);
 
-				// Assuming normals are 3D (x, y, z)
-				const float* normal = reinterpret_cast<const float*>(normalPtr);
-				for (int j = 0; j < 3; ++j) {
-					tempNormalBuffer.push_back(normal[j]);
+					// Assuming normals are 3D (x, y, z)
+					const float* normal = reinterpret_cast<const float*>(normalPtr);
+					for (int j = 0; j < 3; ++j) {
+						tempNormalBuffer.push_back(normal[j]);
+					}
 				}
-			}
 
-			for (size_t i = 0; i < texelAccessor.count; ++i) {
-				const void* texelPtr = texelData + i * texelAccessor.ByteStride(texelBufferView);
+				for (size_t i = 0; i < tangentAccessor.count; ++i) {
+					const void* tangentPtr = tangentData + i * tangentAccessor.ByteStride(tangentBufferView);
 
-				// Assuming texel are 2D (u, v)
-				const float* texel = reinterpret_cast<const float*>(texelPtr);
-				for (int j = 0; j < 2; ++j) {
-					tempTexelBuffer.push_back(texel[j]);
+					// Assuming tangents are 3D (x, y, z)
+					const float* tangent = reinterpret_cast<const float*>(tangentPtr);
+					for (int j = 0; j < 3; ++j) {
+						tempTangentBuffer.push_back(tangent[j]);
+					}
 				}
-			}
 
-			for (size_t i = 0; i < tempPositionBuffer.size(); i += 3)
-			{
-				position3.push_back(V3(
-					tempPositionBuffer[i + 0],
-					tempPositionBuffer[i + 1],
-					tempPositionBuffer[i + 2]
-				));
-			}
+				for (size_t i = 0; i < texelAccessor.count; ++i) {
+					const void* texelPtr = texelData + i * texelAccessor.ByteStride(texelBufferView);
 
-			for (size_t i = 0; i < tempNormalBuffer.size(); i += 3)
-			{
-				normal3.push_back(V3(
-					tempNormalBuffer[i + 0],
-					tempNormalBuffer[i + 1],
-					tempNormalBuffer[i + 2]
-				));
-			}
+					// Assuming texel are 2D (u, v)
+					const float* texel = reinterpret_cast<const float*>(texelPtr);
+					for (int j = 0; j < 2; ++j) {
+						tempTexelBuffer.push_back(texel[j]);
+					}
+				}
 
-			for (size_t i = 0; i < tempTexelBuffer.size(); i += 2)
-			{
-				texel2.push_back(V2(
-					tempTexelBuffer[i + 0],
-					tempTexelBuffer[i + 1]
-				));
-			}
+				for (size_t i = 0; i < tempPositionBuffer.size(); i += 3)
+				{
+					position3.push_back(V3(
+						tempPositionBuffer[i + 0],
+						tempPositionBuffer[i + 1],
+						tempPositionBuffer[i + 2]
+					));
+				}
 
-			assert(texel2.size() == normal3.size() && normal3.size() == position3.size());
-			for (size_t k = 0; k < position3.size(); ++k)
-			{
-				resVert.push_back(
+				for (size_t i = 0; i < tempNormalBuffer.size(); i += 3)
+				{
+					normal3.push_back(V3(
+						tempNormalBuffer[i + 0],
+						tempNormalBuffer[i + 1],
+						tempNormalBuffer[i + 2]
+					));
+				}
+
+				for (size_t i = 0; i < tempTangentBuffer.size(); i += 3)
+				{
+					tangent3.push_back(V3(
+						tempTangentBuffer[i + 0],
+						tempTangentBuffer[i + 1],
+						tempTangentBuffer[i + 2]
+					));
+				}
+
+				for (size_t i = 0; i < tempTexelBuffer.size(); i += 2)
+				{
+					texel2.push_back(V2(
+						tempTexelBuffer[i + 0],
+						tempTexelBuffer[i + 1]
+					));
+				}
+
+				assert(texel2.size() == normal3.size() && normal3.size() == position3.size() && normal3.size() == tangent3.size());
+				for (size_t k = 0; k < position3.size(); ++k)
+				{
+					resVert.push_back(
+						{
+							position3[k],
+							V4(1, 1, 1, 1),
+							texel2[k],
+							normal3[k],
+						});
+				}
+
+				// Iterate through indices data and convert to indices
+				for (size_t i = 0; i < indicesAccessor.count; ++i) {
+					const void* indexPtr = indicesData + i * indicesAccessor.ByteStride(indicesBufferView);
+					if (indicesAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT)
 					{
-						position3[k],
-						V4(1, 1, 1, 1),
-						texel2[k],
-						normal3[k],
-					});
+						// Assuming indices are UNSIGNED_SHORT
+						const unsigned short* index = reinterpret_cast<const unsigned short*>(indexPtr);
+						//if (index[0] == 65021) tri_indices.push_back(1);
+						/*else */tri_indices.push_back(index[0]);
+						//if (index[1] == 65021) tri_indices.push_back(1);
+						/*else */tri_indices.push_back(index[1]);
+						//if (index[2] == 65021) tri_indices.push_back(1);
+						/*else */tri_indices.push_back(index[2]);
+					}
+					else if (indicesAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT)
+					{
+						const unsigned int* index = reinterpret_cast<const unsigned int*>(indexPtr);
+						tri_indices.push_back(index[0]);
+						tri_indices.push_back(index[1]);
+						tri_indices.push_back(index[2]);
+					}
+				}
+
+				/*std::map<int, int> indexMap;
+				std::vector<Vertex> uniqueVertices;
+				std::vector<unsigned int> uniqueIndices;
+			
+				for (unsigned int i = 0; i < tri_indices.size(); ++i) {
+					int vertexIndex = tri_indices[i];
+					if (indexMap.find(vertexIndex) == indexMap.end()) {
+						indexMap[vertexIndex] = uniqueVertices.size();
+						uniqueVertices.push_back(resVert[vertexIndex]);
+					}
+					uniqueIndices.push_back(indexMap[vertexIndex]);
+				}*/
+
+			
+				//for (size_t ss = 0; ss < tri_indices.size(); ss++)
+				//{
+				//	auto first = std::find(tri_indices.begin(), tri_indices.end(), tri_indices[ss]);
+				//	auto pos = std::find(first + 1, tri_indices.end(), tri_indices[ss]);
+				//	if (pos == tri_indices.end()) continue;
+
+				//	tri_indices.erase(pos);
+				//	ss = 0;
+				//}
+			
+
+				// Now, you have the vertices and indices ready for rendering
+				return std::make_shared<MeshResource>(&resVert[0], resVert.size(), &tri_indices[0], tri_indices.size());
 			}
-
-			// Iterate through indices data and convert to indices
-			for (size_t i = 0; i < indicesAccessor.count; ++i) {
-				const void* indexPtr = indicesData + i * indicesAccessor.ByteStride(indicesBufferView);
-				if (indicesAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT)
-				{
-					// Assuming indices are UNSIGNED_SHORT
-					const unsigned short* index = reinterpret_cast<const unsigned short*>(indexPtr);
-					//if (index[0] == 65021) tri_indices.push_back(1);
-					/*else */tri_indices.push_back(index[0]);
-					//if (index[1] == 65021) tri_indices.push_back(1);
-					/*else */tri_indices.push_back(index[1]);
-					//if (index[2] == 65021) tri_indices.push_back(1);
-					/*else */tri_indices.push_back(index[2]);
-				}
-				else if (indicesAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT)
-				{
-					const unsigned int* index = reinterpret_cast<const unsigned int*>(indexPtr);
-					tri_indices.push_back(index[0]);
-					tri_indices.push_back(index[1]);
-					tri_indices.push_back(index[2]);
-				}
-			}
-
-			/*std::map<int, int> indexMap;
-			std::vector<Vertex> uniqueVertices;
-			std::vector<unsigned int> uniqueIndices;
-			
-			for (unsigned int i = 0; i < tri_indices.size(); ++i) {
-				int vertexIndex = tri_indices[i];
-				if (indexMap.find(vertexIndex) == indexMap.end()) {
-					indexMap[vertexIndex] = uniqueVertices.size();
-					uniqueVertices.push_back(resVert[vertexIndex]);
-				}
-				uniqueIndices.push_back(indexMap[vertexIndex]);
-			}*/
-
-			
-			//for (size_t ss = 0; ss < tri_indices.size(); ss++)
-			//{
-			//	auto first = std::find(tri_indices.begin(), tri_indices.end(), tri_indices[ss]);
-			//	auto pos = std::find(first + 1, tri_indices.end(), tri_indices[ss]);
-			//	if (pos == tri_indices.end()) continue;
-
-			//	tri_indices.erase(pos);
-			//	ss = 0;
-			//}
-			
-
-			// Now, you have the vertices and indices ready for rendering
-			return std::make_shared<MeshResource>(&resVert[0], resVert.size(), &tri_indices[0], tri_indices.size());
 		}
 	}
 }

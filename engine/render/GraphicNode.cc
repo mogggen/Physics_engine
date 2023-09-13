@@ -1,10 +1,34 @@
 #include "config.h"
 #include "render/GraphicNode.h"
+#define TINYGLTF_IMPLEMENTATION
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <render/tiny_gltf.h>
 
 
 GraphicNode::GraphicNode(std::shared_ptr<MeshResource> geometry, std::shared_ptr<TextureResource> texture, std::shared_ptr<ShaderResource> shader, M4 transform) : Geometry(geometry), Texture(texture), Shader(shader), Transform(transform)
 {
 	Transform = Translate(V4());
+}
+
+
+std::shared_ptr<tinygltf::Model> GraphicNode::load_gltf(const std::string& filePath)
+{
+	tinygltf::Model model;
+	tinygltf::TinyGLTF loader;
+	std::string err, warn;
+
+	bool result = loader.LoadASCIIFromFile(&model, &err, &warn, filePath);
+
+	if (!warn.empty()) {
+		// Handle warnings
+	}
+
+	if (!err.empty()) {
+		// Handle errors
+	}
+
+	return result ? std::make_shared<tinygltf::Model>(model) : nullptr;
 }
 
 void GraphicNode::DrawScene(M4& mvp, V4& rgba)

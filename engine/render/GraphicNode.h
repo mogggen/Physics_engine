@@ -12,6 +12,7 @@ class GraphicNode
 	std::shared_ptr<ShaderResource> Shader;
 	M4 Transform;
 public:
+	static std::shared_ptr<tinygltf::Model> load_gltf(const std::string& filePath);
 	GraphicNode(std::shared_ptr<MeshResource> geometry, std::shared_ptr<TextureResource> texture, std::shared_ptr<ShaderResource> shader, M4 transform);
 	void DrawScene(M4& mvp, V4& rbga);
 

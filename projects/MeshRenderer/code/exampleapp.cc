@@ -86,11 +86,14 @@ namespace Example
 
 			//MeshResource
 
-			//cube = MeshResource::LoadObj("textures/fireHydrant.obj");
-			cube = MeshResource::LoadGLTF("textures/cube.gltf");
+			std::vector<V3> tangent3;
+			std::shared_ptr<tinygltf::Model> model = GraphicNode::load_gltf("textures/Avocado/Avocado.gltf");
+			cube = MeshResource::LoadObj("textures/fireHydrant.obj");
+			cube = MeshResource::LoadGLTF(*model, tangent3);
 
 			//TextureResource
-			std::shared_ptr<TextureResource> texture = std::make_shared<TextureResource>("textures/cubepic.png");
+			std::shared_ptr<TextureResource> texture = std::make_shared<TextureResource>("textures/Avocado/" + model->images[0].uri);
+			//std::shared_ptr<TextureResource> texture = std::make_shared<TextureResource>("textures/cubepic.png");
 
 			//shaderObject
 			shaderResource = std::make_shared<ShaderResource>();

@@ -86,7 +86,8 @@ namespace Example
 
 			//MeshResource
 
-			cube = MeshResource::LoadObj("textures/fireHydrant.obj");
+			//cube = MeshResource::LoadObj("textures/fireHydrant.obj");
+			cube = MeshResource::LoadGLTF("textures/cube.gltf");
 
 			//TextureResource
 			std::shared_ptr<TextureResource> texture = std::make_shared<TextureResource>("textures/cubepic.png");
@@ -129,8 +130,7 @@ namespace Example
 		cam.setRot(V4(0, 1, 0), M_PI);
 		Lightning light(V3(10, 10, 10), V3(1, 1, 1), .01f);
 		
-
-		auto mm = MeshResource::LoadGLTF("textures/cube.gltf");
+		//std::shared_ptr<MeshResource> mm = std::make_shared<MeshResource>(nullptr);
 
 		float speed = .08f;
 
@@ -140,7 +140,7 @@ namespace Example
 		while (this->window->IsOpen())
 		{
 			Em = Em * Translate(Normalize(V4(float(d - a), float(e - q), float(w - s))) * speed);
-			scene = cam.pv() * (Em * Evp) * Translate(V4Zero) * Scalar(V4(.1, .1, .1)); // scaling because i can
+			scene = cam.pv() * (Em * Evp) * Translate(V4Zero);// * Scalar(V4(.1, .1, .1)); // scaling because i can
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			this->window->Update();
 

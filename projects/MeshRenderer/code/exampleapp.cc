@@ -128,14 +128,14 @@ namespace Example
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
 		node->getTexture()->LoadFromFile();
-		Camera cam(90, (float)width / height, 0.01f, 100.0f);
-		cam.setPos(V4(0, 0, -3));
+		Camera cam(90, (float)width / height, 0.01f, 1000.0f);
+		cam.setPos(V4(0, 0, 3));
 		cam.setRot(V4(0, 1, 0), M_PI);
 		Lightning light(V3(10, 10, 10), V3(1, 1, 1), .01f);
 		
 		//std::shared_ptr<MeshResource> mm = std::make_shared<MeshResource>(nullptr);
 
-		float speed = .08f;
+		float speed = .008f;
 
 		M4 scene;
 		V4 color(1, 1, 1, 1);

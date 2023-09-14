@@ -26,7 +26,6 @@ SET(files_render_display
 	Lightning.h
 	Lightning.cc
 
-	stb_image.h
 	stb_image_write.h
 	tiny_gltf.h
 	json.hpp)

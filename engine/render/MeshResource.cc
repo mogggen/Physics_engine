@@ -185,32 +185,32 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile)
 	return std::make_shared<MeshResource>(&vertices[0], vertices.size(), &indices[0], indices.size());
 }
 
-std::shared_ptr<MeshResource> MeshResource::LoadGLTF(const tinygltf::Model& model, std::vector<V3>& tangent3)
+std::shared_ptr<MeshResource> MeshResource::LoadGLTF(const tinygltf::Model& model)
 {
-	assert(tangent3.empty());
-
 	for (const tinygltf::Scene& scene : model.scenes)
 	{
 		//whatever
 		scene.nodes;
 	}
 
-	for (const tinygltf::Camera& camera : model.cameras)
-	{
-		if (camera.type == "perspective")
-		{
-			const tinygltf::PerspectiveCamera& per = camera.perspective;
-			per.yfov;
-			per.aspectRatio;
-			per.znear;
-			per.zfar;
-		}
-	}
+	std::vector<Vertex> resVert; // complete
+
+	std::vector<float> tempPositionBuffer;
+	std::vector<float> tempNormalBuffer;
+	std::vector<float> tempTangentBuffer;
+	std::vector<float> tempTexelBuffer;
+
+	std::vector<V3> position3;
+	std::vector<V3> tangent3;
+	std::vector<V3> normal3;
+	std::vector<V2> texel2;
+
+	std::vector<unsigned int> tri_indices; // Store triangle indices
 
 	for (const tinygltf::Buffer& buffer : model.buffers)
 	{
 		std::vector<char> binaryData;
-		std::ifstream binFile("textures/Avocado/" + buffer.uri, std::ios::binary | std::ios::ate);
+		std::ifstream binFile("textures/" + buffer.uri, std::ios::binary | std::ios::ate);
 
 		if (binFile.is_open()) {
             // Get the file size and allocate a buffer
@@ -224,23 +224,6 @@ std::shared_ptr<MeshResource> MeshResource::LoadGLTF(const tinygltf::Model& mode
 
             // Now, you can use binaryData as your binary buffer
 		}
-		// if folder structure
-		//std::ifstream bin("textures/Avocado/gltf/Avocado.bin");
-		//std::stringstream ss;
-		//ss << bin.rdbuf();
-		//std::string mime_type = "";
-		//std::string non_empty = ss.str();
-		//tinygltf::DecodeDataURI(&binaryData, mime_type, non_empty, non_empty.size() * 4, false);
-		//// if single file
-		//if (binaryData.empty())
-		//{
-		//	bool succeded = tinygltf::DecodeDataURI(&binaryData, mime_type, buffer.uri, buffer.uri.length(), false);
-		//	if (!succeded)
-		//	{
-		//		std::cerr << "Couldn't read model from gltf" << std::endl;
-		//		return std::shared_ptr<MeshResource>();
-		//	}
-		//}
 
 		for (const tinygltf::Mesh& mesh : model.meshes)
 		{
@@ -257,6 +240,7 @@ std::shared_ptr<MeshResource> MeshResource::LoadGLTF(const tinygltf::Model& mode
 				const tinygltf::Accessor& normalAccessor = model.accessors[normalAccessorIndex];
 				const tinygltf::BufferView& normalBufferView = model.bufferViews[normalAccessor.bufferView];
 				const  char* normalData = &binaryData[normalBufferView.byteOffset];
+
 
 				int tangentAccessorIndex = primitive.attributes.at("TANGENT");
 				const tinygltf::Accessor& tangentAccessor = model.accessors[tangentAccessorIndex];
@@ -281,19 +265,6 @@ std::shared_ptr<MeshResource> MeshResource::LoadGLTF(const tinygltf::Model& mode
 
 				// Create lists to store vertices and indices
 
-				std::vector<Vertex> resVert; // complete
-			
-				std::vector<float> tempPositionBuffer;
-				std::vector<float> tempNormalBuffer;
-				std::vector<float> tempTangentBuffer;
-				std::vector<float> tempTexelBuffer;
-
-				std::vector<V3> position3;
-				std::vector<V3> normal3;
-				std::vector<V2> texel2;
-
-				std::vector<unsigned int> tri_indices; // Store triangle indices
-
 				// Iterate through position data and convert to vertices
 				for (size_t i = 0; i < positionAccessor.count; ++i) {
 					const void* positionPtr = positionData + i * positionAccessor.ByteStride(positionBufferView);
@@ -315,15 +286,15 @@ std::shared_ptr<MeshResource> MeshResource::LoadGLTF(const tinygltf::Model& mode
 					}
 				}
 
-				for (size_t i = 0; i < tangentAccessor.count; ++i) {
-					const void* tangentPtr = tangentData + i * tangentAccessor.ByteStride(tangentBufferView);
+				//for (size_t i = 0; i < tangentAccessor.count; ++i) {
+				//	const void* tangentPtr = tangentData + i * tangentAccessor.ByteStride(tangentBufferView);
 
-					// Assuming tangents are 3D (x, y, z)
-					const float* tangent = reinterpret_cast<const float*>(tangentPtr);
-					for (int j = 0; j < 3; ++j) {
-						tempTangentBuffer.push_back(tangent[j]);
-					}
-				}
+				//	// Assuming tangents are 3D (x, y, z)
+				//	const float* tangent = reinterpret_cast<const float*>(tangentPtr);
+				//	for (int j = 0; j < 3; ++j) {
+				//		tempTangentBuffer.push_back(tangent[j]);
+				//	}
+				//}
 
 				for (size_t i = 0; i < texelAccessor.count; ++i) {
 					const void* texelPtr = texelData + i * texelAccessor.ByteStride(texelBufferView);
@@ -370,15 +341,16 @@ std::shared_ptr<MeshResource> MeshResource::LoadGLTF(const tinygltf::Model& mode
 					));
 				}
 
-				assert(texel2.size() == normal3.size() && normal3.size() == position3.size() && normal3.size() == tangent3.size());
-				for (size_t k = 0; k < position3.size(); ++k)
+				assert(texel2.size() == normal3.size() && normal3.size() == position3.size() && normal3.size());
+
+				for (size_t i = 0; i < position3.size(); ++i)
 				{
 					resVert.push_back(
 						{
-							position3[k],
-							V4(1, 1, 1, 1),
-							texel2[k],
-							normal3[k],
+							position3[i],
+							tangent3.empty() ? V4(1, 1, 1, 1) : tangent3[i],
+							texel2[i],
+							normal3[i],
 						});
 				}
 
@@ -387,14 +359,10 @@ std::shared_ptr<MeshResource> MeshResource::LoadGLTF(const tinygltf::Model& mode
 					const void* indexPtr = indicesData + i * indicesAccessor.ByteStride(indicesBufferView);
 					if (indicesAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT)
 					{
-						// Assuming indices are UNSIGNED_SHORT
 						const unsigned short* index = reinterpret_cast<const unsigned short*>(indexPtr);
-						//if (index[0] == 65021) tri_indices.push_back(1);
-						/*else */tri_indices.push_back(index[0]);
-						//if (index[1] == 65021) tri_indices.push_back(1);
-						/*else */tri_indices.push_back(index[1]);
-						//if (index[2] == 65021) tri_indices.push_back(1);
-						/*else */tri_indices.push_back(index[2]);
+						tri_indices.push_back(index[0]);
+						tri_indices.push_back(index[1]);
+						tri_indices.push_back(index[2]);
 					}
 					else if (indicesAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT)
 					{
@@ -405,20 +373,6 @@ std::shared_ptr<MeshResource> MeshResource::LoadGLTF(const tinygltf::Model& mode
 					}
 				}
 
-				/*std::map<int, int> indexMap;
-				std::vector<Vertex> uniqueVertices;
-				std::vector<unsigned int> uniqueIndices;
-			
-				for (unsigned int i = 0; i < tri_indices.size(); ++i) {
-					int vertexIndex = tri_indices[i];
-					if (indexMap.find(vertexIndex) == indexMap.end()) {
-						indexMap[vertexIndex] = uniqueVertices.size();
-						uniqueVertices.push_back(resVert[vertexIndex]);
-					}
-					uniqueIndices.push_back(indexMap[vertexIndex]);
-				}*/
-
-			
 				//for (size_t ss = 0; ss < tri_indices.size(); ss++)
 				//{
 				//	auto first = std::find(tri_indices.begin(), tri_indices.end(), tri_indices[ss]);
@@ -430,11 +384,10 @@ std::shared_ptr<MeshResource> MeshResource::LoadGLTF(const tinygltf::Model& mode
 				//}
 			
 
-				// Now, you have the vertices and indices ready for rendering
-				return std::make_shared<MeshResource>(&resVert[0], resVert.size(), &tri_indices[0], tri_indices.size());
 			}
 		}
 	}
+	return std::make_shared<MeshResource>(&resVert[0], resVert.size(), &tri_indices[0], tri_indices.size());
 }
 
 /// <summary>

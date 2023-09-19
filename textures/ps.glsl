@@ -1,11 +1,9 @@
 #version 430
-
-layout(location=0) in vec4 colorOut;
-layout(location=1) in vec2 texturesOut;
-layout(location=2) in vec3 fragPosOut;
-layout(location=3) in vec3 normalOut;
-layout(location=4) in vec3 tangentOut; // Tangent from the vertex shader
-layout(location=5) in vec3 bitangentOut; // Bitangent from the vertex shader
+layout(location=0) in vec2 texturesOut;
+layout(location=1) in vec3 fragPosOut;
+layout(location=2) in vec3 normalOut;
+layout(location=3) in vec3 tangentOut; // Tangent from the vertex shader
+layout(location=4) in vec3 bitangentOut; // Bitangent from the vertex shader
 
 uniform vec3 lightColor;
 uniform vec3 lightPos;
@@ -24,7 +22,7 @@ void main()
 	vec3 lightDir = normalize(lightPos - fragPosOut);
 
 	// Sample the normal from the normal map
-	vec3 normalTex = texture(normalMap, texturesOut).xyz;
+	vec3 normalTex = texture(textureArray, texturesOut).xyz;
 	normalTex = normalize(normalTex * 2.0 - 1.0); // Convert from [0, 1] to [-1, 1]
 
 	// Tangent space to world space transformation for normals
@@ -40,5 +38,5 @@ void main()
 	float spec = pow(max(dot(normal, halfwayDir), 0.0), 64);
 	vec3 specular = lightColor * spec * specularIntensity;
 
-	Color = texture(textureArray, texturesOut) * (vec4(0.3) + colorOut * 0.7) * vec4(ambientLight + diffuse + specular, 1);
+	Color = texture(normalMap, texturesOut) * vec4(ambientLight + diffuse + specular, 1.0);
 }

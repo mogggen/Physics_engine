@@ -18,14 +18,26 @@ std::shared_ptr<tinygltf::Model> GraphicNode::load_gltf(const std::string& fileP
 	tinygltf::TinyGLTF loader;
 	std::string err, warn;
 
-	bool result = loader.LoadASCIIFromFile(&model, &err, &warn, filePath);
+	bool result = false;
+
+	if (filePath.rfind(".gltf") != std::string::npos)
+	{
+		result = loader.LoadASCIIFromFile(&model, &err, &warn, filePath);
+	}
+	
+	if (!result && filePath.rfind(".glb") != std::string::npos)
+	{
+		result = loader.LoadBinaryFromFile(&model, &err, &warn, filePath);
+	}
 
 	if (!warn.empty()) {
-		// Handle warnings
+		std::cerr << warn << std::endl;
 	}
 
 	if (!err.empty()) {
 		// Handle errors
+		std::cerr << err << std::endl;
+		return nullptr;
 	}
 
 	return result ? std::make_shared<tinygltf::Model>(model) : nullptr;

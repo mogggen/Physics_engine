@@ -520,7 +520,7 @@ namespace Example
 					float depth;
 					std::vector<V3> suppe = epa(normal, depth, simplex_placeholder,
 						i_vertices, j_vertices);
-					V3 p_i = get_collision_point_in_model_space(ith->actor->transform, suppe, normal, depth);
+					V3 p_i = get_collision_point(ith->actor->transform, suppe, normal, depth);
 					
 					for (size_t i = 0; i < suppe.size(); ++i)
 					{
@@ -532,7 +532,7 @@ namespace Example
 					Debug::DrawLine(V4(p_i, 1), V4(p_i + V3(1, 0, 0), 1), V4(1, .5, .5, 1));
 					
 
-					V3 p_j = get_collision_point_in_model_space(jth->actor->transform, suppe, normal, depth);
+					V3 p_j = get_collision_point(jth->actor->transform, suppe, normal, depth);
 					for (size_t i = 0; i < suppe.size(); ++i)
 					{
 						V4 line1 = V4(V3(suppe[i]), 1);

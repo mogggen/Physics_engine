@@ -136,7 +136,7 @@ namespace Example
 		return ray.minDist(tt);
 	}
 
-	const const V3 ray_intersection(
+	const V3 ray_intersection(
 		Ray& r,
 		M4 WorldSpaceTransform,
 		std::vector<V3>& i_worldSpace_coords,
@@ -397,8 +397,100 @@ namespace Example
 		std::vector<V3>* normals = nullptr;
 
 		V3 hit = ray_intersection(ray, emptyMatrix, vertexPositions, indices, normals); // resulting hit should be 0, 0, 1
+		//std::cout << "x: " << hit[0] << ", y: " << hit[1] << ", z: " << hit[2] << std::endl;
 		return hit;
-		std::cout << "x: " << hit[0] << ", y: " << hit[1] << ", z: " << hit[2] << std::endl;
+	}
+
+	void gjk_collision_test(Actor a, Actor b)
+	{
+		std::vector<V3> Coords;
+		std::vector<unsigned> Indices;
+		std::vector<Vertex> faceBuffer;
+		{
+			std::vector<V2> Texels;
+			std::vector<V3> Normals;
+			/*std::shared_ptr<MeshResource> PyramidMesh = */MeshResource::LoadObj("textures/pyramid.obj", Indices, Coords, Texels, Normals, faceBuffer);
+		}
+
+		//v -1.000000 1.000000 -1.000000
+		//v 1.000000 -1.000000 -1.000000
+		//v -1.000000 -1.000000 -1.000000
+		//v -1.000000 -1.000000 1.000000
+		//vn 0.5774 0.5774 0.5774
+		//vn -1.0000 -0.0000 -0.0000
+		//vn -0.0000 -1.0000 -0.0000
+		//vn -0.0000 -0.0000 -1.0000
+		//vt 0.625000 0.250000
+		//vt 0.375000 0.000000
+		//vt 0.375000 0.500000
+		//vt 0.375000 0.250000
+		//vt 0.625000 0.500000
+		//f 1/1/1 4/2/1 2/3/1
+		//f 4/2/2 1/1/2 3/4/2
+		//f 3/4/3 2/3/3 4/2/3
+		//f 3/4/4 1/5/4 2/3/4
+
+		std::vector<V3> resultingSimplex; 
+
+		std::vector<V3> leftPos;
+		std::vector<V3> rightPos;
+
+
+		Print(a.transform);
+		Print(b.transform);
+		for (const V3& c : Coords)
+		{
+			const V3 left = (a.transform * V4(c, 1)).toV3();
+			leftPos.push_back(left);
+			
+			const V3 right = (b.transform * V4(c, 1)).toV3();
+			rightPos.push_back(right);
+			//left.normal = Normalize((a.transform * V4(left.normal)).toV3());
+			//leftNorm.push_back(v.normal);
+		}
+
+		if (gjk(resultingSimplex, leftPos, rightPos))
+		{
+			std::cout << "collision" << std::endl;
+			std::cout << "Simplex size: " << resultingSimplex.size() << std::endl;
+			
+			float pen = 0.f;
+			V3 res_norm;
+			std::vector<Vertex> leftVert;
+			std::vector<Vertex> rightVert;
+		
+			for (Vertex& v : faceBuffer)
+			{
+				leftVert.insert(leftVert.begin(), Vertex
+					{
+						(a.transform * V4(v.pos, 1)).toV3(),
+						V4(1, 1, 1, 1),
+						v.texel,
+						Normalize((a.transform * V4(v.normal)).toV3())
+					});
+				rightVert.insert(rightVert.begin(), Vertex
+					{
+						(b.transform * V4(v.pos, 1)).toV3(),
+						V4(1, 1, 1, 1),
+						v.texel,
+						Normalize((b.transform * V4(v.normal)).toV3())
+					});
+			}
+			
+			// use faces here
+			//if (epa(res_norm, pen, resultingSimplex, Indices, leftPos, rightPos).size())
+			{
+
+			}
+		}
+		else
+		{
+			std::cout << "No collision" << std::endl;
+		}
+
+		//std::cout << "x: " << hit[0] << ", y: " << hit[1] << ", z: " << hit[2] << std::endl;
+		return;
+
 	}
 
 	void
@@ -424,19 +516,19 @@ namespace Example
 		float camSpeed = .08f;
 
 		// set identies
+		cube->actor->transform = Translate(V4(-3, 1, 0.001f));
 		fireHydrant->actor->transform = Translate(V4(3, 0, 0));
 		
-		cube->actor->transform = Translate(V4(-3, 0, 0));
 
-		cube->actor->linearVelocity = V3(.0005f, 0, 0);
-		//fireHydrant->actor->linearVelocity = V3(-.0005f, 0, 0);
-
+		//return gjk_collision_test(*fireHydrant->actor, *cube->actor);
+		//cube->actor->linearVelocity = V3(.0005f, 0, 0);
+		fireHydrant->actor->linearVelocity = V3(-.0005f, 0, 0);
 		while (this->window->IsOpen())
 		{
 			//--------------------ImGui section--------------------
 
 			auto start = std::chrono::high_resolution_clock::now();
-
+			cube->actor->linearVelocity = V3(.05f * cos(frameIndex / 10.f)+0.001f, sin(frameIndex / 30.f) * 0.02f, 0);
 			//--------------------math section--------------------
 			cam.setPos(cam.getPos() + Normalize(V4((d - a), (q - e), (w - s))) * -camSpeed);
 			V3 rayOrigin = cam.getPos() * 1.f;
@@ -515,23 +607,27 @@ namespace Example
 						Debug::DrawLine(line1, line2, V4(1, 1, 1, 1));
 					}
 					
-					//std::cout << "collision detected! frame: " << frameIndex << std::endl;
 					V3 normal;
 					float depth;
-					std::vector<V3> suppe = epa(normal, depth, simplex_placeholder,
+					std::vector<V3> suppe = epa(normal, depth, simplex_placeholder, 
 						i_vertices, j_vertices);
-					V3 p_i = get_collision_point(ith->actor->transform, suppe, normal, depth);
+					// Where is the collision response applied
 					
+					// Pi
+					V3 p_i = get_collision_point(ith->actor->transform, suppe, normal, depth);
 					for (size_t i = 0; i < suppe.size(); ++i)
 					{
 						V4 line1 = V4(V3(suppe[i]), 1);
 						V4 line2 = V4(V3(suppe[(i + 1) % suppe.size()]), 1);
 						Debug::DrawLine(line1, line2, V4(1, 1, 1, 1));
 					}
-					
 					Debug::DrawLine(V4(p_i, 1), V4(p_i + V3(1, 0, 0), 1), V4(1, .5, .5, 1));
 					
+					std::cout << "point i: " << p_i[0] << p_i[1] << p_i[2] << "\t";
+					std::cout << "normal: " << normal[0] << normal[1] << normal[2] << "\t";
+					std::cout << "depth: " << depth << std::endl;
 
+					// Pj
 					V3 p_j = get_collision_point(jth->actor->transform, suppe, normal, depth);
 					for (size_t i = 0; i < suppe.size(); ++i)
 					{
@@ -539,18 +635,18 @@ namespace Example
 						V4 line2 = V4(V3(suppe[(i + 1) % suppe.size()]), 1);
 						Debug::DrawLine(line1, line2, V4(1, 1, 1, 1));
 					}
-					
 					Debug::DrawLine(V4(p_j, 1), V4(p_j + V3(1, 0, 0), 1), V4(0, 0, 1, 1));
 					
-					std::cout << "normal: " << normal[0] << normal[1] << normal[2] << "\t";
-					//std::cout << "point: " << p[0] << p[1] << p[2] << "\t";
-					std::cout << "depth: " << depth << std::endl;
-					// handle COllision responses here
+					std::cout << "point j: " << p_j[0] << p_j[1] << p_j[2] << "\t";
+					std::cin.get();
+
+					//exit(0);
+					// handle Collision responses here
 					//e * (ith->actor->linearVelocity * ith->actor->mass * .8f + jth->actor->linearVelocity * jth->actor->mass) = ;
 
-					// temporary display of the collision working
+					 //temporary display of the collision working
 					//ith->actor->linearVelocity = ith->actor->linearVelocity * -1.f;
-					jth->actor->linearVelocity = jth->actor->linearVelocity * -1.f;
+					//jth->actor->linearVelocity = jth->actor->linearVelocity * -1.f;
 
 
 					//fireHydrant->actor->apply_linear_impulse(ray, (fireHydrantProjectionViewTransform * V4(fireHydrantMesh->center_of_mass, 1)).toV3(), resultingHit);
@@ -585,12 +681,11 @@ namespace Example
 					std::pair<V3, V3> aabb = findAABB(m, wst);
 					Debug::DrawAABB(aabb, V4(1, 0, 0, 1));
 				}
-				//light.bindLight(script, cam.getPos());
-				//a->DrawScene(cam.pv() * wst, color);
+				light.bindLight(script, cam.getPos());
+				a->DrawScene(cam.pv() * wst, color);
 			}
 			if (showDebugRender)
 			{
-				Debug::DrawLine(V4(1, 1, 1, 1), V4(1, 1, 1, 1), V4(1, 1, 1, 1));
 				Debug::Render(cam.pv());
 			}
 			

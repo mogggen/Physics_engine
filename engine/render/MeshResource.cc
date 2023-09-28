@@ -1,7 +1,10 @@
 #include "config.h"
 #include "render/MeshResource.h"
+#include <string>
 #include <stdio.h>
 #include <inttypes.h>
+#include <iostream>
+#include <fstream>
 
 MeshResource::MeshResource()
 {
@@ -303,7 +306,7 @@ std::pair<V3, V3> MeshResource::find_bounds()
 }
 
 
-std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile,
+std::shared_ptr<MeshResource> LoadObj(const char *pathToFile,
 		std::vector<uint32>& _indices,
 		std::vector<V3>& _positions,
 		std::vector<V2>& _texels,
@@ -377,7 +380,7 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile,
 			else if (buf[0] == 'f' && buf[1] == '\0')
 			{
 				char pos[4][64];
-				uint8_t argc = fscanf(fs, "%s %s %s %s", &pos[0], &pos[1], &pos[2], &pos[3]);
+				uint8_t argc = fscanf(fs, "%s %s %s"/*"%s"*/, &pos[0], &pos[1], &pos[2]/*, &pos[3]*/);
 
 				uint32_t listOfIndices[4][3];
 
@@ -481,6 +484,216 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char *pathToFile,
 	}
 	printf("loaded %s\n", pathToFile);
 	return std::make_shared<MeshResource>(&vertices[0], vertices.size(), &indices[0], indices.size());
+}
+
+std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile, std::vector<uint32>& _indices,
+	std::vector<V3>& _positions,
+	std::vector<V2>& _texels,
+	std::vector<V3>& _normals,
+	std::vector<Vertex>& _vertices)
+{
+	if (!_vertices.empty()) _vertices.clear();
+	if (!_indices.empty()) _indices.clear();
+
+	using namespace std;
+	ifstream fs(pathToFile);
+	string lineRemainder;
+
+	if (!fs)
+	{
+		printf("file not found with path \"./%s\"\n", pathToFile);
+		return nullptr;
+	}
+
+	unsigned long long verticesUsed = 0ull;
+	vector<V3> coords;
+	vector<V2> texels;
+	vector<V3> normals;
+
+	while (getline(fs, lineRemainder))
+	{
+		size_t pos = 0;
+		string token;
+
+		if ((pos = lineRemainder.find(" ")) != string::npos) {
+			token = lineRemainder.substr(0, pos);
+			lineRemainder.erase(0, pos + 1);
+			if (token == "v")
+			{
+				size_t I = 0;
+				V3 nextCoordinate;
+
+				while ((pos = lineRemainder.find(" ")) != string::npos)
+				{
+					if (I >= 3)
+					{
+						cerr << "too many arguments in vertex, expected 3" << endl;
+						break;
+					}
+					token = lineRemainder.substr(0, pos);
+					lineRemainder.erase(0, pos + 1);
+					nextCoordinate[I++] = stof(token);
+				}
+				nextCoordinate[I++] = stof(lineRemainder);
+				if (I < 3U) cerr << "not enough love, vertex";
+				coords.push_back(nextCoordinate);
+			}
+
+			else if (token == "vt")
+			{
+				size_t I = 0;
+				V2 nextTexel;
+
+				while ((pos = lineRemainder.find(" ")) != string::npos)
+				{
+					if (I >= 2)
+					{
+						cerr << "too many arguments in texel, expected 2" << endl;
+						break;
+					}
+					token = lineRemainder.substr(0, pos);
+					lineRemainder.erase(0, pos + 1);
+					nextTexel[I++] = stof(token);
+				}
+				nextTexel[I++] = stof(lineRemainder);
+				if (I < 2)
+				{
+					cerr << "not enough love, texel";
+					break;
+				}
+				texels.push_back(nextTexel);
+			}
+
+			else if (token == "vn")
+			{
+				size_t I = 0;
+				V3 nextNormal;
+
+				while ((pos = lineRemainder.find(" ")) != string::npos)
+				{
+					if (I >= 3)
+					{
+						cerr << "missing arguments in normal, expected 3" << endl;
+						break;
+					}
+					token = lineRemainder.substr(0, pos);
+					lineRemainder.erase(0, pos + 1);
+					nextNormal[I++] = stof(token);
+				}
+				nextNormal[I++] = stof(lineRemainder);
+				if (I < 3U)
+				{
+					cerr << "not enough love, normals";
+					break;
+				}
+				normals.push_back(nextNormal);
+			}
+
+			else if (token == "f")
+			{
+				size_t I = 0;
+				vector<string> args;
+
+				while ((pos = lineRemainder.find(" ")) != string::npos)
+				{
+					if (I >= 5)
+					{
+						cerr << "missing arguments in face, expected 3 or 4" << endl;
+						break;
+					}
+					token = lineRemainder.substr(0, pos);
+					lineRemainder.erase(0, pos + 1);
+					args.push_back(token);
+				}
+				args.push_back(lineRemainder);
+				//for (string s : args) cout << s << endl;
+
+
+				size_t posi = 0;
+				string tokenSmall;
+				vector<unsigned> argi;
+
+				for (size_t i = 0; i < args.size(); i++)
+				{
+					argi.clear();
+					while ((posi = args[i].find("/")) != string::npos)
+					{
+						if (argi.size() >= 4)
+						{
+							cout << "i: " << i << endl;
+							cout << "argi: ";
+							for (auto s : argi) cout << s << " ";
+							cout << endl;
+							cerr << "too many arguments in faceProperties, expected 2 or 3" << endl;
+							break;
+						}
+						tokenSmall = args[i].substr(0, posi);
+						args[i].erase(0, posi + 1);
+						argi.push_back(stoi(tokenSmall));
+					}
+					argi.push_back(stoi(args[i]));
+					if (argi.size() < 2)
+					{
+						cerr << "not enough parameters in faceProperies 2 or 3";
+						break;
+					}
+
+					_vertices.push_back(Vertex{
+						coords[(argi[0]) - 1],
+						V4(1, 1, 1, 1),
+						texels[(argi[1]) - 1],
+						(argi.size() == 3 ? normals[argi[2] - 1] : V3()),
+						});
+					if (args.size() == 3)
+						_indices.push_back(argi[0] - 1);
+				}
+				if (args.size() == 4)
+				{
+					float dist1 = (_vertices[_vertices.size() - 4].pos - _vertices[_vertices.size() - 2].pos).Length();
+					float dist2 = (_vertices[_vertices.size() - 3].pos - _vertices[_vertices.size() - 1].pos).Length();
+					if (dist1 > dist2)
+					{
+						_indices.push_back(_vertices.size() - 4);
+						_indices.push_back(_vertices.size() - 3);
+						_indices.push_back(_vertices.size() - 1);
+
+						_indices.push_back(_vertices.size() - 3);
+						_indices.push_back(_vertices.size() - 2);
+						_indices.push_back(_vertices.size() - 1);
+					}
+					else
+					{
+						_indices.push_back(_vertices.size() - 4);
+						_indices.push_back(_vertices.size() - 3);
+						_indices.push_back(_vertices.size() - 2);
+
+						_indices.push_back(_vertices.size() - 4);
+						_indices.push_back(_vertices.size() - 2);
+						_indices.push_back(_vertices.size() - 1);
+					}
+				}
+			}
+		}
+	}
+
+	for (V3 const& var : coords)
+	{
+		_positions.push_back(var);
+	}
+
+	for (V2 const& var : texels)
+	{
+		_texels.push_back(var);
+	}
+
+	for (V3 const& var : normals)
+	{
+		_normals.push_back(var);
+	}
+
+
+	printf("loadedToBuffer %s\n", pathToFile);
+	return std::make_shared<MeshResource>(&_vertices[0], _vertices.size(), &_indices[0], _indices.size());
 }
 
 /// <summary>

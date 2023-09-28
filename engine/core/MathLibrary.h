@@ -704,7 +704,7 @@ inline bool tetrahedron(std::vector<V3>& simplex,
 }
 
 inline bool next_simplex(std::vector<V3>& simplex,
-V3 newDir)
+V3& newDir)
 {
 	switch (simplex.size())
 	{
@@ -722,23 +722,33 @@ V3 newDir)
 inline bool gjk(std::vector<V3>& simplex_out, std::vector<V3>& lhs,
 std::vector<V3>& rhs)
 {
-	V3 curr = support(lhs, rhs, V3(1.f, 1.f, 1.f));
-	V3 newDir = curr * -1.f;
+	const V3 a = support(lhs, rhs, V3(1.f, 0, -1.f));
+	//const V3 b = support(lhs, rhs, a * -1.f);
 
-	simplex_out.insert(simplex_out.begin(), curr);
+	//if ((a - b).Dot(a) < 0.f)
+	//{
+	//	// Handle the case where the objects overlap initially.
+	//	// You can use any direction here.
+	//	return true; // or handle it as needed
+	//}
 
-	for (size_t i = 0; i < lhs.size() + rhs.size(); i++)
+	//simplex_out.push_back(b);
+	simplex_out.push_back(a);
+
+	V3 dir = a * -1.f;
+
+	for (size_t i = 0; i < 2; i++)
 	{
-		curr = support(lhs, rhs, newDir);
+		V3 next = support(lhs, rhs, dir);
 
-		if (curr.Dot(newDir) <= 0.f)
+		if (next.Dot(dir) < 0.f)
 		{
 			 std::cout << "(false) Degenerate Simplex: " << i << std::endl;
 			return false;
 		}
-		simplex_out.insert(simplex_out.begin(), curr);
+		simplex_out.push_back(next);
 
-		if (next_simplex(simplex_out, newDir))
+		if (next_simplex(simplex_out, dir))
 		{
 			 std::cout << "(true) Degenerate Simplex: " << i << std::endl;
 			return true;
@@ -832,7 +842,7 @@ inline std::vector<V3> epa(
 		0, 2, 3,
 		1, 3, 2
 	};
-
+	
 	std::vector<V3> normals;
 	std::vector<float> distances;
 

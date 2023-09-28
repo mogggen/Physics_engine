@@ -82,3 +82,8 @@ namespace Example
 		Display::Window *window;
 	};
 } // namespace Example
+
+// Debug::DrawSphere
+// Debug::Draw Collision and Normal
+
+// Beräkna kollisionspunkten genom att extrapolera från den information som ges.

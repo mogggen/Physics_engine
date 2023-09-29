@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <iostream>
 #include <vector>
+#include <utility>
 #include <stdio.h>
 #include <cassert>
 #ifndef M_PI
@@ -569,13 +570,13 @@ inline void barycentricCoordinates(const V3& a, const V3& b, const V3& c, const 
 	w3 = std::abs(volPABC) / sumVolumes;
 }
 
-inline const V3 supportFunction(const std::vector<V3>& shapeVertices, const V3& direction)
+inline const V3 findFurtestPoint(const std::vector<V3>& shapeVertices, const V3& direction)
 {
-	V3 farthestPoint = shapeVertices[0];
-	float maxDotProduct = farthestPoint.Dot(direction);
+	V3 farthestPoint;
+	float maxDotProduct = -FLT_MAX;
 
 	// Loop through the remaining vertices to find the farthest point
-	for (size_t i = 1; i < shapeVertices.size(); ++i)
+	for (size_t i = 0; i < shapeVertices.size(); ++i)
 	{
 		const V3& currentPoint = shapeVertices[i];
 		float dotProduct = Dot(currentPoint, direction);
@@ -589,12 +590,12 @@ inline const V3 supportFunction(const std::vector<V3>& shapeVertices, const V3& 
 	return farthestPoint;
 }
 
-inline const V3 support(
-    std::vector<V3>&const lhs,
-    std::vector<V3>&const rhs,
-    const V3 dir)
+inline const V3 Support(
+    const std::vector<V3>&const lhs,
+    const std::vector<V3>&const rhs,
+    const V3& dir)
 {
-    return supportFunction(lhs, dir) - supportFunction(rhs, dir * -1.f);
+    return findFurtestPoint(lhs, dir) - findFurtestPoint(rhs, dir * -1.f);
 }
 
 inline bool same_direction(const V3& direction, const V3& other)
@@ -722,206 +723,22 @@ V3& newDir)
 inline bool gjk(std::vector<V3>& simplex_out, std::vector<V3>& lhs,
 std::vector<V3>& rhs)
 {
-	const V3 a = support(lhs, rhs, V3(1.f, 0, -1.f));
-	//const V3 b = support(lhs, rhs, a * -1.f);
-
-	//if ((a - b).Dot(a) < 0.f)
-	//{
-	//	// Handle the case where the objects overlap initially.
-	//	// You can use any direction here.
-	//	return true; // or handle it as needed
-	//}
-
-	//simplex_out.push_back(b);
+	const V3 a = Support(lhs, rhs, V3(1.3f, 0, -1.f));
 	simplex_out.push_back(a);
 
 	V3 dir = a * -1.f;
 
 	for (size_t i = 0; i < 2; i++)
 	{
-		V3 next = support(lhs, rhs, dir);
+		V3 next = Support(lhs, rhs, dir);
 
 		if (next.Dot(dir) < 0.f)
-		{
-			 std::cout << "(false) Degenerate Simplex: " << i << std::endl;
 			return false;
-		}
 		simplex_out.push_back(next);
 
 		if (next_simplex(simplex_out, dir))
-		{
-			 std::cout << "(true) Degenerate Simplex: " << i << std::endl;
 			return true;
-		}
 	}
-}
-
-inline size_t get_face_normals_and_index(std::vector<V3>& normals_out,
-std::vector<float>& distances_out,
-
-	const std::vector<V3>& polytope,
-	const std::vector<size_t>& faces)
-{
-	assert(normals_out.empty() && distances_out.empty());
-
-	size_t minTriangle = 0;
-	float  minDistance = FLT_MAX;
-
-	for (size_t i = 0; i < faces.size(); i += 3)
-	{
-		V3 a = polytope[faces[i]];
-		V3 b = polytope[faces[i + 1]];
-		V3 c = polytope[faces[i + 2]];
-
-		V3 normal = Normalize(Cross(b - a, c - a));
-		float distance = Dot(normal, a);
-
-		if (distance < 0) {
-			normal *= -1;
-			distance *= -1.f;
-		}
-
-		normals_out.push_back(normal);
-		distances_out.push_back(distance);
-
-		if (distance < minDistance) {
-			minTriangle = i / 3;
-			minDistance = distance;
-		}
-	}
-	return minTriangle;
-}
-
-inline void AddIfUniqueEdge(
-	std::vector<size_t>& edges_a,
-	std::vector<size_t>& edges_b,
-
-	const std::vector<size_t>& faces,
-	size_t a,
-	size_t b)
-{
-	//      0--<--3
-	//     / \ B /   A: 2-0
-	//    / A \ /    B: 0-2
-	//   1-->--2
-	assert(edges_a.size() == edges_b.size());
-
-	size_t discard = size_t(-1);
-	for (size_t i = 0; i < edges_a.size(); i++)
-	{
-		if (edges_a[i] == faces[b] && edges_b[i] == faces[a])
-		{
-			discard = i;
-		}
-	}
- 
-	if (discard != size_t(-1)) {
-		edges_a.erase(edges_a.begin() + discard);
-		edges_b.erase(edges_b.begin() + discard);
-	}
-	else
-	{
-		edges_a.push_back(faces[a]);
-		edges_b.push_back(faces[b]);
-	}
-}
-
-// returns non-discarded support points
-inline std::vector<V3> epa(
-	V3& normal_out,
-	float& penetration_depth_out,
-
-	const std::vector<V3>& simplex,
-	std::vector<V3>& lhs,
-	std::vector<V3>& rhs)
-{
-	std::vector<V3> polytope(simplex.begin(), simplex.end());
-	std::vector<size_t>  faces = {
-		0, 1, 2,
-		0, 3, 1,
-		0, 2, 3,
-		1, 3, 2
-	};
-	
-	std::vector<V3> normals;
-	std::vector<float> distances;
-
-	size_t minFace = get_face_normals_and_index(normals, distances, polytope, faces);
-
-	V3 minNormal;
-	float minDistance = FLT_MAX;
-
-	while (minDistance == FLT_MAX) {
-		minNormal = normals[minFace]; // Here
-		minDistance = distances[minFace];
-
-		V3 supportPoint = support(lhs, rhs, minNormal);
-		float sDistance = Dot(minNormal, supportPoint);
-
-		if (abs(sDistance - minDistance) > 0.001f) {
-			minDistance = FLT_MAX;
-
-			std::vector<size_t> unique_edges_a;
-			std::vector<size_t> unique_edges_b;
-
-			for (size_t i = 0; i < normals.size(); i++)
-			{
-				if (same_direction(normals[i], supportPoint))
-				{
-					AddIfUniqueEdge(unique_edges_a, unique_edges_b, faces, (i * 3), (i * 3) + 1);
-					AddIfUniqueEdge(unique_edges_a, unique_edges_b, faces, (i * 3) + 1, (i * 3) + 2);
-					AddIfUniqueEdge(unique_edges_a, unique_edges_b, faces, (i * 3) + 2, (i * 3));
-
-					faces[(i * 3) + 2] = faces.back(); faces.pop_back();
-					faces[(i * 3) + 1] = faces.back(); faces.pop_back();
-					faces[(i * 3)] = faces.back(); faces.pop_back();
-
-					normals[i] = normals.back(); normals.pop_back();
-					distances[i] = distances.back(); distances.pop_back();
-					i--;
-				}
-			}
-
-			std::vector<size_t> new_faces;
-
-			for (size_t i = 0; i < unique_edges_a.size(); i++)
-			{
-				new_faces.push_back(unique_edges_a[i]);
-				new_faces.push_back(unique_edges_b[i]);
-				new_faces.push_back(polytope.size());
-			}
-
-			polytope.push_back(supportPoint);
-
-			std::vector<V3> new_normals;
-			std::vector<float> new_distances;
-
-			size_t newMinFace = get_face_normals_and_index(new_normals, new_distances, polytope, new_faces);
-
-			float oldMinDistance = FLT_MAX;
-			for (size_t i = 0; i < normals.size(); i++)
-			{
-				if (new_distances[i] < oldMinDistance)
-				{
-					oldMinDistance = new_distances[i];
-					minFace = i;
-				}
-			}
-
-			if (new_distances[newMinFace] < oldMinDistance)
-			{
-				minFace = newMinFace + normals.size();
-			}
-
-			faces.insert(faces.end(), new_faces.begin(), new_faces.end());
-			normals.insert(normals.end(), new_normals.begin(), new_normals.end());
-			distances.insert(distances.end(), new_distances.begin(), new_distances.end());
-		}
-	}
-
-	normal_out = minNormal;
-	penetration_depth_out = minDistance;
-	return polytope;
 }
 
 #pragma endregion // Vector3
@@ -1138,6 +955,158 @@ inline V4 Normalize(V4 vector)
 		vector[i] /= length;
 	return vector;
 }
+
+
+inline void GetFaceNormals(
+	std::pair<std::vector<V4>, size_t>& pair_out,
+	const std::vector<V3>& polytope,
+	const std::vector<size_t>& faces)
+{
+	std::vector<V4> normals;
+	size_t minTriangle = 0;
+	float  minDistance = FLT_MAX;
+
+	for (size_t i = 0; i < faces.size(); i += 3) {
+		V3 a = polytope[faces[i]];
+		V3 b = polytope[faces[i + 1]];
+		V3 c = polytope[faces[i + 2]];
+
+		V3 normal = Normalize(Cross(b - a, c - a));
+		float distance = Dot(normal, a);
+
+		if (distance < 0) {
+			normal *= -1;
+			distance *= -1;
+		}
+
+		normals.emplace_back(normal, distance);
+
+		if (distance < minDistance) {
+			minTriangle = i / 3;
+			minDistance = distance;
+		}
+	}
+
+	pair_out = { normals, minTriangle };
+}
+
+inline void AddIfUniqueEdge(
+	std::vector<std::pair<size_t, size_t>>& edges,
+	const std::vector<size_t>& faces,
+	size_t a,
+	size_t b)
+{
+	auto reverse = std::find(               //      0--<--3
+		edges.begin(),                      //     / \ B /   A: 2-0
+		edges.end(),                        //    / A \ /    B: 0-2
+		std::make_pair(faces[b], faces[a]) 	//   1-->--2
+	);
+
+	if (reverse != edges.end()) {
+		edges.erase(reverse);
+	}
+
+	else {
+		edges.emplace_back(faces[a], faces[b]);
+	}
+}
+
+struct CollisionPoints
+{
+	V3 Normal;
+	float PenetrationDepth;
+	bool HasCollision;
+};
+
+// std::vec<V3> => Collider, Simplex, CollisionPoints
+inline CollisionPoints epa(
+	const std::vector<V3>& simplex,
+	const std::vector<V3>& colliderA,
+	const std::vector<V3>& colliderB)
+{
+	std::vector<V3> polytope(simplex.begin(), simplex.end());
+	std::vector<size_t> faces = {
+		0, 1, 2,
+		0, 3, 1,
+		0, 2, 3,
+		1, 3, 2
+	};
+
+	// list: vec4(normal, distance), index: min distance
+	std::pair<std::vector<V4>, size_t> normal_and_minFace;
+	GetFaceNormals(normal_and_minFace, polytope, faces);
+	std::vector<V4> normals = normal_and_minFace.first;
+	size_t minFace = normal_and_minFace.second;
+	V3 minNormal;
+	float minDistance = FLT_MAX;
+
+	while (minDistance == FLT_MAX) {
+		minNormal = normals[minFace].toV3();
+		minDistance = normals[minFace].w;
+
+		V3 support = Support(colliderA, colliderB, minNormal);
+		float sDistance = Dot(minNormal, support);
+
+		if (abs(sDistance - minDistance) > 0.001f) {
+			minDistance = FLT_MAX;
+			std::vector<std::pair<size_t, size_t>> uniqueEdges;
+
+			for (size_t i = 0; i < normals.size(); i++) {
+				if (same_direction(normals[i].toV3(), support)) {
+					size_t f = i * 3;
+
+					AddIfUniqueEdge(uniqueEdges, faces, f, f + 1);
+					AddIfUniqueEdge(uniqueEdges, faces, f + 1, f + 2);
+					AddIfUniqueEdge(uniqueEdges, faces, f + 2, f);
+
+					faces[f + 2] = faces.back(); faces.pop_back();
+					faces[f + 1] = faces.back(); faces.pop_back();
+					faces[f] = faces.back(); faces.pop_back();
+
+					normals[i] = normals.back(); // pop-erase
+					normals.pop_back();
+
+					i--;
+				}
+			}
+			std::vector<size_t> newFaces;
+			for (std::pair<size_t, size_t> const& edgeIndexPair : uniqueEdges) {
+				newFaces.push_back(edgeIndexPair.first);
+				newFaces.push_back(edgeIndexPair.second);
+				newFaces.push_back(polytope.size());
+			}
+
+			polytope.push_back(support);
+
+			std::pair<std::vector<V4>, size_t> newNormals_and_newMinFace;
+			GetFaceNormals(newNormals_and_newMinFace, polytope, newFaces);
+			std::vector<V4> newNormals = newNormals_and_newMinFace.first;
+			size_t newMinFace = newNormals_and_newMinFace.second;
+			float oldMinDistance = FLT_MAX;
+			for (size_t i = 0; i < normals.size(); i++) {
+				if (normals[i].w < oldMinDistance) {
+					oldMinDistance = normals[i].w;
+					minFace = i;
+				}
+			}
+
+			if (newNormals[newMinFace].w < oldMinDistance) {
+				minFace = newMinFace + normals.size();
+			}
+
+			faces.insert(faces.end(), newFaces.begin(), newFaces.end());
+			normals.insert(normals.end(), newNormals.begin(), newNormals.end());
+		}
+	}
+	CollisionPoints points;
+
+	points.Normal = minNormal;
+	points.PenetrationDepth = minDistance + 0.001f;
+	points.HasCollision = true;
+
+	return points;
+}
+
 
 #pragma endregion
 

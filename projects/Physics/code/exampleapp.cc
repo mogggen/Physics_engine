@@ -607,38 +607,32 @@ namespace Example
 						Debug::DrawLine(line1, line2, V4(1, 1, 1, 1));
 					}
 					
-					V3 normal;
-					float depth;
-					std::vector<V3> suppe = epa(normal, depth, simplex_placeholder, 
+					if (simplex_placeholder.size() == 4)
+					{
+						std::cin.get();
+						CollisionPoints suppe = epa(simplex_placeholder, 
 						i_vertices, j_vertices);
 					// Where is the collision response applied
 					
 					// Pi
-					V3 p_i = get_collision_point(ith->actor->transform, suppe, normal, depth);
-					for (size_t i = 0; i < suppe.size(); ++i)
-					{
-						V4 line1 = V4(V3(suppe[i]), 1);
-						V4 line2 = V4(V3(suppe[(i + 1) % suppe.size()]), 1);
-						Debug::DrawLine(line1, line2, V4(1, 1, 1, 1));
-					}
-					Debug::DrawLine(V4(p_i, 1), V4(p_i + V3(1, 0, 0), 1), V4(1, .5, .5, 1));
+					//V3 p_i = get_collision_point(ith->actor->transform, suppe, normal, depth);
 					
-					std::cout << "point i: " << p_i[0] << p_i[1] << p_i[2] << "\t";
-					std::cout << "normal: " << normal[0] << normal[1] << normal[2] << "\t";
-					std::cout << "depth: " << depth << std::endl;
+					//std::cout << "point i: " << CollsionPoints[0] << CollsionPoints[1] << CollsionPoints[2] << "\t";
+					std::cout << "normal: " << suppe.Normal[0] << suppe.Normal[1] << suppe.Normal[2] << "\t";
+					std::cout << "depth: " << suppe.PenetrationDepth << std::endl;
 
 					// Pj
-					V3 p_j = get_collision_point(jth->actor->transform, suppe, normal, depth);
-					for (size_t i = 0; i < suppe.size(); ++i)
-					{
-						V4 line1 = V4(V3(suppe[i]), 1);
-						V4 line2 = V4(V3(suppe[(i + 1) % suppe.size()]), 1);
-						Debug::DrawLine(line1, line2, V4(1, 1, 1, 1));
+					//V3 p_j = get_collision_point(jth->actor->transform, suppe, normal, depth);
+					//for (size_t i = 0; i < suppe.size(); ++i)
+					//{
+					//	V4 line1 = V4(V3(suppe[i]), 1);
+					//	V4 line2 = V4(V3(suppe[(i + 1) % suppe.size()]), 1);
+					//	Debug::DrawLine(line1, line2, V4(1, 1, 1, 1));
+					//}
+					//Debug::DrawLine(V4(p_j, 1), V4(p_j + V3(1, 0, 0), 1), V4(0, 0, 1, 1));
+					//
+					//std::cout << "point j: " << p_j[0] << p_j[1] << p_j[2] << "\t";
 					}
-					Debug::DrawLine(V4(p_j, 1), V4(p_j + V3(1, 0, 0), 1), V4(0, 0, 1, 1));
-					
-					std::cout << "point j: " << p_j[0] << p_j[1] << p_j[2] << "\t";
-					std::cin.get();
 
 					//exit(0);
 					// handle Collision responses here

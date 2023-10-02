@@ -211,6 +211,41 @@ namespace Example
 		return closest_point;
 	}
 
+	// Function to calculate the projection of an object onto a given axis
+	float ProjectOntoAxis(const std::vector<Vertex>& vertices, const V3& axis) {
+		float min = FLT_MAX;
+		float max = -FLT_MAX;
+
+		for (const Vertex& vertex : vertices) {
+			float projection = Dot(vertex.pos, axis);
+			if (projection < min) {
+				min = projection;
+			}
+			if (projection > max) {
+				max = projection;
+			}
+		}
+
+		return max - min;
+	}
+
+	// Function to check for collision between two 3D objects using the SAT
+	bool SATCollision(const std::vector<Vertex>& object1, const std::vector<Vertex>& object2) {
+		for (size_t i = 0; i < object1.size(); i += 3) {
+			for (size_t j = 0; j < object2.size(); j += 3) {
+				// Calculate the face normals
+				V3 axis = Cross(object1[i].normal, object2[j].normal);
+
+				// Check for separation along the axis
+				if (ProjectOntoAxis(object1, axis) + ProjectOntoAxis(object2, axis) < 0.0f) {
+					return false; // No collision
+				}
+			}
+		}
+
+		return true; // Collision detected
+	}
+
 	void Print(M4 m)
 	{
 		for (size_t i = 0; i < 4; i++)
@@ -591,35 +626,25 @@ namespace Example
 				std::shared_ptr<GraphicNode>& ith = cube;//all_loaded[0];
 				std::shared_ptr<GraphicNode>& jth = fireHydrant;//all_loaded[1];
 				
-				std::vector<V3> i_vertices = ith->getMesh()->positions;
+				std::vector<V3>& i_vertices = ith->getMesh()->positions;
 				apply_worldspace(i_vertices, ith->actor->transform);
 				
-				std::vector<V3> j_vertices = jth->getMesh()->positions;
+				std::vector<V3>& j_vertices = jth->getMesh()->positions;
 				apply_worldspace(j_vertices, jth->actor->transform);
-				std::vector<V3> simplex_placeholder;
 
-				if (gjk(simplex_placeholder, i_vertices, j_vertices))
+				if (SATCollision(ith->getMesh()->vertices, jth->getMesh()->vertices))
 				{
-					for (size_t i = 0; i < simplex_placeholder.size(); ++i)
-					{
-						V4 line1 = V4(V3(simplex_placeholder[i]), 1);
-						V4 line2 = V4(V3(simplex_placeholder[(i + 1) % simplex_placeholder.size()]), 1);
-						Debug::DrawLine(line1, line2, V4(1, 1, 1, 1));
-					}
 					
-					if (simplex_placeholder.size() == 4)
-					{
-						std::cin.get();
-						CollisionPoints suppe = epa(simplex_placeholder, 
-						i_vertices, j_vertices);
+					//CollisionPoints suppe = epa(simplex_placeholder, 
+					//	i_vertices, j_vertices);
 					// Where is the collision response applied
 					
 					// Pi
 					//V3 p_i = get_collision_point(ith->actor->transform, suppe, normal, depth);
 					
 					//std::cout << "point i: " << CollsionPoints[0] << CollsionPoints[1] << CollsionPoints[2] << "\t";
-					std::cout << "normal: " << suppe.Normal[0] << suppe.Normal[1] << suppe.Normal[2] << "\t";
-					std::cout << "depth: " << suppe.PenetrationDepth << std::endl;
+					//std::cout << "normal: " << suppe.Normal[0] << suppe.Normal[1] << suppe.Normal[2] << "\t";
+					//std::cout << "depth: " << suppe.PenetrationDepth << std::endl;
 
 					// Pj
 					//V3 p_j = get_collision_point(jth->actor->transform, suppe, normal, depth);
@@ -632,9 +657,7 @@ namespace Example
 					//Debug::DrawLine(V4(p_j, 1), V4(p_j + V3(1, 0, 0), 1), V4(0, 0, 1, 1));
 					//
 					//std::cout << "point j: " << p_j[0] << p_j[1] << p_j[2] << "\t";
-					}
 
-					//exit(0);
 					// handle Collision responses here
 					//e * (ith->actor->linearVelocity * ith->actor->mass * .8f + jth->actor->linearVelocity * jth->actor->mass) = ;
 
@@ -660,7 +683,7 @@ namespace Example
 
 			for (std::shared_ptr<GraphicNode>& a : all_loaded)
 			{
-				a->actor->update(dt);
+				a->actor->update(dt * 0.1f);
 				M4& wst = a->actor->transform;
 				if (showDebugRender)
 				{

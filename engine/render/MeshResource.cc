@@ -254,22 +254,21 @@ std::shared_ptr<MeshResource> MeshResource::Cube()
 			2, 5, 14,
 			5, 14, 17, // bottom
 		};
-
+	
 	return std::make_shared<MeshResource>(vertices, sizeof(vertices) / sizeof(Vertex), indices, sizeof(indices) / sizeof(uint64_t));
 }
 
 //Model Space
-bool MeshResource::findCenterOfMass()
+const V3 MeshResource::findCenterOfMass(std::vector<V3>& pos)
 {
 	size_t i = 0;
 	V3 sumPositions = V3();
 
-	for (; i < positions.size(); i++)
+	for (; i < pos.size(); i++)
 	{
-		sumPositions = positions[i];
+		sumPositions = pos[i];
 	}
-	center_of_mass = sumPositions * (1.f / ++i);
-	return true;
+	return sumPositions * (1.f / ++i);
 }
 
 std::pair<V3, V3> MeshResource::find_bounds()
@@ -691,7 +690,7 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile, std:
 		_normals.push_back(var);
 	}
 
-
+	
 	printf("loadedToBuffer %s\n", pathToFile);
 	return std::make_shared<MeshResource>(&_vertices[0], _vertices.size(), &_indices[0], _indices.size());
 }

@@ -48,7 +48,7 @@ namespace Example
 		float64 prevX = 0, prevY = 0;
 		float64 senseX = 0, senseY = 0;
 		bool w, a, s, d,
-			q, e, isPressed = false;
+			shift, space, isPressed = false;
 		bool showDebugRender = true;
 		GLuint program;
 		GLuint vertexShader;
@@ -62,7 +62,7 @@ namespace Example
 		std::shared_ptr<MeshResource> fireHydrantMesh;
 		std::shared_ptr<TextureResource> fireHydrantTexture;
 		std::shared_ptr<ShaderResource> fireHydrantScript;
-		std::shared_ptr<GraphicNode> fireHydrant;
+		std::shared_ptr<GraphicNode> texturedCube;
 
 		M4 cubeWorldSpaceTransform;
 		M4 cubeProjectionViewTransform;

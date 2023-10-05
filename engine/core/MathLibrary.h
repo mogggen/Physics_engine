@@ -812,7 +812,7 @@ inline void V4::operator-=(V4 right)
 
 inline void V4::operator*=(V4 right)
 {
-	for (size_t i = 0; i < 4; i++)
+	for (size_t i = 0; i < 3; i++)
 		data[i] *= right[i];
 }
 
@@ -870,42 +870,42 @@ inline float V4::Length2()
 inline void V4::Normalize()
 {
 	float length = Length();
-	for (size_t i = 0; i < 4; i++)
+	for (size_t i = 0; i < 3; i++)
 		data[i] /= length;
 }
 
 //	operator functions
 inline V4 operator+(V4 left, V4 right)
 {
-	for (size_t i = 0; i < 4; i++)
+	for (size_t i = 0; i < 3; i++)
 		left[i] += right[i];
 	return left;
 }
 
 inline V4 operator-(V4 left, V4 right)
 {
-	for (size_t i = 0; i < 4; i++)
+	for (size_t i = 0; i < 3; i++)
 		left[i] -= right[i];
 	return left;
 }
 
 inline V4 operator*(V4 left, V4 right)
 {
-	for (size_t i = 0; i < 4; i++)
+	for (size_t i = 0; i < 3; i++)
 		left[i] *= right[i];
 	return left;
 }
 
 inline V4 operator*(V4 left, float right)
 {
-	for (size_t i = 0; i < 4; i++)
+	for (size_t i = 0; i < 3; i++)
 		left[i] *= right;
 	return left;
 }
 
 inline V4 operator*(float left, V4 right)
 {
-	for (size_t i = 0; i < 4; i++)
+	for (size_t i = 0; i < 3; i++)
 		right[i] *= left;
 	return right;
 }
@@ -913,7 +913,7 @@ inline V4 operator*(float left, V4 right)
 inline float Dot(V4 left, V4 right)
 {
 	float temp = 0;
-	for (size_t i = 0; i < 4; i++)
+	for (size_t i = 0; i < 3; i++)
 		temp += left[i] * right[i];
 	return temp;
 }
@@ -951,7 +951,7 @@ inline V4 Normalize(V4 vector)
 	if (Length(vector) == 0)
 		return vector;
 	float length = Length(vector);
-	for (size_t i = 0; i < 4; i++)
+	for (size_t i = 0; i < 3; i++)
 		vector[i] /= length;
 	return vector;
 }
@@ -1671,7 +1671,7 @@ inline void apply_worldspace(
 inline const V3 get_collision_point(M4 modelMatrix,
 	std::vector<V3>& support_points, // supposed to be local, shouldn't matter if exactly everything isn't
 	V3 norm_collision_normal,
-	float penetrationDepth)
+	float depth)
 {
 	assert(support_points.size() > 0llu, "no support points");
 	// just do this calculation for every single support point
@@ -1681,9 +1681,9 @@ inline const V3 get_collision_point(M4 modelMatrix,
 		supportVertexLocal = &support_points[i];
 		
 		// Backtrack along the collision normal by the penetration depth
-		supportVertexLocal = &((*supportVertexLocal) - norm_collision_normal * penetrationDepth);
+		supportVertexLocal = &((*supportVertexLocal) - norm_collision_normal * depth);
 
-		V3 collisionPointLocal = *supportVertexLocal - norm_collision_normal * penetrationDepth;
+		V3 collisionPointLocal = *supportVertexLocal - norm_collision_normal * depth;
 		//V3 collisionPointWorld
 		supportVertexLocal = &((modelMatrix * V4(collisionPointLocal, 1)).toV3());
 	}
@@ -1766,9 +1766,9 @@ public:
 		// Create a rotation Quaternion that rotates the 'forward' vector (0, 0, 1) to the 'direction' vector
 		V3 forward(0.0, 0.0, 1.0);
 		V3 axis = Normalize(Cross(forward, direction));
-		float angle = std::acos(Dot(forward, direction));
-		Quaternion rotation(std::cos(angle / 2.0), axis[0] * std::sin(angle / 2.0),
-			axis[1] * std::sin(angle / 2.0), axis[2] * std::sin(angle / 2.0));
+		float angleVel = std::acos(Dot(forward, direction));
+		Quaternion rotation(std::cos(angleVel / 2.0), axis[0] * std::sin(angleVel / 2.0),
+			axis[1] * std::sin(angleVel / 2.0), axis[2] * std::sin(angleVel / 2.0));
 
 		return rotation;
 	}
@@ -2048,7 +2048,11 @@ inline std::vector<std::pair<size_t, size_t>> aabbPlaneSweep(std::vector<AABB>& 
 			if (i == j) continue;
 			if (AABBs[i].intersects(AABBs[j]))
 			{
-				intersections.push_back(std::pair<size_t, size_t>(i, j));
+				auto it = std::find(intersections.begin(), intersections.end(), std::pair<size_t, size_t>(j, i));
+				if (it == intersections.end())
+				{
+					intersections.push_back(std::pair<size_t, size_t>(i, j));
+				}
 			}
 		}
 	}

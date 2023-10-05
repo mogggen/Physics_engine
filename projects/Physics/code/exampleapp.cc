@@ -11,6 +11,7 @@
 #include "exampleapp.h"
 #include <iostream>
 #include <fstream>
+#include <string>
 #include <cstring>
 #include <chrono>
 #ifdef __linux__
@@ -60,14 +61,14 @@ namespace Example
 		return ret;
 	}
 
-	const M4 quaternionToRotationMatrix(const Quaternion& q)
+	const M4 quaternionToRotationMatrix(const Quaternion& shift)
 	{
 		M4 rotationMatrix;
 
-		float w = q.getW();
-		float x = q.getX();
-		float y = q.getY();
-		float z = q.getZ();
+		float w = shift.getW();
+		float x = shift.getX();
+		float y = shift.getY();
+		float z = shift.getZ();
 
 		float ww = w * w;
 		float wx = w * x;
@@ -229,21 +230,64 @@ namespace Example
 		return max - min;
 	}
 
-	// Function to check for collision between two 3D objects using the SAT
-	bool SATCollision(const std::vector<Vertex>& object1, const std::vector<Vertex>& object2) {
-		for (size_t i = 0; i < object1.size(); i += 3) {
-			for (size_t j = 0; j < object2.size(); j += 3) {
-				// Calculate the face normals
-				V3 axis = Cross(object1[i].normal, object2[j].normal);
+	// Function to calculate the penetration point along the axis
+	V3 CalculatePenetrationPoint(const std::vector<Vertex>& vertices, const V3& axis) {
+		V3 penetrationPoint(0.0f, 0.0f, 0.0f);
+		float maxProjection = -FLT_MAX;
 
+		for (const Vertex& vertex : vertices) {
+			float projection = Dot(vertex.pos, axis);
+			if (projection > maxProjection) {
+				maxProjection = projection;
+				penetrationPoint = vertex.pos;
+			}
+		}
+
+		return penetrationPoint;
+	}
+
+	struct CollisionInfo {
+		bool isColliding;
+		float depth;
+		V3 pen1;
+		V3 pen2;
+	};
+
+	CollisionInfo sat(const std::vector<Vertex>& i_vertices, const std::vector<Vertex>& j_vertices) {
+		CollisionInfo collisionInfo;
+		collisionInfo.isColliding = true;
+		collisionInfo.depth = FLT_MAX;
+
+		//V3 previous;
+
+		for (size_t i = 0; i < i_vertices.size(); i++) {
+			for (size_t j = 0; j < j_vertices.size(); j++) {
+				
+				V3 axis = Cross(i_vertices[i].normal, j_vertices[j].normal);
+
+				//// avoid redoing work
+				//if (!Dot(axis, previous)) continue;
+				//previous = axis;
+				//
 				// Check for separation along the axis
-				if (ProjectOntoAxis(object1, axis) + ProjectOntoAxis(object2, axis) < 0.0f) {
-					return false; // No collision
+				float projection1 = ProjectOntoAxis(i_vertices, axis);
+				float projection2 = ProjectOntoAxis(j_vertices, axis);
+				float overlap = projection1 + projection2;
+
+				if (overlap < 0.f) {
+					collisionInfo.isColliding = false;
+					return collisionInfo; // No collision
+				}
+				else if (overlap < collisionInfo.depth) {
+					// Store penetration depth and the penetration points
+					collisionInfo.depth = overlap;
+					collisionInfo.pen1 = CalculatePenetrationPoint(i_vertices, axis);
+					collisionInfo.pen2 = CalculatePenetrationPoint(j_vertices, axis);
 				}
 			}
 		}
 
-		return true; // Collision detected
+		return collisionInfo; // Collision detected
 	}
 
 	void Print(M4 m)
@@ -264,7 +308,7 @@ namespace Example
 		this->window = new Display::Window;
 
 		// assign ExampleApp variables
-		w = a = s = d = q = e = false;
+		w = a = s = d = shift = space = false;
 		window->GetSize(width, height);
 
 		window->SetKeyPressFunction([this](int32 keycode, int32 scancode, int32 action, int32 mods)
@@ -278,8 +322,8 @@ namespace Example
 			case GLFW_KEY_A: a = action; break;
 			case GLFW_KEY_D: d = action; break;
 
-			case GLFW_KEY_Q: q = action; break;
-			case GLFW_KEY_E: e = action; break;
+			case GLFW_KEY_LEFT_SHIFT: shift = action; break;
+			case GLFW_KEY_SPACE: space = action; break;
 			} });
 
 		window->SetMousePressFunction([this](int32 button, int32 action, int32 mods)
@@ -316,6 +360,7 @@ namespace Example
 			assert(fireCoords.size() == fireHydrantMesh->positions.size());
 			fireHydrantMesh->min = fireHydrantMesh->find_bounds().first;
 			fireHydrantMesh->max = fireHydrantMesh->find_bounds().second;
+			//fireHydrantMesh->center_of_mass = fireHydrantMesh->findCenterOfMass(fireHydrantMesh->positions);
 
 			// TextureResource
 			fireHydrantTexture = std::make_shared<TextureResource>("textures/cubepic.png");
@@ -327,11 +372,12 @@ namespace Example
 
 			// Actor
 			Actor *fireHydrantActor = new Actor();
+			fireHydrantActor->mass = 7;
+			fireHydrantActor->elasticity = .5;
 
 			// GraphicNode
-			fireHydrant = std::make_shared<GraphicNode>(fireHydrantMesh, fireHydrantTexture, fireHydrantScript, fireHydrantActor);
-
-			all_loaded.push_back(fireHydrant);
+			texturedCube = std::make_shared<GraphicNode>(fireHydrantMesh, fireHydrantTexture, fireHydrantScript, fireHydrantActor);
+			//all_loaded.push_back(texturedCube);
 
 			// MeshResource
 			std::vector<unsigned> cubeIndices;
@@ -350,41 +396,21 @@ namespace Example
 			cubeMesh->max = cubeMesh->find_bounds().second;
 			
 			cubeTexture = std::make_shared<TextureResource>("textures/red.png");
+			cubeTexture->LoadFromFile();
 
 			// shaderResource
 			cubeScript = std::make_shared<ShaderResource>();
-			cubeScript->LoadShader(cubeScript->vs, cubeScript->ps, "textures/vs.glsl", "textures/psNoTexture.glsl");
+			cubeScript->LoadShader(cubeScript->vs, cubeScript->ps, "textures/vs.glsl", "textures/ps.glsl");
 
 			// Actor
 			Actor *cubeActor = new Actor();
+			cubeActor->mass = 300;
+			cubeActor->elasticity = 0.7;
 
 			// GraphicNode
 			cube = std::make_shared<GraphicNode>(cubeMesh, cubeTexture, cubeScript, cubeActor);
 
 			all_loaded.push_back(cube);
-
-			// MeshResource
-			//std::vector<unsigned> quadIndices;
-			//std::vector<V3> quadCoords;
-			//std::vector<V2> quadTexels;
-			//std::vector<V3> quadNormals;
-			//std::vector<Vertex> quadVertices;
-			//quadMesh = MeshResource::LoadObj("textures/quad.obj", quadIndices, quadCoords, quadTexels, quadNormals, quadVertices);
-			//quadMesh->indicesAmount = quadIndices;
-			//quadMesh->positions = quadCoords;
-			//quadMesh->texels = quadTexels;
-			//quadMesh->normals = quadNormals;
-			//quadMesh->vertices = quadVertices;
-			//quadMesh->min = quadMesh->find_bounds().first;
-			//quadMesh->max = quadMesh->find_bounds().second;
-
-			//// Actor
-			//Actor *quadActor = new Actor();
-
-			//// GraphicNode
-			//quad = std::make_shared<GraphicNode>(quadMesh, cubeTexture, cubeScript, quadActor);
-
-			//all_loaded.push_back(quad);
 
 			this->window->SetUiRender([this]()
 									  { this->RenderUI(); });
@@ -396,7 +422,6 @@ namespace Example
 	//------------------------------------------------------------------------------
 	/**
 	 */
-	
 
 	V3 mesh_intersection_test(Ray& ray)
 	{
@@ -533,6 +558,23 @@ namespace Example
 	{
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
+		time_t f = time(nullptr);
+		std::cout << "seed: " << f << std::endl;
+		srand(f);
+
+		for (size_t i = 1; i < 4; i++)
+		{
+			const GraphicNode bro = *texturedCube.get();
+			all_loaded.push_back(std::make_shared<GraphicNode>(bro));
+			all_loaded[i]->actor = new Actor();
+			all_loaded[i]->actor->mass = 2;
+			all_loaded[i]->actor->elasticity = 0.9;
+			all_loaded[i]->actor->linearVelocity = V4(0, 0, 0, 0);
+			float x_rand = 0;//rand() / (float)RAND_MAX * 20.f - 10.f;
+			float z_rand = 0;//rand() / (float)RAND_MAX * 20.f - 10.f;
+			all_loaded[i]->actor->transform = Translate(V4(x_rand, 3.f * i, z_rand));
+			//std::cout << all_loaded[i]->actor->transform.toV3().z << std::endl;
+		}
 
 		// deltatime
 		float dt = 0.01;
@@ -543,50 +585,44 @@ namespace Example
 #define GRAVITY V3(0, g, 0)
 
 		Camera cam(90, (float)width / height, 0.01f, 1000.0f);
-		cam.setPos(V4(0, 1, 3));
-		cam.setRot(V4(0, 1, 0), M_PI);
+		cam.setPos(V4(0, 1, -3));
+		cam.setRot(V4(0, 0, 1), M_PI);
 
 		Lightning light(V3(10, 10, 10), V3(1, 1, 1), .01f);
 
 		float camSpeed = .08f;
 
-		// set identies
-		cube->actor->transform = Translate(V4(-3, 1, 0.001f));
-		fireHydrant->actor->transform = Translate(V4(3, 0, 0));
 		
 
-		//return gjk_collision_test(*fireHydrant->actor, *cube->actor);
-		//cube->actor->linearVelocity = V3(.0005f, 0, 0);
-		fireHydrant->actor->linearVelocity = V3(-.0005f, 0, 0);
+		// set identies
+		cube->actor->transform = Translate(V4(0, -10.5f, 0)) * Scalar(V4(10, 1, 10, 1));
+		//texturedCube->actor->transform = Translate(V4(0, 1.5f, 0));
+		
+		cube->actor->linearVelocity = V3(0, 0, 0);
+		texturedCube->actor->linearVelocity = V3(0, 0, 0);
+		
+		for	(auto g : all_loaded)
+		{
+			std::pair<V3, V3> t = findAABB(*g->getMesh(), g->actor->transform);
+			aabbs.push_back({t.first, t.second});
+		}
+
 		while (this->window->IsOpen())
 		{
 			//--------------------ImGui section--------------------
 
 			auto start = std::chrono::high_resolution_clock::now();
-			cube->actor->linearVelocity = V3(.05f * cos(frameIndex / 10.f)+0.001f, sin(frameIndex / 30.f) * 0.02f, 0);
+			// cube->actor->linearVelocity = V3(.05f * cos(frameIndex / 10.f)+0.001f, sin(frameIndex / 30.f) * 0.02f, 0);
 			//--------------------math section--------------------
-			cam.setPos(cam.getPos() + Normalize(V4((d - a), (q - e), (w - s))) * -camSpeed);
+			cam.setPos(cam.getPos() + Normalize(V4((a - d), (shift - space), (w - s))) * camSpeed);
 			V3 rayOrigin = cam.getPos() * 1.f;
 			
 			// effect of gravity
-			//fireHydrant->actor->apply_force(GRAVITY, dt);
-
-			//fireHydrant world space
-			fireHydrant->actor->transform = Rotation(V4(40, 0, 1), -0.012f) * Rotation(V4(0, 1, 0), 0.004f) * fireHydrant->actor->transform
-			
-			//* Translate(fireHydrant->actor->velocity)
-				;
-
-			//fireHydrant view space
-			fireHydrantProjectionViewTransform = cam.pv() * fireHydrant->actor->transform;// * Scalar(V4(.1, .1, .1));
-
-			// cube world space
-			/*quad->actor->transform = quad->actor->transform
-										* Translate(V4(0, 0, cos(frameIndex / 20.f)))
-				;*/
-
-			// cube view space
-			cubeProjectionViewTransform = cam.pv() * cube->actor->transform;
+			for (size_t i = 1; i < all_loaded.size(); i++)
+			{
+				const float& m = all_loaded[i]->actor->mass;
+				all_loaded[i]->actor->apply_force(m * GRAVITY * 0.0001f, dt);
+			}
 
 			if (isPressed)
 			{
@@ -602,7 +638,6 @@ namespace Example
 				if (!isnan(NAN/*resultingHit.data*/))
 				{
 					printf("%f, %f, %f\n", resultingHit.x, resultingHit.y, resultingHit.z);
-					// make sure w is one when multiplying V4 and float (fixed in mathLib.h)
 					Debug::DrawLine(V4(resultingHit - V3(0, 3, 0), 1), V4(resultingHit - V3(0, 0, 0), 1), V4(1, 0, 0, 1));
 					//Debug::DrawSquare(V4(resultingHit, 1));
 				}
@@ -610,80 +645,113 @@ namespace Example
 			}
 			//cube->actor->transform = Translate(V4(resultingHit, 1));
 
-			//for (std::shared_ptr<GraphicNode>& a : all_loaded)
-			//{
-			//	apply_worldspace(a->getMesh()->positions, a->actor->transform);
-			//	a->getMesh()->find_bounds();
-			//	V3 gg = a->actor->transform.toV3();
-			//	printf("%f, %f, %f\n", gg.x, gg.y, gg.z);
-			//	// check intersections to optimize what to compare later
-			//	AABB the = { a->getMesh()->min, a->getMesh()->max };
-			//}
-
-			//std::vector<std::pair<size_t, size_t>> in = aabbPlaneSweep(aabbs);
-			for (size_t i = 0; i < 1; i++)
+			for (size_t i = 0; i < all_loaded.size(); i++)
 			{
-				std::shared_ptr<GraphicNode>& ith = cube;//all_loaded[0];
-				std::shared_ptr<GraphicNode>& jth = fireHydrant;//all_loaded[1];
+				std::pair<V3, V3> t = findAABB(*all_loaded[i]->getMesh(), all_loaded[i]->actor->transform);
+
+				//Print(all_loaded[i]->actor->transform);
+				// check intersections to optimize what to compare later
+				AABB the = { t.first, t.second};
+				aabbs[i] = the;
+			}
+
+			std::vector<std::pair<size_t, size_t>> in = aabbPlaneSweep(aabbs);	
+			for (std::pair<size_t, size_t>& a : in)
+			{
+				std::cout << "(" << a.first << ", " << a.second << ")" << std::endl;
+				std::shared_ptr<GraphicNode> ith = all_loaded[a.first];
+				std::shared_ptr<GraphicNode> jth = all_loaded[a.second];
 				
+				
+				V3& i_cm = ith->getMesh()->center_of_mass;
 				std::vector<V3>& i_vertices = ith->getMesh()->positions;
-				apply_worldspace(i_vertices, ith->actor->transform);
+				std::vector<V3>& i_normals = ith->getMesh()->normals;
 				
+				apply_worldspace(std::vector<V3>{ i_cm}, ith->actor->transform);
+				apply_worldspace(i_vertices, ith->actor->transform);
+				apply_worldspace(i_normals, ith->actor->transform);
+
+
+				V3& j_cm = jth->getMesh()->center_of_mass;
 				std::vector<V3>& j_vertices = jth->getMesh()->positions;
+				std::vector<V3>& j_normals = jth->getMesh()->normals;
+
+				apply_worldspace(std::vector<V3>{ j_cm}, jth->actor->transform);
 				apply_worldspace(j_vertices, jth->actor->transform);
+				apply_worldspace(j_normals, jth->actor->transform);
 
-				if (SATCollision(ith->getMesh()->vertices, jth->getMesh()->vertices))
+
+				CollisionInfo& info = sat(ith->getMesh()->vertices, jth->getMesh()->vertices);
+				if (info.isColliding)
 				{
+
+					const float& m1 = ith->actor->mass;
+					const float& m2 = jth->actor->mass;
+					V4& u1 = ith->actor->linearVelocity;
+					V4& u2 = jth->actor->linearVelocity;
+					const float& e1 = ith->actor->elasticity;
+					const float& e2 = jth->actor->elasticity;
 					
-					//CollisionPoints suppe = epa(simplex_placeholder, 
-					//	i_vertices, j_vertices);
-					// Where is the collision response applied
+					Quaternion q1 = ith->actor->angularVelocity;
+					Quaternion q2 = jth->actor->angularVelocity;
+
+
+					float& o1 = ith->actor->orie;
+					float& o2 = jth->actor->orie;
+					float& w1 = ith->actor->angleVel;
+					float& w2 = jth->actor->angleVel;
+
+					assert(m1);
+					assert(m2);
+					assert(0.f <= e1 && e1 <= 1.f);
+					assert(0.f <= e2 && e2 <= 1.f);
+					const V4 v1 = e1 * (((m1-m2)/(m1+m2))*u1+((2*m2*u2) * (1 / (m1+m2))));
+					const V4 v2 = e2 * (((m2-m1)/(m1+m2))*u2+((2*m1*u1) * (1 / (m1+m2))));
 					
-					// Pi
-					//V3 p_i = get_collision_point(ith->actor->transform, suppe, normal, depth);
 					
-					//std::cout << "point i: " << CollsionPoints[0] << CollsionPoints[1] << CollsionPoints[2] << "\t";
-					//std::cout << "normal: " << suppe.Normal[0] << suppe.Normal[1] << suppe.Normal[2] << "\t";
-					//std::cout << "depth: " << suppe.PenetrationDepth << std::endl;
+					//angularMomentum
+					V3 arm1 = info.pen1 - i_cm;
+					V3 arm2 = info.pen2 - j_cm;
 
-					// Pj
-					//V3 p_j = get_collision_point(jth->actor->transform, suppe, normal, depth);
-					//for (size_t i = 0; i < suppe.size(); ++i)
-					//{
-					//	V4 line1 = V4(V3(suppe[i]), 1);
-					//	V4 line2 = V4(V3(suppe[(i + 1) % suppe.size()]), 1);
-					//	Debug::DrawLine(line1, line2, V4(1, 1, 1, 1));
-					//}
-					//Debug::DrawLine(V4(p_j, 1), V4(p_j + V3(1, 0, 0), 1), V4(0, 0, 1, 1));
-					//
-					//std::cout << "point j: " << p_j[0] << p_j[1] << p_j[2] << "\t";
+					printf("penetration point: %.8f\n", info.depth);
+					printf("penetration point: %.8f %.8f %.8f\n", arm1.x, arm1.y, arm1.z);
+					printf("penetration point: %.8f %.8f %.8f\n", arm2.x, arm2.y, arm2.z);
 
-					// handle Collision responses here
-					//e * (ith->actor->linearVelocity * ith->actor->mass * .8f + jth->actor->linearVelocity * jth->actor->mass) = ;
+					//if (info.depth)
+					{
+						//M4& i_m4 = ith->actor->transform;
+						//i_m4 = Translate(-info.penetrationDepth * Normalize(u1)) * i_m4;
+						//M4& j_m4 = jth->actor->transform;
+						//j_m4 = Translate(V4(j_m4.toV3(), 1) - 0.001f * Normalize(u2));
+	
+						//if (jth->actor->transform[1][3] > ith->actor->transform[1][3])
+							//jth->actor->transform[1][3] -= u2.y;
+						//else
+						//	ith->actor->transform[1][3] += 0.010f;
+					}
 
-					 //temporary display of the collision working
-					//ith->actor->linearVelocity = ith->actor->linearVelocity * -1.f;
-					//jth->actor->linearVelocity = jth->actor->linearVelocity * -1.f;
-
-
-					//fireHydrant->actor->apply_linear_impulse(ray, (fireHydrantProjectionViewTransform * V4(fireHydrantMesh->center_of_mass, 1)).toV3(), resultingHit);
+					u1 = v1;
+					u2 = v2;
+					
+					// apply resting forces
+					//ith->actor->apply_force(-e1 * m1 * GRAVITY * 0.00001f, dt);
+					//jth->actor->apply_force(-e2 * m2 * GRAVITY * 0.00001f, dt);
 				}
-				// TODO create an impulse
-
 			}
 
 			//--------------------real-time render section--------------------
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			fireHydrant->getShader()->setM4(cam.pv(), "m4ProjViewPos");
-			cube->getShader()->setM4(cam.pv(), "m4ProjViewPos");
-
-			std::shared_ptr<ShaderResource>& script = all_loaded[0]->getShader();
-			V4& color = fireHydrantColor;
-
-			for (std::shared_ptr<GraphicNode>& a : all_loaded)
+			for (std::shared_ptr<GraphicNode> a : all_loaded)
 			{
-				a->actor->update(dt * 0.1f);
+				const V4 color(1, 1, 1, 1);
+
+				a->getShader()->setM4(cam.pv(), "m4ProjViewPos");
+
+				std::shared_ptr<ShaderResource> script = a->getShader();
+
+
+				a->actor->update(dt * 0.4f);
 				M4& wst = a->actor->transform;
 				if (showDebugRender)
 				{

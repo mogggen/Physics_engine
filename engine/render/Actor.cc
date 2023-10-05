@@ -28,25 +28,22 @@ Actor::Actor(V3 _position,
 
 void Actor::apply_force(const V3& force, const float& dt)
 {
+    assert(mass, ("Actor %p has no mass", &this));
     const V3 acceleration = force * (1 / mass);
     linearVelocity = linearVelocity + acceleration * dt;
-    V4 position = V4(transform.toV3(), 1);
-    position = position + linearVelocity * dt;
-    transform = Translate(position);
 }
 
 void Actor::apply_force(const V3& direction, const float& magF, const float& dt)
 {
+    assert(mass, ("Actor %p has no mass", &this));
     const V3 acceleration = direction * magF * (1 / mass);
     linearVelocity = linearVelocity + acceleration * dt;
-    V4 position = V4(transform.toV3(), 1);
-    position = position + linearVelocity * dt;
-    transform = Translate(position);
 }
 
 // this function is cursed
 void Actor::apply_linear_impulse(const Ray& ray, const V3& center_of_mass, const V3& contactPoint, const float& elasticity)
 {
+    assert(mass, ("Actor %p has no mass", &this));
     // how much should be linear velocity (the rest is angular velocity
     const float fraction = Dot(Normalize(transform.toV3() - ray.origin), Normalize(center_of_mass - ray.origin));
     float linear_impulse = 5.f;

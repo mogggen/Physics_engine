@@ -8,6 +8,8 @@ struct Actor
     float elasticity; // Coefficient of restitution
     Quaternion orientation;
     Quaternion angularVelocity;
+    float orie;
+    float angleVel;
     M4 transform;
     V4 linearVelocity;
 

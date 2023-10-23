@@ -71,7 +71,7 @@ namespace Example
 		std::shared_ptr<MeshResource> cubeMesh;
 		std::shared_ptr<TextureResource> cubeTexture;
 		std::shared_ptr<ShaderResource> cubeScript;
-		std::shared_ptr<GraphicNode> cube;
+		std::shared_ptr<GraphicNode> floor;
 
 		// will have a entire array of these
 		std::shared_ptr<MeshResource> quadMesh;

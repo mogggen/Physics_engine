@@ -42,6 +42,7 @@ namespace Example
 	/**
 	 */
 
+
 	std::pair<V3, V3> findAABB(MeshResource& mesh, M4 modelMatrix)
 	{
 		V3 current = (modelMatrix * V4(mesh.min, 1)).toV3();
@@ -59,49 +60,6 @@ namespace Example
 			}
         }
 		return ret;
-	}
-
-	const M4 quaternionToRotationMatrix(const Quaternion& shift)
-	{
-		M4 rotationMatrix;
-
-		float w = shift.getW();
-		float x = shift.getX();
-		float y = shift.getY();
-		float z = shift.getZ();
-
-		float ww = w * w;
-		float wx = w * x;
-		float wy = w * y;
-		float wz = w * z;
-		float xx = x * x;
-		float xy = x * y;
-		float xz = x * z;
-		float yy = y * y;
-		float yz = y * z;
-		float zz = z * z;
-
-		rotationMatrix[0][0] = 1 - 2 * (yy + zz);
-		rotationMatrix[0][1] = 2 * (xy - wz);
-		rotationMatrix[0][2] = 2 * (xz + wy);
-		rotationMatrix[0][3] = 0.0;
-
-		rotationMatrix[1][0] = 2 * (xy + wz);
-		rotationMatrix[1][1] = 1 - 2 * (xx + zz);
-		rotationMatrix[1][2] = 2 * (yz - wx);
-		rotationMatrix[1][3] = 0.0;
-
-		rotationMatrix[2][0] = 2 * (xz - wy);
-		rotationMatrix[2][1] = 2 * (yz + wx);
-		rotationMatrix[2][2] = 1 - 2 * (xx + yy);
-		rotationMatrix[2][3] = 0.0;
-
-		rotationMatrix[3][0] = 0.0;
-		rotationMatrix[3][1] = 0.0;
-		rotationMatrix[3][2] = 0.0;
-		rotationMatrix[3][3] = 1.0;
-
-		return rotationMatrix;
 	}
 
 	inline const V3 find_AABB_intersection(Ray& ray, MeshResource& mesh)
@@ -189,7 +147,7 @@ namespace Example
 			}
 			isUndef = false;
 			
-			if (point_in_triangle_3D(currentIntersect, a, b, c))
+			if (point_in_Face_3D(currentIntersect, { a, b, c }))
 			{
 				if (isUndef)
 				{
@@ -211,19 +169,106 @@ namespace Example
 
 		return closest_point;
 	}
+	
+	struct Face
+	{
+		std::vector<V3> vertices;
+		V3 normal;
+	};
+
+	// Function to find the intersection points between two faces
+	std::vector<V3> FindFaceIntersection(Face face1, Face face2) {
+		std::vector<V3> intersectionPoints;
+
+		// sort in wrapping order
+		wrapping_sort(face1.vertices);
+		wrapping_sort(face2.vertices);
+
+		// Iterate over the edges of the first face
+		for (size_t i = 0; i < face1.vertices.size(); ++i) {
+			size_t j = (i + 1) % face1.vertices.size();
+			V3 edge1_start = face1.vertices[i];
+			V3 edge1_end = face1.vertices[j];
+
+			// Iterate over the edges of the second face
+			for (size_t k = 0; k < face2.vertices.size(); ++k) {
+				size_t l = (k + 1) % face2.vertices.size();
+				V3 edge2_start = face2.vertices[k];
+				V3 edge2_end = face2.vertices[l];
+
+				// Calculate the intersection point of two line segments
+				V3 intersection;
+				V3 dir1 = edge1_end - edge1_start;
+				V3 dir2 = edge2_end - edge2_start;
+				V3 d1 = edge2_start - edge1_start;
+				float cross = Cross(dir1, dir2).Length();
+
+				if (cross < 0.0001) { // Parallel or collinear
+					continue;
+				}
+
+				float t1 = Length(Cross(d1, dir2)) / cross;
+				float t2 = Length(Cross(d1, dir1)) / cross;
+
+				if (t1 >= 0 && t1 <= 1 && t2 >= 0 && t2 <= 1) {
+					intersection = edge1_start + dir1 * t1;
+					intersectionPoints.push_back(intersection);
+				}
+			}
+		}
+
+		return intersectionPoints;
+	}
+
+	void magic() {
+		// Define two faces with their vertices
+		Face face1;
+		face1.vertices = {
+			V3(0, 0, 0),
+			V3(1, 0, 0),
+			V3(1, 1, 0),
+			V3(0, 1, 0)
+		};
+
+		Face face2;
+		face2.vertices = {
+			V3(0.5, 0.5, 0),
+			V3(1.5, 0.5, 0),
+			V3(1.5, 1.5, 0),
+			V3(0.5, 1.5, 0)
+		};
+
+		// Find the intersection points
+		std::vector<V3> intersectionPoints = FindFaceIntersection(face1, face2);
+
+		// Print the intersection points
+		
+		//Intersection Point : (1, 0.5, 0)
+		//Intersection Point : (0.5, 1, 0)
+		//Intersection Point : (0.5, 1, 0)
+		//Intersection Point : (0, 0.5, 0)
+		
+		for (const V3& point : intersectionPoints) {
+			std::cout << "Intersection Point: (" << point.x << ", " << point.y << ", " << point.z << ")" << std::endl;
+		}
+	}
+
 
 	// Function to calculate the projection of an object onto a given axis
-	float ProjectOntoAxis(const std::vector<Vertex>& vertices, const V3& axis) {
+	float ProjectOntoAxis(const std::vector<Face>& faces, const V3& axis) {
 		float min = FLT_MAX;
 		float max = -FLT_MAX;
 
-		for (const Vertex& vertex : vertices) {
-			float projection = Dot(vertex.pos, axis);
-			if (projection < min) {
-				min = projection;
-			}
-			if (projection > max) {
-				max = projection;
+		for (const Face& face : faces)
+		{
+			for (const V3& vertex : face.vertices) {
+				float projection = Dot(vertex, axis);
+				if (projection < min) {
+					min = projection;
+				}
+				if (projection > max) {
+					max = projection;
+				}
 			}
 		}
 
@@ -231,45 +276,100 @@ namespace Example
 	}
 
 	// Function to calculate the penetration point along the axis
-	V3 CalculatePenetrationPoint(const std::vector<Vertex>& vertices, const V3& axis) {
-		V3 penetrationPoint(0.0f, 0.0f, 0.0f);
-		float maxProjection = -FLT_MAX;
+	const V3 CalculatePenetrationPoint(
+		const std::vector<Face>& i_faces,
+		const std::vector<Face>& j_faces,
+		const V3& axis)
+	{
 
-		for (const Vertex& vertex : vertices) {
-			float projection = Dot(vertex.pos, axis);
-			if (projection > maxProjection) {
-				maxProjection = projection;
-				penetrationPoint = vertex.pos;
+		Face i_best;
+		{
+			float maxProjection = -FLT_MAX;
+
+			for (const Face& face : i_faces)
+			{
+				for (const V3& vertex : face.vertices) {
+					float projection = Dot(vertex, axis);
+					if (projection > maxProjection) {
+						maxProjection = projection;
+						i_best = face;
+					}
+				}
+			}
+
+		}
+		
+		Face j_best;
+		{
+			float maxProjection = -FLT_MAX;
+
+			for (const Face& face : j_faces)
+			{
+				for (const V3& vertex : face.vertices) {
+					float projection = Dot(vertex, axis);
+					if (projection > maxProjection) {
+						maxProjection = projection;
+						j_best = face;
+					}
+				}
 			}
 		}
 
-		return penetrationPoint;
+		assert(i_best.vertices.size() == 0);
+		assert(j_best.vertices.size() == 0);
+		
+		if (i_best.vertices.size() == 1) return i_best.vertices[0];
+		if (j_best.vertices.size() == 1) return j_best.vertices[0];
+		
+		if (i_best.vertices.size() == 2) return findAverage(i_best.vertices);
+		if (j_best.vertices.size() == 2) return findAverage(j_best.vertices);
+		
+		if (i_best.vertices.size() == 2 && j_best.vertices.size() == 2)
+		{
+			Ray line1(
+				i_best.vertices[0],
+				i_best.vertices[1] -
+				i_best.vertices[0]
+			);
+			Ray line2(
+				j_best.vertices[0],
+				j_best.vertices[1] -
+				j_best.vertices[0]
+			);
+			
+			V3 delta = line1.origin - line2.origin;
+			float t = (Dot(line2.dir, delta) - Dot(line1.dir, line2.dir)) / Dot(line1.dir, line1.dir);
+			V3 closestPointOnLine1 = line1.origin + line1.dir * t;
+			V3 closestPointOnLine2 = line2.origin + line2.dir * t;
+
+			return findAverage({ closestPointOnLine1, closestPointOnLine2 });
+		}
+		return findAverage(FindFaceIntersection(i_best, j_best));
 	}
 
 	struct CollisionInfo {
-		bool isColliding;
-		float depth;
-		V3 pen1;
-		V3 pen2;
+		bool isColliding = false;
+		float depth = 0.f;
+		V3 polytope;
+		V3 norm1;
+		V3 norm2;
 	};
 
-	CollisionInfo sat(const std::vector<Vertex>& i_vertices, const std::vector<Vertex>& j_vertices) {
+
+
+
+	CollisionInfo sat(const std::vector<Face>& i_vertices, const std::vector<Face>& j_vertices) {
 		CollisionInfo collisionInfo;
 		collisionInfo.isColliding = true;
 		collisionInfo.depth = FLT_MAX;
 
 		//V3 previous;
 
-		for (size_t i = 0; i < i_vertices.size(); i++) {
-			for (size_t j = 0; j < j_vertices.size(); j++) {
+		for (const Face& i : i_vertices) {
+			for (const Face& j : j_vertices) {
 				
-				V3 axis = Cross(i_vertices[i].normal, j_vertices[j].normal);
+				V3 axis = Cross(i.normal, j.normal);
 
-				//// avoid redoing work
-				//if (!Dot(axis, previous)) continue;
-				//previous = axis;
-				//
-				// Check for separation along the axis
 				float projection1 = ProjectOntoAxis(i_vertices, axis);
 				float projection2 = ProjectOntoAxis(j_vertices, axis);
 				float overlap = projection1 + projection2;
@@ -281,14 +381,61 @@ namespace Example
 				else if (overlap < collisionInfo.depth) {
 					// Store penetration depth and the penetration points
 					collisionInfo.depth = overlap;
-					collisionInfo.pen1 = CalculatePenetrationPoint(i_vertices, axis);
-					collisionInfo.pen2 = CalculatePenetrationPoint(j_vertices, axis);
+					collisionInfo.polytope = CalculatePenetrationPoint(i_vertices, j_vertices, axis);
+					collisionInfo.norm1 = i.normal;
+					collisionInfo.norm2 = j.normal;
 				}
 			}
 		}
 
 		return collisionInfo; // Collision detected
 	}
+
+	/**
+This function calulates the velocities after a 3D collision vaf, vbf, waf and wbf from information about the colliding bodies
+@param double e coefficient of restitution which depends on the nature of the two colliding materials
+@param double ma total mass of body a
+@param double mb total mass of body b
+@param M4 Ia inertia tensor for body a in absolute coordinates (if this is known in local body coordinates it must
+                 be converted before this is called).
+@param M4 Ib inertia tensor for body b in absolute coordinates (if this is known in local body coordinates it must
+                 be converted before this is called).
+@param V4 ra position of collision point relative to centre of mass of body a in absolute coordinates (if this is
+                 known in local body coordinates it must be converted before this is called).
+@param V4 rb position of collision point relative to centre of mass of body b in absolute coordinates (if this is
+                 known in local body coordinates it must be converted before this is called).
+@param V4 n normal to collision point, the line along which the impulse acts.
+@param V4 vai initial velocity of centre of mass on object a
+@param V4 vbi initial velocity of centre of mass on object b
+@param V4 wai initial angular velocity of object a
+@param V4 wbi initial angular velocity of object b
+@param V4 vaf final velocity of centre of mass on object a
+@param V4 vbf final velocity of centre of mass on object a
+@param V4 waf final angular velocity of object a
+@param V4 wbf final angular velocity of object b
+*/
+// void CollisionResponse(float e,float ma,float mb,M4 Ia,M4 Ib,V4 ra,V4 rb,V4 n,
+//     V4 vai, V4 vbi, V4 wai, V4 wbi, V4 vaf, V4 vbf, V4 waf, V4 wbf) {
+//   M4 IaInverse = Inverse(Ia);
+//   V4 normal = Normalize(n);
+//   V4 angularVelChangea  = normal; // start calculating the change in angular rotation of a
+//   angularVelChangea.Cross(ra);
+//   IaInverse.transform(angularVelChangea);
+//   V4 vaLinDueToR = angularVelChangea.Cross(ra);  // calculate the linear velocity of collision point on a due to rotation of a
+//   float scalar = 1 / ma + vaLinDueToR.Dot(normal);
+//   M4 IbInverse = Inverse(Ib);
+//   V4 angularVelChangeb = normal; // start calculating the change in angular rotation of b
+//   angularVelChangeb.Cross(rb);
+//   IbInverse.transform(angularVelChangeb);
+//   V4 vbLinDueToR = angularVelChangeb.Cross(rb);  // calculate the linear velocity of collision point on b due to rotation of b
+//   scalar += 1/mb + vbLinDueToR.Dot(normal);
+//   float Jmod = (e+1)*(vai-vbi).Length()/scalar;
+//   V4 J = normal * Jmod;
+//   vaf = vai - J * (1.f / ma);
+//   vbf = vbi - J * (1.f / mb);
+//   waf = wai - angularVelChangea;
+//   wbf = wbi - angularVelChangeb;
+// }
 
 	void Print(M4 m)
 	{
@@ -357,10 +504,8 @@ namespace Example
 			fireHydrantMesh->texels = fireTexels;
 			fireHydrantMesh->normals = fireNormals;
 			fireHydrantMesh->vertices = fireVertices;
-			assert(fireCoords.size() == fireHydrantMesh->positions.size());
 			fireHydrantMesh->min = fireHydrantMesh->find_bounds().first;
 			fireHydrantMesh->max = fireHydrantMesh->find_bounds().second;
-			//fireHydrantMesh->center_of_mass = fireHydrantMesh->findCenterOfMass(fireHydrantMesh->positions);
 
 			// TextureResource
 			fireHydrantTexture = std::make_shared<TextureResource>("textures/cubepic.png");
@@ -371,7 +516,7 @@ namespace Example
 			fireHydrantScript->LoadShader(fireHydrantScript->vs, fireHydrantScript->ps, "textures/vs.glsl", "textures/ps.glsl");
 
 			// Actor
-			Actor *fireHydrantActor = new Actor();
+			std::shared_ptr<Actor> fireHydrantActor = std::make_shared<Actor>();
 			fireHydrantActor->mass = 7;
 			fireHydrantActor->elasticity = .5;
 
@@ -385,7 +530,7 @@ namespace Example
 			std::vector<V2> cubeTexels;
 			std::vector<V3> cubeNormals;
 			std::vector<Vertex> cubeVertices;
-			cubeMesh = MeshResource::LoadObj("textures/cube.obj", cubeIndices, cubeCoords, cubeTexels, cubeNormals, cubeVertices);
+			cubeMesh = MeshResource::LoadObj("textures/floorbox.obj", cubeIndices, cubeCoords, cubeTexels, cubeNormals, cubeVertices);
 			cubeMesh->indicesAmount = cubeIndices;
 			cubeMesh->positions = cubeCoords;
 			cubeMesh->texels = cubeTexels;
@@ -403,14 +548,15 @@ namespace Example
 			cubeScript->LoadShader(cubeScript->vs, cubeScript->ps, "textures/vs.glsl", "textures/ps.glsl");
 
 			// Actor
-			Actor *cubeActor = new Actor();
+			std::shared_ptr<Actor> cubeActor = std::make_shared<Actor>();
 			cubeActor->mass = 300;
-			cubeActor->elasticity = 0.7;
+			cubeActor->elasticity = 0.3;
+			cubeActor->isDynamic = false;
 
 			// GraphicNode
-			cube = std::make_shared<GraphicNode>(cubeMesh, cubeTexture, cubeScript, cubeActor);
+			floor = std::make_shared<GraphicNode>(cubeMesh, cubeTexture, cubeScript, cubeActor);
 
-			all_loaded.push_back(cube);
+			//all_loaded.push_back(floor);
 
 			this->window->SetUiRender([this]()
 									  { this->RenderUI(); });
@@ -423,159 +569,43 @@ namespace Example
 	/**
 	 */
 
-	V3 mesh_intersection_test(Ray& ray)
-	{
-		V4 identity[4] = {
-			V4(1, 0, 0, 0),
-			V4(0, 1, 0, 0),
-			V4(0, 0, 1, 0),
-			V4(0, 0, 0, 1)
-		};
-
-		M4 emptyMatrix = M4(identity);
-
-		//Print(emptyMatrix);
-
-		std::vector<V3> vertexPositions;
-
-		V3 bottomLeft = V3(-1, -1, 5);
-		V3 topMiddle = V3(0, 1, 5);
-		V3 bottomRight = V3(1, -1, 5);
-		
-		//V3 bottomLeft = V3();
-		//TODO: CONTINUE CODING HERE, ADD ANOTHER FACE TO MAKE SURE DEPTH TEST WORKS
-		vertexPositions.push_back(bottomLeft);
-		vertexPositions.push_back(topMiddle);
-		vertexPositions.push_back(bottomRight);
-
-		std::vector<uint32> indices;
-
-		indices.push_back(0);
-		indices.push_back(1);
-		indices.push_back(2);
-
-		std::vector<V3>* normals = nullptr;
-
-		V3 hit = ray_intersection(ray, emptyMatrix, vertexPositions, indices, normals); // resulting hit should be 0, 0, 1
-		//std::cout << "x: " << hit[0] << ", y: " << hit[1] << ", z: " << hit[2] << std::endl;
-		return hit;
-	}
-
-	void gjk_collision_test(Actor a, Actor b)
-	{
-		std::vector<V3> Coords;
-		std::vector<unsigned> Indices;
-		std::vector<Vertex> faceBuffer;
-		{
-			std::vector<V2> Texels;
-			std::vector<V3> Normals;
-			/*std::shared_ptr<MeshResource> PyramidMesh = */MeshResource::LoadObj("textures/pyramid.obj", Indices, Coords, Texels, Normals, faceBuffer);
-		}
-
-		//v -1.000000 1.000000 -1.000000
-		//v 1.000000 -1.000000 -1.000000
-		//v -1.000000 -1.000000 -1.000000
-		//v -1.000000 -1.000000 1.000000
-		//vn 0.5774 0.5774 0.5774
-		//vn -1.0000 -0.0000 -0.0000
-		//vn -0.0000 -1.0000 -0.0000
-		//vn -0.0000 -0.0000 -1.0000
-		//vt 0.625000 0.250000
-		//vt 0.375000 0.000000
-		//vt 0.375000 0.500000
-		//vt 0.375000 0.250000
-		//vt 0.625000 0.500000
-		//f 1/1/1 4/2/1 2/3/1
-		//f 4/2/2 1/1/2 3/4/2
-		//f 3/4/3 2/3/3 4/2/3
-		//f 3/4/4 1/5/4 2/3/4
-
-		std::vector<V3> resultingSimplex; 
-
-		std::vector<V3> leftPos;
-		std::vector<V3> rightPos;
-
-
-		Print(a.transform);
-		Print(b.transform);
-		for (const V3& c : Coords)
-		{
-			const V3 left = (a.transform * V4(c, 1)).toV3();
-			leftPos.push_back(left);
-			
-			const V3 right = (b.transform * V4(c, 1)).toV3();
-			rightPos.push_back(right);
-			//left.normal = Normalize((a.transform * V4(left.normal)).toV3());
-			//leftNorm.push_back(v.normal);
-		}
-
-		if (gjk(resultingSimplex, leftPos, rightPos))
-		{
-			std::cout << "collision" << std::endl;
-			std::cout << "Simplex size: " << resultingSimplex.size() << std::endl;
-			
-			float pen = 0.f;
-			V3 res_norm;
-			std::vector<Vertex> leftVert;
-			std::vector<Vertex> rightVert;
-		
-			for (Vertex& v : faceBuffer)
-			{
-				leftVert.insert(leftVert.begin(), Vertex
-					{
-						(a.transform * V4(v.pos, 1)).toV3(),
-						V4(1, 1, 1, 1),
-						v.texel,
-						Normalize((a.transform * V4(v.normal)).toV3())
-					});
-				rightVert.insert(rightVert.begin(), Vertex
-					{
-						(b.transform * V4(v.pos, 1)).toV3(),
-						V4(1, 1, 1, 1),
-						v.texel,
-						Normalize((b.transform * V4(v.normal)).toV3())
-					});
-			}
-			
-			// use faces here
-			//if (epa(res_norm, pen, resultingSimplex, Indices, leftPos, rightPos).size())
-			{
-
-			}
-		}
-		else
-		{
-			std::cout << "No collision" << std::endl;
-		}
-
-		//std::cout << "x: " << hit[0] << ", y: " << hit[1] << ", z: " << hit[2] << std::endl;
-		return;
-
-	}
-
 	void
 	ExampleApp::Run()
 	{
+		magic();
+		exit(0);
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
 		time_t f = time(nullptr);
-		std::cout << "seed: " << f << std::endl;
+		//std::cout << "seed: " << f << std::endl;
 		srand(f);
+		float x_rand = 0;//rand() / (float)RAND_MAX * 20.f - 10.f;
+		float z_rand = rand() / (float)RAND_MAX * 20.f - 10.f;
 
-		for (size_t i = 1; i < 4; i++)
+		for (size_t i = 0; i < 2; i++)
 		{
-			const GraphicNode bro = *texturedCube.get();
-			all_loaded.push_back(std::make_shared<GraphicNode>(bro));
-			all_loaded[i]->actor = new Actor();
+			const GraphicNode node = *texturedCube.get();
+			all_loaded.push_back(std::make_shared<GraphicNode>(node));
+			all_loaded[i]->actor = std::make_shared<Actor>();
 			all_loaded[i]->actor->mass = 2;
-			all_loaded[i]->actor->elasticity = 0.9;
-			all_loaded[i]->actor->linearVelocity = V4(0, 0, 0, 0);
-			float x_rand = 0;//rand() / (float)RAND_MAX * 20.f - 10.f;
-			float z_rand = 0;//rand() / (float)RAND_MAX * 20.f - 10.f;
-			all_loaded[i]->actor->transform = Translate(V4(x_rand, 3.f * i, z_rand));
-			//std::cout << all_loaded[i]->actor->transform.toV3().z << std::endl;
+			all_loaded[i]->actor->elasticity = 0.6;
+			all_loaded[i]->actor->isDynamic = true;
+
+			all_loaded[i]->actor->transform = Translate(V4(i * 0.75f, 0, 0));// *Rotation(V4(0, 0, 1), M_PI / 4.f)* Rotation(V4(0, 0, 1), z_rand);
+			//all_loaded[i]->actor->linearVelocity = V3(-1e-3f, 1e-3f, 0);
 		}
 
+		all_loaded[0]->actor->mass = 1;
+		all_loaded[0]->actor->elasticity = 0.5;
+		all_loaded[0]->actor->linearVelocity = V3(-1e-3f, 0, 0);
+		all_loaded[1]->actor->transform = Translate(V4(3.5f, 0, 0));
+
+		all_loaded[1]->actor->transform = Translate(V4(-3.5f, 0, 0));
+		all_loaded[1]->actor->mass = 100;
+		all_loaded[1]->actor->elasticity = 0.5;
+		all_loaded[1]->actor->linearVelocity = V3(1e-3f, -0, 0);
+		//all_loaded[1]->actor->isDynamic = false;
+		//all_loaded[1]->actor->transform = Translate(V4(1 * 0.75f, 3.f * 1, 0));
 		// deltatime
 		float dt = 0.01;
 		Ray ray(V3(FLT_MAX, FLT_MAX, FLT_MAX), V3(FLT_MAX, FLT_MAX, FLT_MAX));
@@ -595,13 +625,9 @@ namespace Example
 		
 
 		// set identies
-		cube->actor->transform = Translate(V4(0, -10.5f, 0)) * Scalar(V4(10, 1, 10, 1));
-		//texturedCube->actor->transform = Translate(V4(0, 1.5f, 0));
+		floor->actor->transform = Translate(V4(0, -10.5f, 0));		
 		
-		cube->actor->linearVelocity = V3(0, 0, 0);
-		texturedCube->actor->linearVelocity = V3(0, 0, 0);
-		
-		for	(auto g : all_loaded)
+		for	(const std::shared_ptr<GraphicNode> g : all_loaded)
 		{
 			std::pair<V3, V3> t = findAABB(*g->getMesh(), g->actor->transform);
 			aabbs.push_back({t.first, t.second});
@@ -618,12 +644,7 @@ namespace Example
 			V3 rayOrigin = cam.getPos() * 1.f;
 			
 			// effect of gravity
-			for (size_t i = 1; i < all_loaded.size(); i++)
-			{
-				const float& m = all_loaded[i]->actor->mass;
-				all_loaded[i]->actor->apply_force(m * GRAVITY * 0.0001f, dt);
-			}
-
+			
 			if (isPressed)
 			{
 				glfwGetCursorPos(this->window->GetHandle(), &mouseDirX, &mouseDirY);
@@ -658,84 +679,159 @@ namespace Example
 			std::vector<std::pair<size_t, size_t>> in = aabbPlaneSweep(aabbs);	
 			for (std::pair<size_t, size_t>& a : in)
 			{
-				std::cout << "(" << a.first << ", " << a.second << ")" << std::endl;
+				//std::cout << "(" << a.first << ", " << a.second << ")" << std::endl;
 				std::shared_ptr<GraphicNode> ith = all_loaded[a.first];
 				std::shared_ptr<GraphicNode> jth = all_loaded[a.second];
-				
-				
-				V3& i_cm = ith->getMesh()->center_of_mass;
+
 				std::vector<V3>& i_vertices = ith->getMesh()->positions;
 				std::vector<V3>& i_normals = ith->getMesh()->normals;
-				
-				apply_worldspace(std::vector<V3>{ i_cm}, ith->actor->transform);
+
 				apply_worldspace(i_vertices, ith->actor->transform);
 				apply_worldspace(i_normals, ith->actor->transform);
 
+				std::vector<Face> i_faces;
+				{
+					Face currFace;
+					std::vector<Vertex>& i_verts = ith->getMesh()->vertices;
+					for (size_t i = 0; i < i_verts.size(); i++)
+					{
+						if (currFace.normal == i_verts[i].normal)
+						{
+							currFace.vertices.push_back(i_verts[i].pos);
+						}
+						else if (currFace.vertices.empty())
+						{
+							currFace.vertices.push_back(i_verts[i].pos);
+							currFace.normal = i_verts[i].normal;
+						}
+						else
+						{
+							i_faces.push_back(currFace);
+							currFace = Face();
+						}
+					}
+				}
+				V3 j_cm = findAverage(i_vertices);
 
-				V3& j_cm = jth->getMesh()->center_of_mass;
 				std::vector<V3>& j_vertices = jth->getMesh()->positions;
 				std::vector<V3>& j_normals = jth->getMesh()->normals;
 
-				apply_worldspace(std::vector<V3>{ j_cm}, jth->actor->transform);
 				apply_worldspace(j_vertices, jth->actor->transform);
 				apply_worldspace(j_normals, jth->actor->transform);
 
-
-				CollisionInfo& info = sat(ith->getMesh()->vertices, jth->getMesh()->vertices);
-				if (info.isColliding)
+				std::vector<Face> j_faces;
 				{
+					Face currFace;
+					std::vector<Vertex>& j_verts = ith->getMesh()->vertices;
 
+					for (size_t j = 0; j < j_verts.size(); j++)
+					{
+						if (currFace.normal == j_verts[j].normal)
+						{
+							currFace.vertices.push_back(j_verts[j].pos);
+						}
+						else if (currFace.vertices.empty())
+						{
+							currFace.vertices.push_back(j_verts[j].pos);
+							currFace.normal = j_verts[j].normal;
+						}
+						else
+						{
+							j_faces.push_back(currFace);
+							currFace = Face();
+						}
+					}
+				}
+
+				V3 i_cm = findAverage(j_vertices);
+
+				CollisionInfo& info = sat(i_faces, j_faces);
+
+				if(info.isColliding)
+				{
 					const float& m1 = ith->actor->mass;
 					const float& m2 = jth->actor->mass;
-					V4& u1 = ith->actor->linearVelocity;
-					V4& u2 = jth->actor->linearVelocity;
+					const V4 r1 = info.polytope - i_cm;
+					const V4 r2 = info.polytope - j_cm;
+
 					const float& e1 = ith->actor->elasticity;
 					const float& e2 = jth->actor->elasticity;
+					//if (info.isColliding)
+					//{
+					//	std::cout << ("e1 %f e2 %f dt %f", &e1, &e2, dt * 0.001f) << std::endl;
+					//	ith->actor->transform.data[1][3] += ith->getMesh()->min[1] * e1 * dt * 0.001f;
+					//	jth->actor->transform.data[1][3] += jth->getMesh()->min[1] * e2 * dt * 0.001f;
+					//}
+					//else continue;
+
+					V4& u1 = ith->actor->linearVelocity;
+					V4& u2 = jth->actor->linearVelocity;
 					
-					Quaternion q1 = ith->actor->angularVelocity;
-					Quaternion q2 = jth->actor->angularVelocity;
-
-
+					M4& rot1 = ith->actor->rotation;
+					M4& rot2 = jth->actor->rotation;
 					float& o1 = ith->actor->orie;
 					float& o2 = jth->actor->orie;
 					float& w1 = ith->actor->angleVel;
 					float& w2 = jth->actor->angleVel;
 
-					assert(m1);
-					assert(m2);
+
+					assert(m1 > 0.f);
+					assert(m2 > 0.f);
 					assert(0.f <= e1 && e1 <= 1.f);
 					assert(0.f <= e2 && e2 <= 1.f);
+
+					//V4 relativeVelocity = u2 - u1;
+
+					//V4 collisionNormal = Normalize(r2 * 1.f);
+					//float impulseScalar = -(1 + e1) * Dot(relativeVelocity, collisionNormal) / Dot(collisionNormal, collisionNormal * (1 / m1 + 1 / m2));
+					//V4 impulse = impulseScalar * collisionNormal;
+					//const V4 v1 = u1 + impulse * (1 / m1);
+
+					//const V4 v2 = u2 - impulse * (1 / m2);
+
+
 					const V4 v1 = e1 * (((m1-m2)/(m1+m2))*u1+((2*m2*u2) * (1 / (m1+m2))));
 					const V4 v2 = e2 * (((m2-m1)/(m1+m2))*u2+((2*m1*u1) * (1 / (m1+m2))));
 					
-					
-					//angularMomentum
-					V3 arm1 = info.pen1 - i_cm;
-					V3 arm2 = info.pen2 - j_cm;
+					V4 axis1 = Cross(r1, v1);
+					V4 axis2 = Cross(r2, v2);
+					w1 = Length(axis1) / (m1 * Length(r1)) * e1;
+					w2 = Length(axis2) / (m2 * Length(r2)) * e2;
 
-					printf("penetration point: %.8f\n", info.depth);
-					printf("penetration point: %.8f %.8f %.8f\n", arm1.x, arm1.y, arm1.z);
-					printf("penetration point: %.8f %.8f %.8f\n", arm2.x, arm2.y, arm2.z);
+					//std::cin.get();
+					o1 += w1;
+					o2 += w2;
 
-					//if (info.depth)
+					if (ith->actor->isDynamic)
 					{
-						//M4& i_m4 = ith->actor->transform;
-						//i_m4 = Translate(-info.penetrationDepth * Normalize(u1)) * i_m4;
-						//M4& j_m4 = jth->actor->transform;
-						//j_m4 = Translate(V4(j_m4.toV3(), 1) - 0.001f * Normalize(u2));
-	
-						//if (jth->actor->transform[1][3] > ith->actor->transform[1][3])
-							//jth->actor->transform[1][3] -= u2.y;
-						//else
-						//	ith->actor->transform[1][3] += 0.010f;
-					}
+						rot1 = Rotation(axis1, o1);
+						o1 = o1 * .95f;
+						
+						const V4 res = reflect(v1, info.norm1);
+						const V3 kl = { res.x, res.y, res.z };
+						//ith->actor->apply_force(kl * 0.001f, dt);
 
-					u1 = v1;
-					u2 = v2;
-					
-					// apply resting forces
-					//ith->actor->apply_force(-e1 * m1 * GRAVITY * 0.00001f, dt);
-					//jth->actor->apply_force(-e2 * m2 * GRAVITY * 0.00001f, dt);
+						u1 = reflect(v1, info.norm1);
+					}
+					if (jth->actor->isDynamic)
+					{
+						rot2 = Rotation(axis2, o2);
+						o2 = o2 * .95f;
+						const V4 res = reflect(v2 * -1.f, info.norm2);
+						const V3 kl = { res.x, res.y, res.z };
+						std::cout << o2 << std::endl;
+						//jth->actor->apply_force(kl * 0.001f, dt);
+						u2 = reflect(v2 * -1.f, info.norm2);
+					}
+				}
+			}
+
+			for (const auto node : all_loaded)
+			{
+				const float& m = node->actor->mass;
+				if (node->actor->isDynamic)
+				{
+					//node->actor->apply_force(m * GRAVITY * 0.0001f, dt);
 				}
 			}
 

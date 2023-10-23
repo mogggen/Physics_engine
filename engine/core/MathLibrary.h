@@ -415,7 +415,7 @@ inline bool V3::operator==(V3 rhs)
 		(isnan(rhs.x) &&
 			isnan(rhs.y) &&
 			isnan(rhs.z))
-		) return true;
+		) return false;
 	return x == rhs.x && y == rhs.y && z == rhs.z;
 }
 
@@ -524,13 +524,11 @@ inline V3 Normalize(V3 vector)
 	return vector;
 }
 
-inline bool point_in_triangle_3D(
-	const V3& p,
-	const V3& a,
-	const V3& b,
-	const V3& c
-)
+inline bool point_in_Face_3D(const V3& p, const std::vector<V3> face)
 {
+	const V3& a = face[0];
+	const V3& b = face[1];
+	const V3& c = face[2];
 	const V3 x1 = Cross(b - a, p - a);
 	const V3 x2 = Cross(c - b, p - b);
 	const V3 x3 = Cross(a - c, p - c);
@@ -538,6 +536,47 @@ inline bool point_in_triangle_3D(
 		(Normalize(x1) == Normalize(x2) && Normalize(x2) == Normalize(x3))
 		&&
 		(Dot(x1, x2) > 0.f && Dot(x2, x3) > 0.f && Dot(x3, x1) > 0.f);
+}
+
+
+inline const V3 findAverage(const std::vector<V3>& pos)
+{
+	size_t i = 0;
+	V3 sumPositions = V3();
+
+	for (; i < pos.size(); i++)
+	{
+		sumPositions = pos[i];
+	}
+	return sumPositions * (1.f / ++i);
+}
+
+
+// only handles point on the same plane
+inline void wrapping_sort(std::vector<V3>& faces)
+{
+	std::vector<V3> newWinding;
+	const V3 center = findAverage(faces);
+	
+	size_t lineStart = 0;
+	for (size_t _ = 0; _ < faces.size() - 1; _++)
+	{
+		newWinding.push_back(faces[lineStart]);
+		size_t bestIndex = -1;
+		float bestCross = -FLT_MAX;
+		for (size_t lineEnd = 0; lineEnd < faces.size(); lineEnd++)
+		{
+			if (lineStart == lineEnd) continue;
+			const float currCross = Cross(center - faces[lineStart], faces[lineEnd] - faces[lineStart]).Length2();
+			if (currCross > bestCross)
+			{
+				bestIndex = lineEnd;
+				bestCross = currCross;
+			}
+		}
+		newWinding.push_back(faces[bestIndex]);
+		lineStart = bestIndex;
+	}
 }
 
 // Calculate the signed volume of a tetrahedron formed by four points
@@ -959,7 +998,7 @@ inline V4 Normalize(V4 vector)
 
 inline void GetFaceNormals(
 	std::pair<std::vector<V4>, size_t>& pair_out,
-	const std::vector<V3>& polytope,
+	const std::vector<V3>& penetrationCenter,
 	const std::vector<size_t>& faces)
 {
 	std::vector<V4> normals;
@@ -967,9 +1006,9 @@ inline void GetFaceNormals(
 	float  minDistance = FLT_MAX;
 
 	for (size_t i = 0; i < faces.size(); i += 3) {
-		V3 a = polytope[faces[i]];
-		V3 b = polytope[faces[i + 1]];
-		V3 c = polytope[faces[i + 2]];
+		V3 a = penetrationCenter[faces[i]];
+		V3 b = penetrationCenter[faces[i + 1]];
+		V3 c = penetrationCenter[faces[i + 2]];
 
 		V3 normal = Normalize(Cross(b - a, c - a));
 		float distance = Dot(normal, a);
@@ -1024,7 +1063,7 @@ inline CollisionPoints epa(
 	const std::vector<V3>& colliderA,
 	const std::vector<V3>& colliderB)
 {
-	std::vector<V3> polytope(simplex.begin(), simplex.end());
+	std::vector<V3> penetrationCenter(simplex.begin(), simplex.end());
 	std::vector<size_t> faces = {
 		0, 1, 2,
 		0, 3, 1,
@@ -1034,7 +1073,7 @@ inline CollisionPoints epa(
 
 	// list: vec4(normal, distance), index: min distance
 	std::pair<std::vector<V4>, size_t> normal_and_minFace;
-	GetFaceNormals(normal_and_minFace, polytope, faces);
+	GetFaceNormals(normal_and_minFace, penetrationCenter, faces);
 	std::vector<V4> normals = normal_and_minFace.first;
 	size_t minFace = normal_and_minFace.second;
 	V3 minNormal;
@@ -1073,13 +1112,13 @@ inline CollisionPoints epa(
 			for (std::pair<size_t, size_t> const& edgeIndexPair : uniqueEdges) {
 				newFaces.push_back(edgeIndexPair.first);
 				newFaces.push_back(edgeIndexPair.second);
-				newFaces.push_back(polytope.size());
+				newFaces.push_back(penetrationCenter.size());
 			}
 
-			polytope.push_back(support);
+			penetrationCenter.push_back(support);
 
 			std::pair<std::vector<V4>, size_t> newNormals_and_newMinFace;
-			GetFaceNormals(newNormals_and_newMinFace, polytope, newFaces);
+			GetFaceNormals(newNormals_and_newMinFace, penetrationCenter, newFaces);
 			std::vector<V4> newNormals = newNormals_and_newMinFace.first;
 			size_t newMinFace = newNormals_and_newMinFace.second;
 			float oldMinDistance = FLT_MAX;
@@ -1224,7 +1263,7 @@ inline M4 Transpose(M4 matrix)
 /// Inverse a 4-by-4 matrix.
 /// </summary>
 /// <param name="matrix">the matrix to inverse</param>
-inline M4 Inverse(M4 matrix)
+inline const M4 Inverse(const M4& matrix)
 {
 	// to hold the matrix values
 	float m[16];
@@ -1389,186 +1428,13 @@ inline M4 Inverse(M4 matrix)
 	det = m[0] * matrix[0][0] + m[1] * matrix[1][0] + m[2] * matrix[2][0] + m[3] * matrix[3][0];
 
 	if (det == 0)
-		matrix = M4();
+		return M4();
 
-	else
-		for (size_t i = 0; i < 16; i++)
-		{
-			matrix[i / 4][i % 4] /= det;
-		}
-	return matrix;
-}
-
-inline void Inverse(M4 &matrix)
-{
-	// to hold the matrix values
-	float m[16];
-
-	size_t k = 0;
-	for (size_t i = 0; i < 4; i++)
+	for (size_t i = 0; i < 16; i++)
 	{
-		for (size_t j = 0; j < 4; j++)
-		{
-			m[k] = matrix[i][j];
-			k++;
-		}
+		matrix[i / 4][i % 4] /= det;
 	}
-	float det;
-
-	/*
-	0:0	0:1	0:2	0:3
-	1:0	1:1	1:2	1:3
-	2:0	2:1	2:2	2:3
-	3:0	3:1	3:2	3:3
-
-	0 	1	2	3
-	4	5	6	7
-	8	9	10	11
-	12	13	14	15
-	*/
-
-	// coloum 0/3
-	matrix[0][0] =
-		m[5] * m[10] * m[15] -
-		m[5] * m[11] * m[14] -
-		m[9] * m[6] * m[15] +
-		m[9] * m[7] * m[14] +
-		m[13] * m[6] * m[11] -
-		m[13] * m[7] * m[10];
-
-	matrix[1][0] =
-		-m[4] * m[10] * m[15] +
-		m[4] * m[11] * m[14] +
-		m[8] * m[6] * m[15] -
-		m[8] * m[7] * m[14] -
-		m[12] * m[6] * m[11] +
-		m[12] * m[7] * m[10];
-
-	matrix[2][0] =
-		m[4] * m[9] * m[15] -
-		m[4] * m[11] * m[13] -
-		m[8] * m[5] * m[15] +
-		m[8] * m[7] * m[13] +
-		m[12] * m[5] * m[11] -
-		m[12] * m[7] * m[9];
-
-	matrix[3][0] =
-		-m[4] * m[9] * m[14] +
-		m[4] * m[10] * m[13] +
-		m[8] * m[5] * m[14] -
-		m[8] * m[6] * m[13] -
-		m[12] * m[5] * m[10] +
-		m[12] * m[6] * m[9];
-
-	// column 1/3
-	matrix[0][1] =
-		-m[1] * m[10] * m[15] +
-		m[1] * m[11] * m[14] +
-		m[9] * m[2] * m[15] -
-		m[9] * m[3] * m[14] -
-		m[13] * m[2] * m[11] +
-		m[13] * m[3] * m[10];
-
-	matrix[1][1] =
-		m[0] * m[10] * m[15] -
-		m[0] * m[11] * m[14] -
-		m[8] * m[2] * m[15] +
-		m[8] * m[3] * m[14] +
-		m[12] * m[2] * m[11] -
-		m[12] * m[3] * m[10];
-
-	matrix[2][1] =
-		-m[0] * m[9] * m[15] +
-		m[0] * m[11] * m[13] +
-		m[8] * m[1] * m[15] -
-		m[8] * m[3] * m[13] -
-		m[12] * m[1] * m[11] +
-		m[12] * m[3] * m[9];
-
-	matrix[3][1] =
-		m[0] * m[9] * m[14] -
-		m[0] * m[10] * m[13] -
-		m[8] * m[1] * m[14] +
-		m[8] * m[2] * m[13] +
-		m[12] * m[1] * m[10] -
-		m[12] * m[2] * m[9];
-
-	// column 2/3
-	matrix[0][2] =
-		m[1] * m[6] * m[15] -
-		m[1] * m[7] * m[14] -
-		m[5] * m[2] * m[15] +
-		m[5] * m[3] * m[14] +
-		m[13] * m[2] * m[7] -
-		m[13] * m[3] * m[6];
-
-	matrix[1][2] =
-		-m[0] * m[6] * m[15] +
-		m[0] * m[7] * m[14] +
-		m[4] * m[2] * m[15] -
-		m[4] * m[3] * m[14] -
-		m[12] * m[2] * m[7] +
-		m[12] * m[3] * m[6];
-
-	matrix[2][2] =
-		m[0] * m[5] * m[15] -
-		m[0] * m[7] * m[13] -
-		m[4] * m[1] * m[15] +
-		m[4] * m[3] * m[13] +
-		m[12] * m[1] * m[7] -
-		m[12] * m[3] * m[5];
-
-	matrix[3][2] =
-		-m[0] * m[5] * m[14] +
-		m[0] * m[6] * m[13] +
-		m[4] * m[1] * m[14] -
-		m[4] * m[2] * m[13] -
-		m[12] * m[1] * m[6] +
-		m[12] * m[2] * m[5];
-
-	// column 3/3
-	matrix[0][3] =
-		-m[1] * m[6] * m[11] +
-		m[1] * m[7] * m[10] +
-		m[5] * m[2] * m[11] -
-		m[5] * m[3] * m[10] -
-		m[9] * m[2] * m[7] +
-		m[9] * m[3] * m[6];
-
-	matrix[1][3] =
-		m[0] * m[6] * m[11] -
-		m[0] * m[7] * m[10] -
-		m[4] * m[2] * m[11] +
-		m[4] * m[3] * m[10] +
-		m[8] * m[2] * m[7] -
-		m[8] * m[3] * m[6];
-
-	matrix[2][3] =
-		-m[0] * m[5] * m[11] +
-		m[0] * m[7] * m[9] +
-		m[4] * m[1] * m[11] -
-		m[4] * m[3] * m[9] -
-		m[8] * m[1] * m[7] +
-		m[8] * m[3] * m[5];
-
-	matrix[3][3] =
-		m[0] * m[5] * m[10] -
-		m[0] * m[6] * m[9] -
-		m[4] * m[1] * m[10] +
-		m[4] * m[2] * m[9] +
-		m[8] * m[1] * m[6] -
-		m[8] * m[2] * m[5];
-
-	det = m[0] * matrix[0][0] + m[1] * matrix[1][0] + m[2] * matrix[2][0] + m[3] * matrix[3][0];
-
-	if (det == 0)
-		matrix = M4();
-
-	else
-		for (size_t i = 0; i < 16; i++)
-		{
-			matrix[i / 4][i % 4] /= det;
-		}
+	return matrix;
 }
 
 // Line with direction of line and rotation around axis by theta radians
@@ -1668,32 +1534,6 @@ inline void apply_worldspace(
 	}
 }
 
-inline const V3 get_collision_point(M4 modelMatrix,
-	std::vector<V3>& support_points, // supposed to be local, shouldn't matter if exactly everything isn't
-	V3 norm_collision_normal,
-	float depth)
-{
-	assert(support_points.size() > 0llu, "no support points");
-	// just do this calculation for every single support point
-	V3* supportVertexLocal = nullptr;
-	for (size_t i = 0; i < support_points.size(); ++i)
-	{
-		supportVertexLocal = &support_points[i];
-		
-		// Backtrack along the collision normal by the penetration depth
-		supportVertexLocal = &((*supportVertexLocal) - norm_collision_normal * depth);
-
-		V3 collisionPointLocal = *supportVertexLocal - norm_collision_normal * depth;
-		//V3 collisionPointWorld
-		supportVertexLocal = &((modelMatrix * V4(collisionPointLocal, 1)).toV3());
-	}
-	// to find the correct one render all of them and see if at least one makes sense
-	
-	// Assuming you have identified the support vertex
-	//TODO: return the correct collision when it is deemed so
-	return *supportVertexLocal;
-}
-
 #pragma region Quaternions
 
 class Quaternion
@@ -1776,6 +1616,50 @@ public:
 
 // If the quaternion is not normalized, make sure to normalize it before converting it to a rotation matrix.
 
+inline const M4 quaternionToRotationMatrix(const Quaternion& shift)
+{
+	M4 rotationMatrix;
+
+	float w = shift.getW();
+	float x = shift.getX();
+	float y = shift.getY();
+	float z = shift.getZ();
+
+	float ww = w * w;
+	float wx = w * x;
+	float wy = w * y;
+	float wz = w * z;
+	float xx = x * x;
+	float xy = x * y;
+	float xz = x * z;
+	float yy = y * y;
+	float yz = y * z;
+	float zz = z * z;
+
+	rotationMatrix[0][0] = 1 - 2 * (yy + zz);
+	rotationMatrix[0][1] = 2 * (xy - wz);
+	rotationMatrix[0][2] = 2 * (xz + wy);
+	rotationMatrix[0][3] = 0.0;
+
+	rotationMatrix[1][0] = 2 * (xy + wz);
+	rotationMatrix[1][1] = 1 - 2 * (xx + zz);
+	rotationMatrix[1][2] = 2 * (yz - wx);
+	rotationMatrix[1][3] = 0.0;
+
+	rotationMatrix[2][0] = 2 * (xz - wy);
+	rotationMatrix[2][1] = 2 * (yz + wx);
+	rotationMatrix[2][2] = 1 - 2 * (xx + yy);
+	rotationMatrix[2][3] = 0.0;
+
+	rotationMatrix[3][0] = 0.0;
+	rotationMatrix[3][1] = 0.0;
+	rotationMatrix[3][2] = 0.0;
+	rotationMatrix[3][3] = 1.0;
+
+	return rotationMatrix;
+}
+
+
 #pragma endregion // Quaternions
 
 
@@ -1795,6 +1679,7 @@ Plane::Plane(V3 point, V3 normal) : point(point), normal(normal)
 {
 
 }
+
 
 inline bool Plane::pointIsOnPlane(const V3& point, float epsion)
 {
@@ -1819,6 +1704,11 @@ struct Ray
 inline Ray::Ray(V3 origin, V3 dir) : origin(origin), dir(dir)
 {
 
+}
+
+inline const V4 reflect(const V4& incident, const V4& normal)
+{
+	return incident - 2.f * Dot(normal, incident) * normal;
 }
 
 inline const V3 Ray::intersect(const Plane& plane, float epsilon=1e-5f)

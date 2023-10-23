@@ -258,19 +258,6 @@ std::shared_ptr<MeshResource> MeshResource::Cube()
 	return std::make_shared<MeshResource>(vertices, sizeof(vertices) / sizeof(Vertex), indices, sizeof(indices) / sizeof(uint64_t));
 }
 
-//Model Space
-const V3 MeshResource::findCenterOfMass(std::vector<V3>& pos)
-{
-	size_t i = 0;
-	V3 sumPositions = V3();
-
-	for (; i < pos.size(); i++)
-	{
-		sumPositions = pos[i];
-	}
-	return sumPositions * (1.f / ++i);
-}
-
 std::pair<V3, V3> MeshResource::find_bounds()
 {
 	// can't be less than the minimum value of 'undefined', so let's not, mate?

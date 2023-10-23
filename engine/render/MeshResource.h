@@ -30,9 +30,8 @@ public:
 	//float right;
 	//float top;
 	//float back;
-
+	
 	static std::shared_ptr<MeshResource> Cube();
-	const V3 MeshResource::findCenterOfMass(std::vector<V3>& pos);
 	std::pair<V3, V3> find_bounds();
 	static std::shared_ptr<MeshResource> LoadObj(const char *pathToFile,
 		std::vector<uint32>& _indices,

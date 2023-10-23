@@ -15,15 +15,21 @@ protected:
 	std::shared_ptr<TextureResource> Texture;
 	std::shared_ptr<ShaderResource> Shader;
 public:
-	Actor* actor;
-	GraphicNode(std::shared_ptr<MeshResource> mesh, std::shared_ptr<TextureResource> texture, std::shared_ptr<ShaderResource> shader, Actor* actor);
+	std::shared_ptr<Actor> actor;
+	GraphicNode(
+		std::shared_ptr<MeshResource> mesh,
+		std::shared_ptr<TextureResource> texture,
+		std::shared_ptr<ShaderResource> shader,
+		std::shared_ptr<Actor> actor);
 	void DrawScene(const M4& mvp, const V4& rbga);
 
-	std::shared_ptr<MeshResource> getMesh();
-	std::shared_ptr<TextureResource> getTexture();
-	std::shared_ptr<ShaderResource> getShader();
+	std::shared_ptr<MeshResource> getMesh() { return Mesh; }
+	std::shared_ptr<TextureResource> getTexture() { return Texture; }
+	std::shared_ptr<ShaderResource> getShader() { return Shader; }
+	std::shared_ptr<Actor> getActor() { return actor; }
 
-	void setMesh(std::shared_ptr<MeshResource> Mesh);
-	void setTexture(std::shared_ptr<TextureResource> texture);
-	void setShader(std::shared_ptr<ShaderResource> shader);	
+	void setMesh(std::shared_ptr<MeshResource> mesh) { Mesh = mesh; }
+	void setTexture(std::shared_ptr<TextureResource> texture) { Texture = texture; }
+	void setShader(std::shared_ptr<ShaderResource> shader) { Shader = shader; }
+	void setActor(std::shared_ptr<Actor> _actor) { _actor = actor; }
 };

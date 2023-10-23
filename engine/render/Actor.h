@@ -4,13 +4,18 @@
 
 struct Actor
 {
+    bool isDynamic;
     float mass;
+    float drag;
     float elasticity; // Coefficient of restitution
     Quaternion orientation;
     Quaternion angularVelocity;
+    
+    M4 rotation;
     float orie;
     float angleVel;
     M4 transform;
+    
     V4 linearVelocity;
 
     Actor();

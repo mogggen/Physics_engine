@@ -3,11 +3,15 @@
 
 Actor::Actor()
 {
+    rotation = Translate(V4());
     orientation = Quaternion();
     angularVelocity = Quaternion();
-    transform = Translate(V4());
+    transform = rotation;
     linearVelocity = V4();
     mass = 0.f;
+    orie = 0.f;
+    angleVel = 0.f;
+    isDynamic = false;
 }
 
 
@@ -71,15 +75,18 @@ void Actor::apply_angular_impulse(const Quaternion& impulse, const V4& contactPo
 
 void Actor::update(const float& dt)
 {
-    transform = Translate(linearVelocity * dt) * transform;
-
-    Quaternion deltaOrientation = Quaternion(1.0, angularVelocity.getX() * dt * 0.5,
-                                                    angularVelocity.getY() * dt * 0.5,
-                                                    angularVelocity.getZ() * dt * 0.5) * orientation;
-    orientation = orientation + deltaOrientation * 0.5;
-    orientation = orientation.normalized();
-
-    // Other updates as required (e.g., updating linear and angular damping, etc.)
+    //transform = (Translate(linearVelocity * dt) * transform);
+    
+    transform = 
+    rotation *
+    (Translate(linearVelocity * dt) *
+    transform)
+        ;
+    //Quaternion deltaOrientation = Quaternion(1.0, angularVelocity.getX() * dt * 0.5,
+    //                                                angularVelocity.getY() * dt * 0.5,
+    //                                                angularVelocity.getZ() * dt * 0.5) * orientation;
+    //orientation = orientation + deltaOrientation * 0.5;
+    //orientation = orientation.normalized();
 }
 
 

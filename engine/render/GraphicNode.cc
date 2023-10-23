@@ -2,7 +2,15 @@
 #include "render/GraphicNode.h"
 
 
-GraphicNode::GraphicNode(std::shared_ptr<MeshResource> mesh, std::shared_ptr<TextureResource> texture, std::shared_ptr<ShaderResource> shader, Actor* actor) : Mesh(mesh), Texture(texture), Shader(shader), actor(actor)
+GraphicNode::GraphicNode(
+	std::shared_ptr<MeshResource> mesh,
+	std::shared_ptr<TextureResource> texture,
+	std::shared_ptr<ShaderResource> shader,
+	std::shared_ptr<Actor> _actor) :
+	Mesh(mesh),
+	Texture(texture),
+	Shader(shader),
+	actor(_actor)
 {
 	
 }
@@ -21,11 +29,3 @@ void GraphicNode::DrawScene(const M4& mvp, const V4& rgba)
 
 	Mesh->render();
 }
-
-std::shared_ptr<MeshResource> GraphicNode::getMesh() { return Mesh; }
-std::shared_ptr<TextureResource> GraphicNode::getTexture() { return Texture; }
-std::shared_ptr<ShaderResource> GraphicNode::getShader() { return Shader; }
-
-void GraphicNode::setMesh(std::shared_ptr<MeshResource> mesh) { Mesh = mesh; }
-void GraphicNode::setTexture(std::shared_ptr<TextureResource> texture) { Texture = texture; }
-void GraphicNode::setShader(std::shared_ptr<ShaderResource> shader) { Shader = shader; }

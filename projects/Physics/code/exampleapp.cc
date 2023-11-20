@@ -391,60 +391,40 @@ namespace Example
 		return collisionInfo; // Collision detected
 	}
 
-	/**
-This function calulates the velocities after a 3D collision vaf, vbf, waf and wbf from information about the colliding bodies
-@param double e coefficient of restitution which depends on the nature of the two colliding materials
-@param double ma total mass of body a
-@param double mb total mass of body b
-@param M4 Ia inertia tensor for body a in absolute coordinates (if this is known in local body coordinates it must
-                 be converted before this is called).
-@param M4 Ib inertia tensor for body b in absolute coordinates (if this is known in local body coordinates it must
-                 be converted before this is called).
-@param V4 ra position of collision point relative to centre of mass of body a in absolute coordinates (if this is
-                 known in local body coordinates it must be converted before this is called).
-@param V4 rb position of collision point relative to centre of mass of body b in absolute coordinates (if this is
-                 known in local body coordinates it must be converted before this is called).
-@param V4 n normal to collision point, the line along which the impulse acts.
-@param V4 vai initial velocity of centre of mass on object a
-@param V4 vbi initial velocity of centre of mass on object b
-@param V4 wai initial angular velocity of object a
-@param V4 wbi initial angular velocity of object b
-@param V4 vaf final velocity of centre of mass on object a
-@param V4 vbf final velocity of centre of mass on object a
-@param V4 waf final angular velocity of object a
-@param V4 wbf final angular velocity of object b
-*/
-// void CollisionResponse(float e,float ma,float mb,M4 Ia,M4 Ib,V4 ra,V4 rb,V4 n,
-//     V4 vai, V4 vbi, V4 wai, V4 wbi, V4 vaf, V4 vbf, V4 waf, V4 wbf) {
-//   M4 IaInverse = Inverse(Ia);
-//   V4 normal = Normalize(n);
-//   V4 angularVelChangea  = normal; // start calculating the change in angular rotation of a
-//   angularVelChangea.Cross(ra);
-//   IaInverse.transform(angularVelChangea);
-//   V4 vaLinDueToR = angularVelChangea.Cross(ra);  // calculate the linear velocity of collision point on a due to rotation of a
-//   float scalar = 1 / ma + vaLinDueToR.Dot(normal);
-//   M4 IbInverse = Inverse(Ib);
-//   V4 angularVelChangeb = normal; // start calculating the change in angular rotation of b
-//   angularVelChangeb.Cross(rb);
-//   IbInverse.transform(angularVelChangeb);
-//   V4 vbLinDueToR = angularVelChangeb.Cross(rb);  // calculate the linear velocity of collision point on b due to rotation of b
-//   scalar += 1/mb + vbLinDueToR.Dot(normal);
-//   float Jmod = (e+1)*(vai-vbi).Length()/scalar;
-//   V4 J = normal * Jmod;
-//   vaf = vai - J * (1.f / ma);
-//   vbf = vbi - J * (1.f / mb);
-//   waf = wai - angularVelChangea;
-//   wbf = wbi - angularVelChangeb;
-// }
+
+	const V3 collisionPoint() {
+		std::vector<Face> face1, face2;
+
+		std::vector<V3> res1;
+		// averge of collision f1
+		for (Face f : face1)
+		{
+			res1.push_back(findAverage(f.vertices));
+		}
+
+		std::vector<V3> res2;
+		for (Face f : face2)
+		{
+			res2.push_back(findAverage(f.vertices));
+		}
+
+		res1.insert(res1.end(), res2.begin(), res2.end());
+		return findAverage(res1);
+	}
+
+	void Print(V4 v)
+	{
+		std::cout << '(';
+		for (size_t i = 0; i < 4; i++)
+			std::cout << v.data[i] << (i == 3 ? ")\n" : ", ");
+	}
 
 	void Print(M4 m)
 	{
 		for (size_t i = 0; i < 4; i++)
 		{
 			V4 v = m[i];
-			std::cout << '(';
-			for (size_t i = 0; i < 4; i++)
-				std::cout << v.data[i] << (i == 3 ? ")\n" : ", ");
+			Print(v);
 		}
 	}
 

@@ -222,35 +222,48 @@ namespace Example
 
 	void magic() {
 		// Define two faces with their vertices
-		Face face1;
-		face1.vertices = {
-			V3(0, 0, 0),
-			V3(1, 0, 0),
-			V3(1, 1, 0),
-			V3(0, 1, 0)
-		};
 
-		Face face2;
-		face2.vertices = {
-			V3(0.5, 0.5, 0),
-			V3(1.5, 0.5, 0),
-			V3(1.5, 1.5, 0),
-			V3(0.5, 1.5, 0)
-		};
+		std::vector<uint32_t> fireIndices;
+		std::vector<V3> fireCoords;
+		std::vector<V2> fireTexels;
+		std::vector<V3> fireNormals;
+		std::vector<Vertex> fireVertices;
+		//TODO: fix this later if requried
+		std::shared_ptr<MeshResource> fire = MeshResource::LoadObj("textures/cube.obj", fireIndices, fireCoords, fireTexels, fireNormals, fireVertices);
+		fire->indicesAmount = fireIndices;
+		fire->positions = fireCoords;
+		fire->texels = fireTexels;
+		fire->normals = fireNormals;
+		fire->vertices = fireVertices;
+		fire->min = fire->find_bounds().first;
+		fire->max = fire->find_bounds().second;
 
-		// Find the intersection points
-		std::vector<V3> intersectionPoints = FindFaceIntersection(face1, face2);
+		std::vector<uint32_t> waterIndices;
+		std::vector<V3> waterCoords;
+		std::vector<V2> waterTexels;
+		std::vector<V3> waterNormals;
+		std::vector<Vertex> waterVertices;
+		//TODO: fix this later if requried
+		std::shared_ptr<MeshResource> water = MeshResource::LoadObj("textures/cube.obj", waterIndices, waterCoords, waterTexels, waterNormals, waterVertices);
+		water->indicesAmount = waterIndices;
+		water->positions = waterCoords;
+		water->texels = waterTexels;
+		water->normals = waterNormals;
+		water->vertices = waterVertices;
+		water->min = water->find_bounds().first;
+		water->max = water->find_bounds().second;
 
-		// Print the intersection points
+		apply_worldspace(fire->positions, Translate(V4(-0.5f, 0, 0)));
+		apply_worldspace(water->positions, Translate(V4(0.5f, 0, 0)));
+
 		
-		//Intersection Point : (1, 0.5, 0)
-		//Intersection Point : (0.5, 1, 0)
-		//Intersection Point : (0.5, 1, 0)
-		//Intersection Point : (0, 0.5, 0)
+		CollisionInfo info = sat(fire->positions, water->positions);
 		
-		for (const V3& point : intersectionPoints) {
-			std::cout << "Intersection Point: (" << point.x << ", " << point.y << ", " << point.z << ")" << std::endl;
-		}
+		
+
+		//for (const V3& point : intersectionPoints) {
+		//	std::cout << "Intersection Point: (" << point.x << ", " << point.y << ", " << point.z << ")" << std::endl;
+		//}
 	}
 
 

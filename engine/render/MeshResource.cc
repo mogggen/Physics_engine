@@ -521,7 +521,7 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile, std:
 					nextCoordinate[I++] = stof(token);
 				}
 				nextCoordinate[I++] = stof(lineRemainder);
-				if (I < 3U) cerr << "not enough love, vertex";
+				if (I<3U) cerr << "not enough love, vertex";
 				coords.push_back(nextCoordinate);
 			}
 

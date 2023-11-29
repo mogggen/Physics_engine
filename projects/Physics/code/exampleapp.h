@@ -20,70 +20,8 @@
 
 namespace Example
 {
-	class ExampleApp : public Core::App
+	struct ExampleApp
 	{
-	public:
-		/// constructor
-		ExampleApp();
-		/// destructor
-		~ExampleApp();
-
-		/// open app
-		bool Open();
-		/// run app
-		void Run();
-
-	private:
-		void RenderUI();
-		uint64_t duration;
-		int width, height;
-		uint32_t frameIndex = 0;
-		Plane *plane;
-		float x, y, z;
-
-		std::vector<std::shared_ptr<GraphicNode>> all_loaded;
-		V3 resultingHit;
-		
-		double mouseDirX, mouseDirY;
-		float64 prevX = 0, prevY = 0;
-		float64 senseX = 0, senseY = 0;
-		bool w, a, s, d,
-			shift, space, isPressed = false;
-		bool showDebugRender = true;
-		GLuint program;
-		GLuint vertexShader;
-		GLuint pixelShader;
-
-		std::vector<AABB> aabbs;
-
-		M4 fireHydrantWorldSpaceTransform;
-		M4 fireHydrantProjectionViewTransform;
-		V4 fireHydrantColor{1, 1, 1, 1};
-		std::shared_ptr<MeshResource> fireHydrantMesh;
-		std::shared_ptr<TextureResource> fireHydrantTexture;
-		std::shared_ptr<ShaderResource> fireHydrantScript;
-		std::shared_ptr<GraphicNode> texturedCube;
-
-		M4 cubeWorldSpaceTransform;
-		M4 cubeProjectionViewTransform;
-		V4 cubeColor{1, 0, 0, 1};
-
-		std::shared_ptr<MeshResource> cubeMesh;
-		std::shared_ptr<TextureResource> cubeTexture;
-		std::shared_ptr<ShaderResource> cubeScript;
-		std::shared_ptr<GraphicNode> floor;
-
-		// will have a entire array of these
-		std::shared_ptr<MeshResource> quadMesh;
-		std::shared_ptr<TextureResource> quadTexture;
-		std::shared_ptr<ShaderResource> quadScript;
-		std::shared_ptr<GraphicNode> quad;
-
-		Display::Window *window;
+		static void Run();
 	};
-} // namespace Example
-
-// Debug::DrawSphere
-// Debug::Draw Collision and Normal
-
-// Beräkna kollisionspunkten genom att extrapolera från den information som ges.
+}

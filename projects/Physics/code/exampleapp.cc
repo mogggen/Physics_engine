@@ -220,36 +220,86 @@ namespace Example
 		return intersectionPoints;
 	}
 
-	void magic() {
+	void magic(float max_velocity, float delta_time) {
 		// Define two faces with their vertices
-		Face face1;
-		face1.vertices = {
-			V3(0, 0, 0),
+		Face faceX1;
+		faceX1.vertices = {
 			V3(1, 0, 0),
+			V3(1, 0, 1),
 			V3(1, 1, 0),
-			V3(0, 1, 0)
+			V3(1, 1, 1)
 		};
 
-		Face face2;
-		face2.vertices = {
-			V3(0.5, 0.5, 0),
-			V3(1.5, 0.5, 0),
-			V3(1.5, 1.5, 0),
-			V3(0.5, 1.5, 0)
+		Face faceX0;
+		faceX0.vertices = {
+			V3(0, 0, 0),
+			V3(0, 0, 1),
+			V3(0, 1, 0),
+			V3(0, 1, 1)
 		};
 
-		// Find the intersection points
-		std::vector<V3> intersectionPoints = FindFaceIntersection(face1, face2);
+		Face faceY1;
+		faceY1.vertices = {
+			V3(0, 1, 0),
+			V3(0, 1, 1),
+			V3(1, 1, 0),
+			V3(1, 1, 1)
+		};
 
-		// Print the intersection points
-		
-		//Intersection Point : (1, 0.5, 0)
-		//Intersection Point : (0.5, 1, 0)
-		//Intersection Point : (0.5, 1, 0)
-		//Intersection Point : (0, 0.5, 0)
-		
-		for (const V3& point : intersectionPoints) {
-			std::cout << "Intersection Point: (" << point.x << ", " << point.y << ", " << point.z << ")" << std::endl;
+		Face faceY0;
+		faceY0.vertices = {
+			V3(0, 0, 0),
+			V3(0, 0, 1),
+			V3(1, 0, 0),
+			V3(1, 0, 1)
+		};
+
+		Face faceZ1;
+		faceZ1.vertices = {
+			V3(0, 0, 1),
+			V3(0, 1, 1),
+			V3(1, 0, 1),
+			V3(1, 1, 1)
+		};
+
+		Face faceZ0;
+		faceZ0.vertices = {
+			V3(0, 0, 0),
+			V3(0, 1, 0),
+			V3(1, 0, 0),
+			V3(1, 1, 0)
+		};
+
+		std::vector<Face>
+		cube1 = 
+			{
+				faceX0,
+				faceX1,
+				faceY0,
+				faceY1,
+				faceZ0,
+				faceZ1,	
+			};
+
+		std::vector<Face>
+		cube2 =
+			{
+				faceX0,
+				faceX1,
+				faceY0,
+				faceY1,
+				faceZ0,
+				faceZ1,
+				
+			};
+
+		CollisionInfo info = sat(cube1, cube2);
+
+		// game loop
+		{
+			// magic(max_velocity, delta_time);
+			// do main calc in here
+
 		}
 	}
 
@@ -363,12 +413,16 @@ namespace Example
 		collisionInfo.isColliding = true;
 		collisionInfo.depth = FLT_MAX;
 
-		//V3 previous;
+		std::vector<Face> i_copy = i_vertices;
+		std::vector<Face> j_copy = j_vertices;
 
-		for (const Face& i : i_vertices) {
-			for (const Face& j : j_vertices) {
-				
-				V3 axis = Cross(i.normal, j.normal);
+		size_t i = 0, j = 0;
+		//V3 previous;
+		for (; i < i_vertices.size(); i++)
+		{
+			for (; i < j_vertices.size(); j++)
+			{
+				V3 axis = Cross(i_vertices[i].normal, j_vertices[j].normal);
 
 				float projection1 = ProjectOntoAxis(i_vertices, axis);
 				float projection2 = ProjectOntoAxis(j_vertices, axis);
@@ -381,12 +435,21 @@ namespace Example
 				else if (overlap < collisionInfo.depth) {
 					// Store penetration depth and the penetration points
 					collisionInfo.depth = overlap;
+					// remove the face that most recently collided from the list
+					std::vector<Face> newArgi = i_vertices;
+					std::vector<Face> newArgj = j_vertices;
 					collisionInfo.polytope = CalculatePenetrationPoint(i_vertices, j_vertices, axis);
-					collisionInfo.norm1 = i.normal;
-					collisionInfo.norm2 = j.normal;
+					collisionInfo.norm1 = i_vertices[i].normal;
+					collisionInfo.norm2 = j_vertices[j].normal;
 				}
 			}
 		}
+
+		// search the rest of the vertices so that only new faces are shown
+		i_copy.erase(i_copy.begin() + i);
+		j_copy.erase(j_copy.begin() + j);
+		if (collisionInfo.isColliding)
+			return sat(i_vertices, j_vertices);
 
 		return collisionInfo; // Collision detected
 	}
@@ -545,87 +608,17 @@ namespace Example
 		return false;
 	}
 
-	//------------------------------------------------------------------------------
-	/**
-	 */
-
-	void
-	ExampleApp::Run()
+	void ExampleApp::shot_ray(const bool& isPressed,
+	float64& mouseDirX, float64& mouseDirY,
+	Camera& cam,
+	unsigned width, unsigned height,
+	Ray& ray,
+	V3 rayOrigin,
+	V3& resultingHit,
+	std::shared_ptr<MeshResource> mesh,
+	const M4& transform)
 	{
-		magic();
-		exit(0);
-		glEnable(GL_DEPTH_TEST);
-		glDepthFunc(GL_LEQUAL);
-		time_t f = time(nullptr);
-		//std::cout << "seed: " << f << std::endl;
-		srand(f);
-		float x_rand = 0;//rand() / (float)RAND_MAX * 20.f - 10.f;
-		float z_rand = rand() / (float)RAND_MAX * 20.f - 10.f;
-
-		for (size_t i = 0; i < 2; i++)
-		{
-			const GraphicNode node = *texturedCube.get();
-			all_loaded.push_back(std::make_shared<GraphicNode>(node));
-			all_loaded[i]->actor = std::make_shared<Actor>();
-			all_loaded[i]->actor->mass = 2;
-			all_loaded[i]->actor->elasticity = 0.6;
-			all_loaded[i]->actor->isDynamic = true;
-
-			all_loaded[i]->actor->transform = Translate(V4(i * 0.75f, 0, 0));// *Rotation(V4(0, 0, 1), M_PI / 4.f)* Rotation(V4(0, 0, 1), z_rand);
-			//all_loaded[i]->actor->linearVelocity = V3(-1e-3f, 1e-3f, 0);
-		}
-
-		all_loaded[0]->actor->mass = 1;
-		all_loaded[0]->actor->elasticity = 0.5;
-		all_loaded[0]->actor->linearVelocity = V3(-1e-3f, 0, 0);
-		all_loaded[1]->actor->transform = Translate(V4(3.5f, 0, 0));
-
-		all_loaded[1]->actor->transform = Translate(V4(-3.5f, 0, 0));
-		all_loaded[1]->actor->mass = 100;
-		all_loaded[1]->actor->elasticity = 0.5;
-		all_loaded[1]->actor->linearVelocity = V3(1e-3f, -0, 0);
-		//all_loaded[1]->actor->isDynamic = false;
-		//all_loaded[1]->actor->transform = Translate(V4(1 * 0.75f, 3.f * 1, 0));
-		// deltatime
-		float dt = 0.01;
-		Ray ray(V3(FLT_MAX, FLT_MAX, FLT_MAX), V3(FLT_MAX, FLT_MAX, FLT_MAX));
-
-		// gravity
-		const float g = -9.806e-3f;
-#define GRAVITY V3(0, g, 0)
-
-		Camera cam(90, (float)width / height, 0.01f, 1000.0f);
-		cam.setPos(V4(0, 1, -3));
-		cam.setRot(V4(0, 0, 1), M_PI);
-
-		Lightning light(V3(10, 10, 10), V3(1, 1, 1), .01f);
-
-		float camSpeed = .08f;
-
-		
-
-		// set identies
-		floor->actor->transform = Translate(V4(0, -10.5f, 0));		
-		
-		for	(const std::shared_ptr<GraphicNode> g : all_loaded)
-		{
-			std::pair<V3, V3> t = findAABB(*g->getMesh(), g->actor->transform);
-			aabbs.push_back({t.first, t.second});
-		}
-
-		while (this->window->IsOpen())
-		{
-			//--------------------ImGui section--------------------
-
-			auto start = std::chrono::high_resolution_clock::now();
-			// cube->actor->linearVelocity = V3(.05f * cos(frameIndex / 10.f)+0.001f, sin(frameIndex / 30.f) * 0.02f, 0);
-			//--------------------math section--------------------
-			cam.setPos(cam.getPos() + Normalize(V4((a - d), (shift - space), (w - s))) * camSpeed);
-			V3 rayOrigin = cam.getPos() * 1.f;
-			
-			// effect of gravity
-			
-			if (isPressed)
+		if (isPressed)
 			{
 				glfwGetCursorPos(this->window->GetHandle(), &mouseDirX, &mouseDirY);
 				// shot a ray
@@ -634,7 +627,7 @@ namespace Example
 				V4 mousePickingWorldSpace = Inverse(cam.pv()) * normalizedDeviceCoordinates;
 				ray = Ray(rayOrigin, (mousePickingWorldSpace - rayOrigin).toV3());
 
-				resultingHit = find_AABB_intersection(ray, *fireHydrantMesh);
+				resultingHit = find_AABB_intersection(ray, *mesh);
 				if (!isnan(resultingHit.x) || !isinf(resultingHit.y))
 				if (!isnan(NAN/*resultingHit.data*/))
 				{
@@ -642,10 +635,15 @@ namespace Example
 					Debug::DrawLine(V4(resultingHit - V3(0, 3, 0), 1), V4(resultingHit - V3(0, 0, 0), 1), V4(1, 0, 0, 1));
 					//Debug::DrawSquare(V4(resultingHit, 1));
 				}
-				resultingHit = ray_intersection(ray, fireHydrantWorldSpaceTransform, fireHydrantMesh->positions, fireHydrantMesh->indicesAmount, &(fireHydrantMesh)->normals);
+				resultingHit = ray_intersection(ray, transform, mesh->positions, mesh->indicesAmount, &(mesh)->normals);
 			}
 			//cube->actor->transform = Translate(V4(resultingHit, 1));
 
+	}
+
+	void CollisionResponse(std::vector<std::shared_ptr<GraphicNode>> all_loaded, std::vector<AABB> aabbs)
+	{
+		
 			for (size_t i = 0; i < all_loaded.size(); i++)
 			{
 				std::pair<V3, V3> t = findAABB(*all_loaded[i]->getMesh(), all_loaded[i]->actor->transform);
@@ -814,6 +812,89 @@ namespace Example
 					//node->actor->apply_force(m * GRAVITY * 0.0001f, dt);
 				}
 			}
+	}
+
+	//------------------------------------------------------------------------------
+	/**
+	 */
+
+	void
+	ExampleApp::Run()
+	{
+		magic(1000, 16);
+		//exit(0);
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LEQUAL);
+		time_t f = time(nullptr);
+		//std::cout << "seed: " << f << std::endl;
+		srand(f);
+		float x_rand = 0;//rand() / (float)RAND_MAX * 20.f - 10.f;
+		float z_rand = rand() / (float)RAND_MAX * 20.f - 10.f;
+
+		for (size_t i = 0; i < 2; i++)
+		{
+			const GraphicNode node = *texturedCube.get();
+			all_loaded.push_back(std::make_shared<GraphicNode>(node));
+			all_loaded[i]->actor = std::make_shared<Actor>();
+			all_loaded[i]->actor->mass = 2;
+			all_loaded[i]->actor->elasticity = 0.6;
+			all_loaded[i]->actor->isDynamic = true;
+
+			all_loaded[i]->actor->transform = Translate(V4(i * 0.75f, 0, 0));// *Rotation(V4(0, 0, 1), M_PI / 4.f)* Rotation(V4(0, 0, 1), z_rand);
+			//all_loaded[i]->actor->linearVelocity = V3(-1e-3f, 1e-3f, 0);
+		}
+
+		all_loaded[0]->actor->mass = 1;
+		all_loaded[0]->actor->elasticity = 0.5;
+		all_loaded[0]->actor->linearVelocity = V3(-1e-3f, 0, 0);
+		all_loaded[1]->actor->transform = Translate(V4(3.5f, 0, 0));
+
+		all_loaded[1]->actor->transform = Translate(V4(-3.5f, 0, 0));
+		all_loaded[1]->actor->mass = 100;
+		all_loaded[1]->actor->elasticity = 0.5;
+		all_loaded[1]->actor->linearVelocity = V3(1e-3f, -0, 0);
+		//all_loaded[1]->actor->isDynamic = false;
+		//all_loaded[1]->actor->transform = Translate(V4(1 * 0.75f, 3.f * 1, 0));
+		// deltatime
+		float dt = 0.01;
+		Ray ray(V3(FLT_MAX, FLT_MAX, FLT_MAX), V3(FLT_MAX, FLT_MAX, FLT_MAX));
+
+		// gravity
+		const float g = -9.806e-3f;
+#define GRAVITY V3(0, g, 0)
+
+		Camera cam(90, (float)width / height, 0.01f, 1000.0f);
+		cam.setPos(V4(0, 1, -3));
+		cam.setRot(V4(0, 0, 1), M_PI);
+
+		Lightning light(V3(10, 10, 10), V3(1, 1, 1), .01f);
+
+		float camSpeed = .08f;
+
+		
+
+		// set identies
+		floor->actor->transform = Translate(V4(0, -10.5f, 0));		
+		
+		for	(const std::shared_ptr<GraphicNode> g : all_loaded)
+		{
+			std::pair<V3, V3> t = findAABB(*g->getMesh(), g->actor->transform);
+			aabbs.push_back({t.first, t.second});
+		}
+
+		while (this->window->IsOpen())
+		{
+			//--------------------ImGui section--------------------
+
+			auto start = std::chrono::high_resolution_clock::now();
+			// cube->actor->linearVelocity = V3(.05f * cos(frameIndex / 10.f)+0.001f, sin(frameIndex / 30.f) * 0.02f, 0);
+			//--------------------math section--------------------
+			cam.setPos(cam.getPos() + Normalize(V4((a - d), (shift - space), (w - s))) * camSpeed);
+			V3 rayOrigin = cam.getPos() * 1.f;
+			
+			// effect of gravity
+			
+			CollisionResponse(all_loaded, aabbs);
 
 			//--------------------real-time render section--------------------
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

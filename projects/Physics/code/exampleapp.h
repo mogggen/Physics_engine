@@ -34,6 +34,16 @@ namespace Example
 		void Run();
 
 	private:
+		void shot_ray(const bool& isPressed,
+	float64& mouseDirX, float64& mouseDirY,
+	Camera& cam,
+	unsigned width, unsigned height,
+	Ray& ray,
+	V3 rayOrigin,
+	V3& resultingHit,
+	std::shared_ptr<MeshResource> mesh,
+	const M4& transform);
+
 		void RenderUI();
 		uint64_t duration;
 		int width, height;

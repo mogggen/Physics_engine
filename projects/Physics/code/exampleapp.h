@@ -33,12 +33,12 @@ namespace Example
 		/// run app
 		void Run();
 
-	private:
-		void RenderUI();
-		uint64_t duration;
-		int width, height;
-		uint32_t frameIndex = 0;
-		Plane *plane;
+    private:
+        void RenderUI();
+        uint64_t duration;
+        int width, height;
+        uint32_t frameIndex = 0;
+        Plane *plane;
 		float x, y, z;
 
 		std::vector<std::shared_ptr<GraphicNode>> all_loaded;

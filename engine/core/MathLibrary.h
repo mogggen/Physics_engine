@@ -268,7 +268,7 @@ struct V3
 
 	float Length();
 	float Length2();
-	void Normalize();
+	V3 Normalize();
 
 	bool operator!=(V3 const& rhs) const {
 		for (size_t i = 0; i < 3; ++i) {
@@ -398,12 +398,13 @@ inline float V3::Length2()
 	return x * x + y * y + z * z;
 }
 
-inline void V3::Normalize()
+inline V3 V3::Normalize()
 {
 	float length = Length();
 	if (length)
 	for (size_t i = 0; i < 3; i++)
 		data[i] /= length;
+	return *this;
 }
 
 inline bool V3::operator==(V3 rhs)

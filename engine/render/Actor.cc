@@ -1,7 +1,7 @@
 #include "config.h"
 #include "render/Actor.h"
 
-Actor::Actor()
+RigidBody::RigidBody()
 {
     rotation = Translate(V4());
     orientation = Quaternion();
@@ -16,7 +16,7 @@ Actor::Actor()
 
 
 
-Actor::Actor(V3 _position,
+RigidBody::RigidBody(V3 _position,
     float _mass,
     V3 _linearVelocity,
     Quaternion _orientation,
@@ -30,14 +30,14 @@ Actor::Actor(V3 _position,
     
 }
 
-void Actor::apply_force(const V3& force, const float& dt)
+void RigidBody::apply_force(const V3& force, const float& dt)
 {
     assert(mass, ("Actor %p has no mass", &this));
     const V3 acceleration = force * (1 / mass);
     linearVelocity = linearVelocity + acceleration * dt;
 }
 
-void Actor::apply_force(const V3& direction, const float& magF, const float& dt)
+void RigidBody::apply_force(const V3& direction, const float& magF, const float& dt)
 {
     assert(mass, ("Actor %p has no mass", &this));
     const V3 acceleration = direction * magF * (1 / mass);
@@ -45,7 +45,7 @@ void Actor::apply_force(const V3& direction, const float& magF, const float& dt)
 }
 
 // this function is cursed
-void Actor::apply_linear_impulse(const Ray& ray, const V3& center_of_mass, const V3& contactPoint, const float& elasticity)
+void RigidBody::apply_linear_impulse(const Ray& ray, const V3& center_of_mass, const V3& contactPoint, const float& elasticity)
 {
     assert(mass, ("Actor %p has no mass", &this));
     // how much should be linear velocity (the rest is angular velocity
@@ -54,7 +54,7 @@ void Actor::apply_linear_impulse(const Ray& ray, const V3& center_of_mass, const
     linearVelocity = linearVelocity + Normalize(ray.dir) * linear_impulse * (1 / mass);
 }
 
-void Actor::apply_angular_impulse(const Quaternion& impulse, const V4& contactPoint, const float& elasticity=.5f)
+void RigidBody::apply_angular_impulse(const Quaternion& impulse, const V4& contactPoint, const float& elasticity=.5f)
 {
     // Calculate change in velocity due to the impulse
     Quaternion linearImpulse = impulse.normalized() * (1.0 + elasticity);
@@ -73,7 +73,7 @@ void Actor::apply_angular_impulse(const Quaternion& impulse, const V4& contactPo
     //    ;
 }
 
-void Actor::update(const float& dt)
+void RigidBody::update(const float& dt)
 {
     //transform = (Translate(linearVelocity * dt) * transform);
     

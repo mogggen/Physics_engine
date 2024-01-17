@@ -17,7 +17,7 @@
 #ifdef __linux__
 #include <unistd.h>
 #endif
-struct Actor;
+struct RigidBody;
 
 using namespace Display;
 namespace Example
@@ -482,12 +482,12 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 			fireHydrantScript->LoadShader(fireHydrantScript->vs, fireHydrantScript->ps, "textures/vs.glsl", "textures/ps.glsl");
 
 			// Actor
-			std::shared_ptr<Actor> fireHydrantActor = std::make_shared<Actor>();
+			std::shared_ptr<RigidBody> fireHydrantActor = std::make_shared<RigidBody>();
 			fireHydrantActor->mass = 7;
 			fireHydrantActor->elasticity = .5;
 
 			// GraphicNode
-			texturedCube = std::make_shared<GraphicNode>(fireHydrantMesh, fireHydrantTexture, fireHydrantScript, fireHydrantActor);
+			texturedCube = std::make_shared<Object3D>(fireHydrantMesh, fireHydrantTexture, fireHydrantScript, fireHydrantActor);
 			//all_loaded.push_back(texturedCube);
 
 			// MeshResource
@@ -514,13 +514,13 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 			cubeScript->LoadShader(cubeScript->vs, cubeScript->ps, "textures/vs.glsl", "textures/ps.glsl");
 
 			// Actor
-			std::shared_ptr<Actor> cubeActor = std::make_shared<Actor>();
+			std::shared_ptr<RigidBody> cubeActor = std::make_shared<RigidBody>();
 			cubeActor->mass = 300;
 			cubeActor->elasticity = 0.3;
 			cubeActor->isDynamic = false;
 
 			// GraphicNode
-			floor = std::make_shared<GraphicNode>(cubeMesh, cubeTexture, cubeScript, cubeActor);
+			floor = std::make_shared<Object3D>(cubeMesh, cubeTexture, cubeScript, cubeActor);
 
 			//all_loaded.push_back(floor);
 
@@ -597,18 +597,41 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 
 
 
+	
+
+/*
+AABB finds a pair
+SAT finds a Collision:
+normal
+point
+MTV
+
+*/
 
 
-
-
-
-	std::pair<std::vector<Face>, std::vector<Face>> magic() {
+	int newMain() {
 		
 		// 1. An std::pair<std::vector<Face>, std::vector<Face> collisionPair; initalized to hold the faces of a cube
 		// 2. Translate cubes in 3D space to starting position at -3.5F and 3.5F
-		// 3. 
+		// 3.
+		
+		Object3D triangle = Object3D(
+			std::make_shared<MeshResource>(),
+			std::make_shared<TextureResource>(),
+			std::make_shared<ShaderResource>(),
+			std::make_shared<RigidBody>()
+			);
+		triangle.getActor()->isDynamic = false;
+		
+		// only allow traiangle and square faces. in game engine
+		Face triangleFace;
+		triangleFace.vertices = {
+			V3(0, 1, 0),
+			V3(0, 0, -.5),
+			V3(0, 0, 0.5)
+		};
 
-		// Define two faces with their vertices
+		// Define two cubes with their vertices
 		Face faceX1;
 		faceX1.vertices = {
 			V3(1, 0, 0),
@@ -964,7 +987,7 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 		}
 	};
 
-	void ConvertToFaces(std::shared_ptr<GraphicNode>& ith, std::vector<Face>& i_faces)
+	void ConvertToFaces(std::shared_ptr<Object3D>& ith, std::vector<Face>& i_faces)
 	{
 		Face currFace;
 		std::vector<Vertex>& verts = ith->getMesh()->vertices;
@@ -1007,28 +1030,28 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 
 		for (size_t i = 0; i < 2; i++)
 		{
-			const GraphicNode node = *texturedCube.get();
-			all_loaded.push_back(std::make_shared<GraphicNode>(node));
-			all_loaded[i]->actor = std::make_shared<Actor>();
-			all_loaded[i]->actor->elasticity = 0.4;
-			all_loaded[i]->actor->mass = 2;
-			all_loaded[i]->actor->isDynamic = true;
+			const Object3D node = *texturedCube.get();
+			all_loaded.push_back(std::make_shared<Object3D>(node));
+			all_loaded[i]->getActor() = std::make_shared<RigidBody>();
+			all_loaded[i]->getActor()->elasticity = 0.4;
+			all_loaded[i]->getActor()->mass = 2;
+			all_loaded[i]->getActor()->isDynamic = true;
 
-			all_loaded[i]->actor->transform = Translate(V4(i * 0.75f, 0, 0));// *Rotation(V4(0, 0, 1), M_PI / 4.f)* Rotation(V4(0, 0, 1), z_rand);
-			//all_loaded[i]->actor->linearVelocity = V3(-1e-3f, 1e-3f, 0);
+			all_loaded[i]->getActor()->transform = Translate(V4(i * 0.75f, 0, 0));// *Rotation(V4(0, 0, 1), M_PI / 4.f)* Rotation(V4(0, 0, 1), z_rand);
+			//all_loaded[i]->getActor()->linearVelocity = V3(-1e-3f, 1e-3f, 0);
 		}
 
-		all_loaded[0]->actor->mass = 100;
-		all_loaded[0]->actor->elasticity = 0.4;
-		all_loaded[0]->actor->linearVelocity = V3(-1e-3f, 0, 0);
-		all_loaded[0]->actor->transform = Translate(V4(3.5f, 0, 0));
+		all_loaded[0]->getActor()->mass = 100;
+		all_loaded[0]->getActor()->elasticity = 0.4;
+		all_loaded[0]->getActor()->linearVelocity = V3(-1e-3f, 0, 0);
+		all_loaded[0]->getActor()->transform = Translate(V4(3.5f, 0, 0));
 
-		all_loaded[1]->actor->transform = Translate(V4(-3.5f, 0, 0));
-		all_loaded[1]->actor->mass = 100;
-		all_loaded[1]->actor->elasticity = 0.5;
-		all_loaded[1]->actor->linearVelocity = V3(1e-3f, -0, 0);
-		//all_loaded[1]->actor->isDynamic = false;
-		//all_loaded[1]->actor->transform = Translate(V4(1 * 0.75f, 3.f * 1, 0));
+		all_loaded[1]->getActor()->transform = Translate(V4(-3.5f, 0, 0));
+		all_loaded[1]->getActor()->mass = 100;
+		all_loaded[1]->getActor()->elasticity = 0.5;
+		all_loaded[1]->getActor()->linearVelocity = V3(1e-3f, -0, 0);
+		//all_loaded[1]->getActor()->isDynamic = false;
+		//all_loaded[1]->getActor()->transform = Translate(V4(1 * 0.75f, 3.f * 1, 0));
 		// deltatime
 		float dt = 0.01;
 		Ray ray(V3(FLT_MAX, FLT_MAX, FLT_MAX), V3(FLT_MAX, FLT_MAX, FLT_MAX));
@@ -1048,11 +1071,11 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 		std::cout << dt;
 
 		// set identies
-		floor->actor->transform = Translate(V4(0, -10.5f, 0));		
+		floor->getActor()->transform = Translate(V4(0, -10.5f, 0));		
 		
-		for	(const std::shared_ptr<GraphicNode> g : all_loaded)
+		for	(const std::shared_ptr<Object3D> g : all_loaded)
 		{
-			std::pair<V3, V3> t = findAABB(*g->getMesh(), g->actor->transform);
+			std::pair<V3, V3> t = findAABB(*g->getMesh(), g->getActor()->transform);
 			aabbs.push_back({t.first, t.second});
 		}
 
@@ -1075,7 +1098,7 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 				// check intersections to optimize what to compare later
 				
 				AABB the;
-				std::tie(the.min, the.max) = findAABB(*all_loaded[i]->getMesh(), all_loaded[i]->actor->transform);
+				std::tie(the.min, the.max) = findAABB(*all_loaded[i]->getMesh(), all_loaded[i]->getActor()->transform);
 				aabbs[i] = the;
 			}
 
@@ -1083,8 +1106,8 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 			for (std::pair<size_t, size_t>& a : in)
 			{
 				//prepare arguments
-				std::shared_ptr<GraphicNode> ith = all_loaded[a.first];
-				std::shared_ptr<GraphicNode> jth = all_loaded[a.second];
+				std::shared_ptr<Object3D> ith = all_loaded[a.first];
+				std::shared_ptr<Object3D> jth = all_loaded[a.second];
 				
 				if (aabbs[a.second].min.x < aabbs[a.first].min.x)
 				{
@@ -1124,20 +1147,20 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 				// then face-on-face get average point collision
 
 				// the correct subtraction in relative momentum one rigidbody is statitionary no matter what.
-				V4 yes = ith->actor->linearVelocity - jth->actor->linearVelocity; // basic aritmetic
+				V4 yes = ith->getActor()->linearVelocity - jth->getActor()->linearVelocity; // basic aritmetic
 
-				float hellNo = ith->actor->angleVel - jth->actor->angleVel; // hard mode
+				float hellNo = ith->getActor()->angleVel - jth->getActor()->angleVel; // hard mode
 				 
 				// i
 				std::vector<V3>& i_vertices = ith->getMesh()->positions;
-				apply_worldspace(i_vertices, ith->actor->transform);
+				apply_worldspace(i_vertices, ith->getActor()->transform);
 				std::vector<Face> i_faces;
                 ConvertToFaces(ith, i_faces);
                 V3 i_cm = findAverage(i_vertices);
 				
 				// j
 				std::vector<V3>& j_vertices = jth->getMesh()->positions;
-				apply_worldspace(j_vertices, jth->actor->transform);
+				apply_worldspace(j_vertices, jth->getActor()->transform);
 				std::vector<Face> j_faces;
                 ConvertToFaces(jth, j_faces);
                 V3 j_cm = findAverage(j_vertices);
@@ -1151,31 +1174,31 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 					info.polytope = V3();
 					info.depth = 0;
 
-					/* const */ float& m1 = ith->actor->mass;
-					/* const */ float& m2 = jth->actor->mass;
+					/* const */ float& m1 = ith->getActor()->mass;
+					/* const */ float& m2 = jth->getActor()->mass;
 					
 					/* const */ V4 r1 = V4( 0.5, 0, 0);//info.polytope - i_cm; // figure this out last
 					/* const */ V4 r2 = V4(-0.5, 0, 0);//info.polytope - j_cm; // figure this out last
 
-					/* const */ float& e1 = ith->actor->elasticity;
-					/* const */ float& e2 = jth->actor->elasticity;
+					/* const */ float& e1 = ith->getActor()->elasticity;
+					/* const */ float& e2 = jth->getActor()->elasticity;
 					//if (info.isColliding)
 					//{
 					//	std::cout << ("e1 %f e2 %f dt %f", &e1, &e2, dt * 0.001f) << std::endl;
-					//	ith->actor->transform.data[1][3] += ith->getMesh()->min[1] * e1 * dt * 0.001f;
-					//	jth->actor->transform.data[1][3] += jth->getMesh()->min[1] * e2 * dt * 0.001f;
+					//	ith->getActor()->transform.data[1][3] += ith->getMesh()->min[1] * e1 * dt * 0.001f;
+					//	jth->getActor()->transform.data[1][3] += jth->getMesh()->min[1] * e2 * dt * 0.001f;
 					//}
 					//else continue;
 
-					V4& u1 = ith->actor->linearVelocity;
-					V4& u2 = jth->actor->linearVelocity;
+					V4& u1 = ith->getActor()->linearVelocity;
+					V4& u2 = jth->getActor()->linearVelocity;
 					
-					M4& rot1 = ith->actor->rotation;
-					M4& rot2 = jth->actor->rotation;
-					float& o1 = ith->actor->orie;
-					float& o2 = jth->actor->orie;
-					float& w1 = ith->actor->angleVel;
-					float& w2 = jth->actor->angleVel;
+					M4& rott1 = ith->getActor()->rotation;
+					M4& rott2 = jth->getActor()->rotation;
+					float& o1 = ith->getActor()->orie; // ignore gimbel-lock
+					float& o2 = jth->getActor()->orie;
+					float& w1 = ith->getActor()->angleVel;
+					float& w2 = jth->getActor()->angleVel;
 
 
 					assert(m1 > 0.f);
@@ -1205,27 +1228,27 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 					o1 += w1; // should only last during hit frames
 					o2 += w2;
 
-					if (ith->actor->isDynamic && axis1.Length())
+					if (ith->getActor()->isDynamic && axis1.Length())
 					{
-						rot1 = Rotation(axis1, o1);
+						rott1 = Rotation(axis1, o1);
 						o1 = o1;
 						std::cout << o2 << std::endl;
 
 						
 						const V4 res = reflect(v1, info.norm1);
 						const V3 kl = { res.x, res.y, res.z };
-						//ith->actor->apply_force(kl * 0.001f, dt);
+						//ith->getActor()->apply_force(kl * 0.001f, dt);
 
 						u1 = reflect(v1, info.norm1);
 					}
-					if (jth->actor->isDynamic && axis2.Length())
+					if (jth->getActor()->isDynamic && axis2.Length())
 					{
-						rot2 = Rotation(axis2, o2);
+						rott2 = Rotation(axis2, o2);
 						o2 = o2;
 						const V4 res = reflect(v2 * -1.f, info.norm2);
 						const V3 kl = { res.x, res.y, res.z };
 						std::cout << o2 << std::endl;
-						//jth->actor->apply_force(kl * 0.001f, dt);
+						//jth->getActor()->apply_force(kl * 0.001f, dt);
 						u2 = reflect(v2 * -1.f, info.norm2);
 					}
 				}
@@ -1233,17 +1256,17 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 
 			for (const auto node : all_loaded)
 			{
-				const float& m = node->actor->mass;
-				if (node->actor->isDynamic)
+				const float& m = node->getActor()->mass;
+				if (node->getActor()->isDynamic)
 				{
-					//node->actor->apply_force(m * GRAVITY * 0.0001f, dt);
+					//node->getActor()->apply_force(m * GRAVITY * 0.0001f, dt);
 				}
 			}
 
 			//--------------------real-time render section--------------------
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			for (std::shared_ptr<GraphicNode> a : all_loaded)
+			for (std::shared_ptr<Object3D> a : all_loaded)
 			{
 				const V4 color(1, 1, 1, 1);
 
@@ -1252,8 +1275,8 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 				std::shared_ptr<ShaderResource> script = a->getShader();
 
 
-				a->actor->update(3);
-				M4& wst = a->actor->transform;
+				a->getActor()->update(3);
+				M4& wst = a->getActor()->transform;
 				if (showDebugRender)
 				{
 					if (isPressed)

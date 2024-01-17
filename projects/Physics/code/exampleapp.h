@@ -41,7 +41,7 @@ namespace Example
         Plane *plane;
 		float x, y, z;
 
-		std::vector<std::shared_ptr<GraphicNode>> all_loaded;
+		std::vector<std::shared_ptr<Object3D>> all_loaded;
 		V3 resultingHit;
 		
 		double mouseDirX, mouseDirY;
@@ -62,7 +62,7 @@ namespace Example
 		std::shared_ptr<MeshResource> fireHydrantMesh;
 		std::shared_ptr<TextureResource> fireHydrantTexture;
 		std::shared_ptr<ShaderResource> fireHydrantScript;
-		std::shared_ptr<GraphicNode> texturedCube;
+		std::shared_ptr<Object3D> texturedCube;
 
 		M4 cubeWorldSpaceTransform;
 		M4 cubeProjectionViewTransform;
@@ -71,13 +71,13 @@ namespace Example
 		std::shared_ptr<MeshResource> cubeMesh;
 		std::shared_ptr<TextureResource> cubeTexture;
 		std::shared_ptr<ShaderResource> cubeScript;
-		std::shared_ptr<GraphicNode> floor;
+		std::shared_ptr<Object3D> floor;
 
 		// will have a entire array of these
 		std::shared_ptr<MeshResource> quadMesh;
 		std::shared_ptr<TextureResource> quadTexture;
 		std::shared_ptr<ShaderResource> quadScript;
-		std::shared_ptr<GraphicNode> quad;
+		std::shared_ptr<Object3D> quad;
 
 		Display::Window *window;
 	};

@@ -2,11 +2,13 @@
 #include "render/GraphicNode.h"
 
 
-GraphicNode::GraphicNode(
+Object3D::Object3D(){};
+
+Object3D::Object3D(
 	std::shared_ptr<MeshResource> mesh,
 	std::shared_ptr<TextureResource> texture,
 	std::shared_ptr<ShaderResource> shader,
-	std::shared_ptr<Actor> _actor) :
+	std::shared_ptr<RigidBody> _actor) :
 	Mesh(mesh),
 	Texture(texture),
 	Shader(shader),
@@ -15,7 +17,7 @@ GraphicNode::GraphicNode(
 	
 }
 
-void GraphicNode::DrawScene(const M4& mvp, const V4& rgba)
+void Object3D::DrawScene(const M4& mvp, const V4& rgba)
 {
 	Texture->BindTexture();
 

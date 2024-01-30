@@ -542,14 +542,13 @@ inline bool point_in_Face_3D(const V3& p, const std::vector<V3> face)
 
 inline const V3 findAverage(const std::vector<V3>& pos)
 {
-	size_t i = 0;
-	V3 sumPositions = V3();
+	V3 sumPositions;
 
-	for (; i < pos.size(); i++)
+	for (const V3& curr : pos)
 	{
-		sumPositions = pos[i];
+		sumPositions += curr;
 	}
-	return sumPositions * (1.f / ++i);
+	return sumPositions / pos.size();
 }
 
 

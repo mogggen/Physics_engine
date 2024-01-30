@@ -403,14 +403,19 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 //   wbf = wbi - angularVelChangeb;
 // }
 
+	void Print(V4 v)
+	{
+		std::cout << '(';
+		for (size_t i = 0; i < 4; i++)
+			std::cout << v.data[i] << (i == 3 ? ")\n" : ", ");
+	}
+
 	void Print(M4 m)
 	{
 		for (size_t i = 0; i < 4; i++)
 		{
 			V4 v = m[i];
-			std::cout << '(';
-			for (size_t i = 0; i < 4; i++)
-				std::cout << v.data[i] << (i == 3 ? ")\n" : ", ");
+			Print(v);
 		}
 	}
 
@@ -995,8 +1000,10 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 	void
 	ExampleApp::Run()
 	{
+		bool depletedCollisions = false; // only do one collision when testing
 		//auto [ShapeA, ShapeB] = magic();
-
+		// reflect hit with normal and and scale the vector with the other factors
+		
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
 		time_t f = time(nullptr);
@@ -1010,7 +1017,7 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 			const GraphicNode node = *texturedCube.get();
 			all_loaded.push_back(std::make_shared<GraphicNode>(node));
 			all_loaded[i]->actor = std::make_shared<Actor>();
-			all_loaded[i]->actor->elasticity = 0.4;
+			all_loaded[i]->actor->elasticity = 1.001f;
 			all_loaded[i]->actor->mass = 2;
 			all_loaded[i]->actor->isDynamic = true;
 
@@ -1019,14 +1026,14 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 		}
 
 		all_loaded[0]->actor->mass = 100;
-		all_loaded[0]->actor->elasticity = 0.4;
-		all_loaded[0]->actor->linearVelocity = V3(-1e-3f, 0, 0);
-		all_loaded[0]->actor->transform = Translate(V4(3.5f, 0, 0));
+		//all_loaded[0]->actor->elasticity = 0.4;
+		all_loaded[0]->actor->linearVelocity = V3(-1e-2f, 0, 0);
+		all_loaded[0]->actor->transform = Translate(V4(3.5f, -0.7f, 0));
 
-		all_loaded[1]->actor->transform = Translate(V4(-3.5f, 0, 0));
+		all_loaded[1]->actor->transform = Translate(V4(-3.5f, 0.8f, 0));
 		all_loaded[1]->actor->mass = 100;
-		all_loaded[1]->actor->elasticity = 0.5;
-		all_loaded[1]->actor->linearVelocity = V3(1e-3f, -0, 0);
+		//all_loaded[1]->actor->elasticity = 0.5;
+		all_loaded[1]->actor->linearVelocity = V3(1e-2f, -0, 0);
 		//all_loaded[1]->actor->isDynamic = false;
 		//all_loaded[1]->actor->transform = Translate(V4(1 * 0.75f, 3.f * 1, 0));
 		// deltatime
@@ -1146,9 +1153,9 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 
 				if(info.isColliding)
 				{
-					info.norm1 = V3( 1, 0, 0);
+					info.norm1 = V3(1, 0, 0);
 					info.norm2 = V3(-1, 0, 0);
-					info.polytope = V3();
+					info.polytope = V3(0, 0.0f, 0);
 					info.depth = 0;
 
 					/* const */ float& m1 = ith->actor->mass;
@@ -1180,8 +1187,8 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 
 					assert(m1 > 0.f);
 					assert(m2 > 0.f);
-					assert(0.f <= e1 && e1 <= 1.f);
-					assert(0.f <= e2 && e2 <= 1.f);
+					//assert(0.f <= e1 && e1 <= 1.f);
+					//assert(0.f <= e2 && e2 <= 1.f);
 
 					//V4 relativeVelocity = u2 - u1;
 
@@ -1196,38 +1203,40 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 					const V4 v1 = e1 * (((m1-m2)/(m1+m2))*u1+((2*m2*u2) * (1 / (m1+m2))));
 					const V4 v2 = e2 * (((m2-m1)/(m1+m2))*u2+((2*m1*u1) * (1 / (m1+m2))));
 					
+					/*Print(i_cm);
+					Print(info.polytope);
+					Print(v1);*/
+					r1 = Cross(info.polytope - i_cm, v1 * -1.f);
+					r2 = Cross(info.polytope - j_cm, v2 * -1.f);
 					V4 axis1 = Cross(r1, v1);
 					V4 axis2 = Cross(r2, v2);
 					w1 = Length(axis1) / (m1 * Length(r1)) * e1;
 					w2 = Length(axis2) / (m2 * Length(r2)) * e2;
 
 					//std::cin.get();
-					o1 += w1; // should only last during hit frames
-					o2 += w2;
+					o1 += w1 * 70; // should only last during hit frames
+					o2 += w2 * 70;
 
-					if (ith->actor->isDynamic && axis1.Length())
-					{
+					if (axis1.Length2())
 						rot1 = Rotation(axis1, o1);
-						o1 = o1;
-						std::cout << o2 << std::endl;
-
+					//o1 = o1 * 0.9;
 						
-						const V4 res = reflect(v1, info.norm1);
-						const V3 kl = { res.x, res.y, res.z };
-						//ith->actor->apply_force(kl * 0.001f, dt);
+					//const V4 res = reflect(v1, info.norm1);
+					//const V3 kl = { res.x, res.y, res.z };
+					//ith->actor->apply_force(kl * 0.001f, dt);
 
-						u1 = reflect(v1, info.norm1);
-					}
-					if (jth->actor->isDynamic && axis2.Length())
-					{
+					u1 = v1 * ith->actor->isDynamic; reflect(v1, info.norm1);
+					
+					if (axis2.Length2())
 						rot2 = Rotation(axis2, o2);
-						o2 = o2;
-						const V4 res = reflect(v2 * -1.f, info.norm2);
-						const V3 kl = { res.x, res.y, res.z };
-						std::cout << o2 << std::endl;
-						//jth->actor->apply_force(kl * 0.001f, dt);
-						u2 = reflect(v2 * -1.f, info.norm2);
-					}
+					//o2 = o2 * 0.9;
+
+					//const V4 res = reflect(v2 * -1.f, info.norm2);
+					//const V3 kl = { res.x, res.y, res.z };
+					//jth->actor->apply_force(kl * 0.001f, dt);
+						
+					u2 = v2 * jth->actor->isDynamic; reflect(v2 * -1.f, info.norm2);
+					
 				}
 			}
 

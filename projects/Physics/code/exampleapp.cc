@@ -1178,10 +1178,10 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 					V4& u2 = jth->actor->linearVelocity;
 					
 					M4& rot1 = ith->actor->rotation;
-					M4& rot2 = jth->actor->rotation;
-					float& o1 = ith->actor->orie;
-					float& o2 = jth->actor->orie;
-					float& w1 = ith->actor->angleVel;
+					M4 &rot2 = jth->actor->rotation;
+					float &o1 = ith->actor->angle;
+					float &o2 = jth->actor->angle;
+					float &w1 = ith->actor->angleVel;
 					float& w2 = jth->actor->angleVel;
 
 

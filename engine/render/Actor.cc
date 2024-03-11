@@ -9,7 +9,7 @@ Actor::Actor()
     transform = rotation;
     linearVelocity = V4();
     mass = 0.f;
-    orie = 0.f;
+    angle = 0.f;
     angleVel = 0.f;
     isDynamic = false;
 }

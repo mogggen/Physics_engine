@@ -12,7 +12,7 @@ struct Actor
     Quaternion angularVelocity;
     
     M4 rotation;
-    float orie;
+    float angle;
     float angleVel;
     M4 transform;
     

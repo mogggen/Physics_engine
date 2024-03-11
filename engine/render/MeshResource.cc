@@ -598,38 +598,47 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile, std:
 				size_t posi = 0;
 				string tokenSmall;
 				vector<unsigned> argi;
+				string sep = texels.size() ? "/" : "//";
 
 				for (size_t i = 0; i < args.size(); i++)
 				{
 					argi.clear();
-					while ((posi = args[i].find("/")) != string::npos)
+					while ((posi = args[i].find(sep)) != string::npos)
 					{
 						if (argi.size() >= 4)
 						{
 							cout << "i: " << i << endl;
 							cout << "argi: ";
-							for (auto s : argi) cout << s << " ";
+							for (unsigned s : argi) cout << s << " ";
 							cout << endl;
 							cerr << "too many arguments in faceProperties, expected 2 or 3" << endl;
 							break;
 						}
 						tokenSmall = args[i].substr(0, posi);
-						args[i].erase(0, posi + 1);
+						args[i].erase(0, posi + sep.size());
 						argi.push_back(stoi(tokenSmall));
 					}
 					argi.push_back(stoi(args[i]));
 					if (argi.size() < 2)
 					{
-						cerr << "not enough parameters in faceProperies 2 or 3";
+						cerr << "not enough parameters in faceProperties 2 or 3";
 						break;
 					}
 
-					_vertices.push_back(Vertex{
-						coords[(argi[0]) - 1],
-						V4(1, 1, 1, 1),
-						texels[(argi[1]) - 1],
-						(argi.size() == 3 ? normals[argi[2] - 1] : V3()),
-						});
+					Vertex v = Vertex();
+					v.pos = coords[(argi[0]) - 1];
+					v.rgba = V4(1, 1, 1, 1);
+					if (texels.size())
+					{
+						v.texel = texels[(argi[1]) - 1];
+						v.normal = (argi.size() == 3 ? normals[argi[2] - 1] : V3());
+					}
+					else
+					{
+						v.texel = V2();
+						v.normal = (argi.size() == 3 ? normals[argi[1] - 1] : V3());
+					}
+					_vertices.push_back(v);
 					if (args.size() == 3)
 						_indices.push_back(argi[0] - 1);
 				}

@@ -488,7 +488,7 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 			std::vector<V3> fireNormals;
 			std::vector<Vertex> fireVertices;
 			// TODO: fix this later if requried
-			fireHydrantMesh = MeshResource::LoadObj("textures/cube.obj", fireIndices, fireCoords, fireTexels, fireNormals, fireVertices);
+			fireHydrantMesh = MeshResource::LoadObj("textures/pyramid.obj", fireIndices, fireCoords, fireTexels, fireNormals, fireVertices);
 			fireHydrantMesh->indicesAmount = fireIndices;
 			fireHydrantMesh->positions = fireCoords;
 			fireHydrantMesh->texels = fireTexels;
@@ -1048,14 +1048,14 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 				std::vector<V3> &i_vertices = ith->getMesh()->positions;
 				apply_worldspace(i_vertices, ith->actor->transform);
 				std::vector<Face> i_faces;
-				ConvertToFaces(ith, i_faces);
+				//ConvertToFaces(ith, i_faces);
 				V3 i_cm = findAverage(i_vertices);
 
 				// j
 				std::vector<V3> &j_vertices = jth->getMesh()->positions;
 				apply_worldspace(j_vertices, jth->actor->transform);
 				std::vector<Face> j_faces;
-				ConvertToFaces(jth, j_faces);
+				//ConvertToFaces(jth, j_faces);
 				V3 j_cm = findAverage(j_vertices);
 
 				CollisionInfo &info = sat(i_faces, j_faces);

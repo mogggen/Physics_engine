@@ -78,9 +78,9 @@ void Actor::update(const float& dt)
     //transform = (Translate(linearVelocity * dt) * transform);
     
     transform = 
-    rotation *
     (Translate(linearVelocity * dt) *
-    transform)
+    transform) *
+    rotation
         ;
     //Quaternion deltaOrientation = Quaternion(1.0, angularVelocity.getX() * dt * 0.5,
     //                                                angularVelocity.getY() * dt * 0.5,

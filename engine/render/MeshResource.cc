@@ -483,6 +483,8 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile,
 {
 	if (!_vertices.empty()) _vertices.clear();
 	if (!_indices.empty()) _indices.clear();
+	if (!_faces.empty()) _faces.clear();
+
 
 	using namespace std;
 	ifstream fs(pathToFile);
@@ -602,6 +604,8 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile,
 				string tokenSmall;
 				vector<unsigned> argi;
 				string sep = texels.size() ? "/" : "//";
+				Face tempFace;
+				tempFace.vertices = {};
 
 				for (size_t i = 0; i < args.size(); i++)
 				{
@@ -642,6 +646,8 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile,
 						v.normal = (argi.size() == 3 ? normals[argi[1] - 1] : V3());
 					}
 					_vertices.push_back(v);
+					tempFace.vertices.push_back(v.pos);
+					tempFace.normal = v.normal;
 					if (args.size() == 3)
 						_indices.push_back(argi[0] - 1);
 				}
@@ -649,26 +655,30 @@ std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile,
 				{
 					float dist1 = (_vertices[_vertices.size() - 4].pos - _vertices[_vertices.size() - 2].pos).Length();
 					float dist2 = (_vertices[_vertices.size() - 3].pos - _vertices[_vertices.size() - 1].pos).Length();
-					if (dist1 > dist2)
-					{
-						_indices.push_back(_vertices.size() - 4);
-						_indices.push_back(_vertices.size() - 3);
-						_indices.push_back(_vertices.size() - 1);
 
-						_indices.push_back(_vertices.size() - 3);
-						_indices.push_back(_vertices.size() - 2);
-						_indices.push_back(_vertices.size() - 1);
-					}
-					else
-					{
-						_indices.push_back(_vertices.size() - 4);
-						_indices.push_back(_vertices.size() - 3);
-						_indices.push_back(_vertices.size() - 2);
+					_indices.push_back(argi[0] - 4);
+					_indices.push_back(argi[0] - 3);
+					_indices.push_back(argi[0] - 2);
+					_indices.push_back(argi[0] - 1);
+					
+					tempFace.vertices.push_back(coords[argi[0] - 1]);
+					tempFace.normal = ([&]() ->V3
+						{
+						if (argi.size() == 3) {
+							if (texels.size())
+							{
 
-						_indices.push_back(_vertices.size() - 4);
-						_indices.push_back(_vertices.size() - 2);
-						_indices.push_back(_vertices.size() - 1);
-					}
+								return normals[argi[2] - 1];
+							}
+							else
+							{
+								return normals[argi[1] - 1];
+							}
+						}
+						else {
+							return V3();
+						}
+					})();
 				}
 			}
 		}

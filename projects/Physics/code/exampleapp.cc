@@ -172,12 +172,6 @@ namespace Example
 		return closest_point;
 	}
 
-	struct Face
-	{
-		std::vector<V3> vertices;
-		V3 normal;
-	};
-
 	// Function to find the intersection points between two faces
 	std::vector<V3> FindFaceIntersection(Face face1, Face face2)
 	{
@@ -487,13 +481,15 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 			std::vector<V2> fireTexels;
 			std::vector<V3> fireNormals;
 			std::vector<Vertex> fireVertices;
-			// TODO: fix this later if requried
-			fireHydrantMesh = MeshResource::LoadObj("textures/pyramid.obj", fireIndices, fireCoords, fireTexels, fireNormals, fireVertices);
+			std::vector<Face> fireFaces;
+			// TODO: fix this later if required
+			fireHydrantMesh = MeshResource::LoadObj("textures/pyramid.obj", fireIndices, fireCoords, fireTexels, fireNormals, fireVertices, fireFaces);
 			fireHydrantMesh->indicesAmount = fireIndices;
 			fireHydrantMesh->positions = fireCoords;
 			fireHydrantMesh->texels = fireTexels;
 			fireHydrantMesh->normals = fireNormals;
 			fireHydrantMesh->vertices = fireVertices;
+			fireHydrantMesh->faces = fireFaces;
 			fireHydrantMesh->min = fireHydrantMesh->find_bounds().first;
 			fireHydrantMesh->max = fireHydrantMesh->find_bounds().second;
 
@@ -520,12 +516,14 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 			std::vector<V2> cubeTexels;
 			std::vector<V3> cubeNormals;
 			std::vector<Vertex> cubeVertices;
-			cubeMesh = MeshResource::LoadObj("textures/floorbox.obj", cubeIndices, cubeCoords, cubeTexels, cubeNormals, cubeVertices);
+			std::vector<Face> cubeFaces;
+			cubeMesh = MeshResource::LoadObj("textures/floorbox.obj", cubeIndices, cubeCoords, cubeTexels, cubeNormals, cubeVertices, cubeFaces);
 			cubeMesh->indicesAmount = cubeIndices;
 			cubeMesh->positions = cubeCoords;
 			cubeMesh->texels = cubeTexels;
 			cubeMesh->normals = cubeNormals;
 			cubeMesh->vertices = cubeVertices;
+			cubeMesh->faces = cubeFaces;
 
 			cubeMesh->min = cubeMesh->find_bounds().first;
 			cubeMesh->max = cubeMesh->find_bounds().second;

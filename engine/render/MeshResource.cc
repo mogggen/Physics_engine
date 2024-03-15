@@ -297,7 +297,8 @@ std::shared_ptr<MeshResource> LoadObj(const char *pathToFile,
 		std::vector<V3>& _positions,
 		std::vector<V2>& _texels,
 		std::vector<V3>& _normals,
-		std::vector<Vertex>& _vertices)
+		std::vector<Vertex>& _vertices,
+	std::vector<Face>& _faces)
 {
 	char buf[1024];
 	FILE *fs;
@@ -472,11 +473,13 @@ std::shared_ptr<MeshResource> LoadObj(const char *pathToFile,
 	return std::make_shared<MeshResource>(&vertices[0], vertices.size(), &indices[0], indices.size());
 }
 
-std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile, std::vector<uint32>& _indices,
+std::shared_ptr<MeshResource> MeshResource::LoadObj(const char* pathToFile,
+	std::vector<uint32>& _indices,
 	std::vector<V3>& _positions,
 	std::vector<V2>& _texels,
 	std::vector<V3>& _normals,
-	std::vector<Vertex>& _vertices)
+	std::vector<Vertex>& _vertices,
+	std::vector<Face>& _faces)
 {
 	if (!_vertices.empty()) _vertices.clear();
 	if (!_indices.empty()) _indices.clear();

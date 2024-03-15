@@ -780,7 +780,7 @@ std::vector<V3>& rhs)
 	}
 }
 
-#pragma endregion // Vector3
+#pragma endregion
 
 #pragma region Vector4
 //	Vector operations: +, -, *, length, normalize, dot product, cross product
@@ -1520,8 +1520,6 @@ inline M4 projection(float fov, float aspect, float n, float f)
 	return temp;
 }
 
-#pragma endregion // Matrix
-
 
 inline void apply_worldspace(
 	std::vector<V3>& verts,
@@ -1533,6 +1531,8 @@ inline void apply_worldspace(
 		ff = ((transform) * V4(ff, 1)).toV3();
 	}
 }
+
+#pragma endregion
 
 #pragma region Quaternions
 
@@ -1660,8 +1660,7 @@ inline const M4 quaternionToRotationMatrix(const Quaternion& shift)
 }
 
 
-#pragma endregion // Quaternions
-
+#pragma endregion
 
 #pragma region Plane
 
@@ -1687,7 +1686,7 @@ inline bool Plane::pointIsOnPlane(const V3& point, float epsion)
 	return res <= epsion || res >= -epsion;
 }
 
-#pragma endregion // Plane
+#pragma endregion
 
 #pragma region Ray
 
@@ -1749,8 +1748,9 @@ inline const V3 Ray::minDist(const std::vector<V3>& others)
 	return others[min_index];
 }
 
-#pragma endregion // Ray
+#pragma endregion
 
+#pragma region Node
 
 struct Node {
 	float value;
@@ -1909,6 +1909,18 @@ inline void inOrderTraversal(Node * root) {
 	inOrderTraversal(root->right);
 }
 
+#pragma endregion
+
+#pragma region Face
+
+struct Face
+{
+	std::vector<V3> vertices;
+	V3 normal;
+};
+
+#pragma endregion
+
 #pragma region AABB
 
 struct AABB
@@ -1949,4 +1961,4 @@ inline std::vector<std::pair<size_t, size_t>> aabbPlaneSweep(std::vector<AABB>& 
 	return intersections;
 }
 
-#pragma endregion // AABB
+#pragma endregion

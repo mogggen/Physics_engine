@@ -18,6 +18,7 @@ public:
 	std::vector<V2> texels;
 	std::vector<V3> normals;
 	std::vector<Vertex> vertices;
+	std::vector<Face> faces;
 
 	V3 center_of_mass;
 	
@@ -38,7 +39,8 @@ public:
 		std::vector<V3>& _positions,
 		std::vector<V2>& _texels,
 		std::vector<V3>& _normals,
-		std::vector<Vertex>& _vertices);
+		std::vector<Vertex>& _vertices,
+		std::vector<Face>& _faces);
 	MeshResource();
 	MeshResource(Vertex vertices[], uint32_t verticesLength, uint32_t indices[], uint32_t indicesLength);
 	~MeshResource();

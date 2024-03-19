@@ -1044,14 +1044,16 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 
 				// i
 				std::vector<V3> &i_vertices = ith->getMesh()->positions;
-				apply_worldspace(i_vertices, ith->actor->transform);
+				apply_world_space(i_vertices, ith->actor->transform);
 				std::vector<Face> i_faces = ith->getMesh()->faces;
+				apply_world_space(i_faces, ith->actor->transform);
 				V3 i_cm = findAverage(i_vertices);
 
 				// j
 				std::vector<V3> &j_vertices = jth->getMesh()->positions;
-				apply_worldspace(j_vertices, jth->actor->transform);
+				apply_world_space(j_vertices, jth->actor->transform);
 				std::vector<Face> j_faces = jth->getMesh()->faces;
+				apply_world_space(j_faces, jth->actor->transform);
 				V3 j_cm = findAverage(j_vertices);
 
 				CollisionInfo &info = sat(i_faces, j_faces);
@@ -1168,10 +1170,10 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 				M4 &wst = a->actor->transform;
 				if (showDebugRender)
 				{
-					if (isPressed)
-					{
-						std::cout << std::endl;
-					}
+					//if (isPressed)
+					//{
+					//	std::cout << std::endl;
+					//}
 
 					MeshResource &m = *a->getMesh();
 					Debug::DrawBB(m, V4(0, 1, 1, 1), wst);

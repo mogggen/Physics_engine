@@ -18,8 +18,7 @@
 /// <summary>
 /// V2 is a 2 dimensional vector with coordinates.
 /// </summary>
-struct V2
-{
+struct V2 {
 	union
 	{
 		struct
@@ -57,70 +56,59 @@ V2::V2() : x(0), y(0) {}
 V2::V2(float x, float y) : x(x), y(y) {}
 
 //	operator methods
-inline void V2::operator+=(V2 right)
-{
+inline void V2::operator+=(V2 right) {
 	for (size_t i = 0; i < 2; i++)
 		data[i] += right[i];
 }
 
-inline void V2::operator-=(V2 right)
-{
+inline void V2::operator-=(V2 right) {
 	for (size_t i = 0; i < 2; i++)
 		data[i] -= right[i];
 }
 
-inline void V2::operator*=(V2 right)
-{
+inline void V2::operator*=(V2 right) {
 	for (size_t i = 0; i < 2; i++)
 		data[i] *= right[i];
 }
 
-inline void V2::operator*=(float right)
-{
+inline void V2::operator*=(float right) {
 	for (size_t i = 0; i < 2; i++)
 		data[i] *= right;
 }
 
-inline void V2::operator/=(V2 right)
-{
+inline void V2::operator/=(V2 right) {
 	for (size_t i = 0; i < 2; i++)
 	{
 		data[i] /= right[i];
 	}
 }
 
-inline void V2::operator/=(float right)
-{
+inline void V2::operator/=(float right) {
 	for (size_t i = 0; i < 2; i++)
 	{
 		data[i] /= right;
 	}
 }
 
-inline float V2::Dot(V2 right)
-{
+inline float V2::Dot(V2 right) {
 	return x * right.x + y * right.y;
 }
 
 //	utilitiy methods
-inline float &V2::operator[](size_t index)
-{
+inline float &V2::operator[](size_t index) {
 	return data[index];
 }
 
-inline float V2::Length()
-{
+inline float V2::Length() {
 	return sqrtf(x * x + y * y);
 }
 
-inline float V2::Length2()
-{
+inline float V2::Length2() {
 	return x * x + y * y;
 }
 	
 
-inline void V2::Normalize()
-{
+inline void V2::Normalize() {
 	if (Length() == 0)
 		return;
 	float length = Length();
@@ -129,43 +117,37 @@ inline void V2::Normalize()
 }
 
 // operator functions
-inline V2 operator+(V2 left, V2 right)
-{
+inline V2 operator+(V2 left, V2 right) {
 	for (size_t i = 0; i < 2; i++)
 		left[i] += right[i];
 	return left;
 }
 
-inline V2 operator-(V2 left, V2 right)
-{
+inline V2 operator-(V2 left, V2 right) {
 	for (size_t i = 0; i < 2; i++)
 		left[i] -= right[i];
 	return left;
 }
 
-inline V2 operator*(V2 left, V2 right)
-{
+inline V2 operator*(V2 left, V2 right) {
 	for (size_t i = 0; i < 2; i++)
 		left[i] *= right[i];
 	return left;
 }
 
-inline V2 operator*(V2 left, float right)
-{
+inline V2 operator*(V2 left, float right) {
 	for (size_t i = 0; i < 2; i++)
 		left[i] *= right;
 	return left;
 }
 
-inline V2 operator*(float left, V2 right)
-{
+inline V2 operator*(float left, V2 right) {
 	for (size_t i = 0; i < 2; i++)
 		right[i] *= left;
 	return right;
 }
 
-inline V2 operator/(V2 left, V2 right)
-{
+inline V2 operator/(V2 left, V2 right) {
 	for (size_t i = 0; i < 2; i++)
 	{
 		left[i] /= right[i];
@@ -173,8 +155,7 @@ inline V2 operator/(V2 left, V2 right)
 	return left;
 }
 
-inline V2 operator/(V2 left, float right)
-{
+inline V2 operator/(V2 left, float right) {
 	for (size_t i = 0; i < 2; i++)
 	{
 		left[i] /= right;
@@ -182,8 +163,7 @@ inline V2 operator/(V2 left, float right)
 	return left;
 }
 
-inline V2 operator/(float left, V2 right)
-{
+inline V2 operator/(float left, V2 right) {
 	for (size_t i = 0; i < 2; i++)
 	{
 		right[i] /= left;
@@ -191,21 +171,18 @@ inline V2 operator/(float left, V2 right)
 	return right;
 }
 
-inline float Dot(V2 left, V2 right)
-{
+inline float Dot(V2 left, V2 right) {
 	float temp = 0;
 	for (size_t i = 0; i < 2; i++)
 		temp += left[i] * right[i];
 	return temp;
 }
 
-inline float Length(V2 vector)
-{
+inline float Length(V2 vector) {
 	return sqrtf(vector.x * vector.x + vector.y * vector.y);
 }
 
-inline float Length2(V2 vector)
-{
+inline float Length2(V2 vector) {
 	return vector.x * vector.x + vector.y * vector.y;
 }
 
@@ -214,8 +191,7 @@ inline float Length2(V2 vector)
 /// </summary>
 /// <param name="vector">the vector to normalize.</param>
 /// <returns></returns>
-inline V2 Normalize(V2 vector)
-{
+inline V2 Normalize(V2 vector) {
 	float length = Length(vector);
 	for (size_t i = 0; i < 3; i++)
 		vector[i] /= length;
@@ -229,8 +205,7 @@ inline V2 Normalize(V2 vector)
 /// <summary>
 /// V3 is a 3 dimensional vector with coordinates. or a rgb-value
 /// </summary>
-struct V3
-{
+struct V3 {
 	union
 	{
 		struct
@@ -330,76 +305,64 @@ V3::V3(float x, float y, float z) : x(x), y(y), z(z) {}
 V3::V3(V2 vec, float z) : x(vec.x), y(vec.y), z(z) {}
 
 //	operator methods
-inline void V3::operator+=(V3 right)
-{
+inline void V3::operator+=(V3 right) {
 	for (size_t i = 0; i < 3; i++)
 		data[i] += right[i];
 }
 
-inline void V3::operator-=(V3 right)
-{
+inline void V3::operator-=(V3 right) {
 	for (size_t i = 0; i < 3; i++)
 		data[i] -= right[i];
 }
 
-inline void V3::operator*=(V3 right)
-{
+inline void V3::operator*=(V3 right) {
 	for (size_t i = 0; i < 3; i++)
 		data[i] *= right[i];
 }
 
-inline void V3::operator*=(float right)
-{
+inline void V3::operator*=(float right) {
 	for (size_t i = 0; i < 3; i++)
 		data[i] *= right;
 }
 
-inline void V3::operator/=(V3 right)
-{
+inline void V3::operator/=(V3 right) {
 	for (size_t i = 0; i < 3; i++)
 	{
 		data[i] /= right[i];
 	}
 }
 
-inline void V3::operator/=(float right)
-{
+inline void V3::operator/=(float right) {
 	for (size_t i = 0; i < 3; i++)
 	{
 		data[i] /= right;
 	}
 }
 
-inline float V3::Dot(V3 right)
-{
+inline float V3::Dot(V3 right) {
 	return x * right.x + y * right.y + z * right.z;
 }
 
-inline void V3::Cross(V3 right)
-{
+inline void V3::Cross(V3 right) {
 	x = y * right.z - z * right.y;
 	y = z * right.x - x * right.z;
 	z = x * right.y - y * right.x;
 }
 
 //	utilitiy methods
-inline float &V3::operator[](size_t index)
-{
+inline float &V3::operator[](size_t index) {
 	return data[index];
 }
 
-inline float V3::Length()
-{
+inline float V3::Length() {
 	return sqrtf(x * x + y * y + z * z);
 }
 
-inline float V3::Length2()
-{
+inline float V3::Length2() {
 	return x * x + y * y + z * z;
 }
 
-inline V3 V3::Normalize()
-{
+inline V3 V3::Normalize() {
 	float length = Length();
 	if (length)
 	for (size_t i = 0; i < 3; i++)
@@ -407,8 +370,7 @@ inline V3 V3::Normalize()
 	return *this;
 }
 
-inline bool V3::operator==(V3 rhs)
-{
+inline bool V3::operator==(V3 rhs) {
 	if ((isnan(x) &&
 		isnan(y) &&
 		isnan(z)) &&
@@ -420,49 +382,42 @@ inline bool V3::operator==(V3 rhs)
 	return x == rhs.x && y == rhs.y && z == rhs.z;
 }
 
-inline bool V3::operator!=(V3 rhs)
-{
+inline bool V3::operator!=(V3 rhs) {
 	return !operator==(rhs);
 }
 
 //	operator functions
-inline V3 operator+(V3 left, V3 right)
-{
+inline V3 operator+(V3 left, V3 right) {
 	for (size_t i = 0; i < 3; i++)
 		left[i] += right[i];
 	return left;
 }
 
-inline V3 operator-(V3 left, V3 right)
-{
+inline V3 operator-(V3 left, V3 right) {
 	for (size_t i = 0; i < 3; i++)
 		left[i] -= right[i];
 	return left;
 }
 
-inline V3 operator*(V3 left, V3 right)
-{
+inline V3 operator*(V3 left, V3 right) {
 	for (size_t i = 0; i < 3; i++)
 		left[i] *= right[i];
 	return left;
 }
 
-inline V3 operator*(V3 left, float right)
-{
+inline V3 operator*(V3 left, float right) {
 	for (size_t i = 0; i < 3; i++)
 		left[i] *= right;
 	return left;
 }
 
-inline V3 operator*(float left, V3 right)
-{
+inline V3 operator*(float left, V3 right) {
 	for (size_t i = 0; i < 3; i++)
 		right[i] *= left;
 	return right;
 }
 
-inline V3 operator/(V3 left, V3 right)
-{
+inline V3 operator/(V3 left, V3 right) {
 	for (size_t i = 0; i < 3; i++)
 	{
 		left[i] /= right[i];
@@ -470,8 +425,7 @@ inline V3 operator/(V3 left, V3 right)
 	return left;
 }
 
-inline V3 operator/(V3 left, float right)
-{
+inline V3 operator/(V3 left, float right) {
 	for (size_t i = 0; i < 3; i++)
 	{
 		left[i] /= right;
@@ -480,16 +434,14 @@ inline V3 operator/(V3 left, float right)
 }
 
 
-inline float Dot(V3 left, V3 right)
-{
+inline float Dot(V3 left, V3 right) {
 	float temp = 0;
 	for (size_t i = 0; i < 3; i++)
 		temp += left[i] * right[i];
 	return temp;
 }
 
-inline V3 Cross(V3 left, V3 right)
-{
+inline V3 Cross(V3 left, V3 right) {
 	return V3(
 		left.y * right.z -
 			left.z * right.y,
@@ -501,13 +453,11 @@ inline V3 Cross(V3 left, V3 right)
 			left.y * right.x);
 }
 
-inline float Length(V3 vector)
-{
+inline float Length(V3 vector) {
 	return sqrtf(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
 }
 
-inline float Length2(V3 vector)
-{
+inline float Length2(V3 vector) {
 	return vector.x * vector.x + vector.y * vector.y + vector.z * vector.z;
 }
 
@@ -516,8 +466,7 @@ inline float Length2(V3 vector)
 /// </summary>
 /// <param name="vector">the vector to normalize.</param>
 /// <returns></returns>
-inline V3 Normalize(V3 vector)
-{
+inline V3 Normalize(V3 vector) {
 	float length = Length(vector);
 	if (length)
 		for (size_t i = 0; i < 3; i++)
@@ -525,8 +474,7 @@ inline V3 Normalize(V3 vector)
 	return vector;
 }
 
-inline bool point_in_Face_3D(const V3& p, const std::vector<V3> face)
-{
+inline bool point_in_Face_3D(const V3& p, const std::vector<V3> face) {
 	const V3& a = face[0];
 	const V3& b = face[1];
 	const V3& c = face[2];
@@ -540,8 +488,7 @@ inline bool point_in_Face_3D(const V3& p, const std::vector<V3> face)
 }
 
 
-inline const V3 findAverage(const std::vector<V3>& pos)
-{
+inline const V3 findAverage(const std::vector<V3>& pos) {
 	V3 sumPositions;
 
 	for (const V3& curr : pos)
@@ -553,8 +500,7 @@ inline const V3 findAverage(const std::vector<V3>& pos)
 
 
 // only handles point on the same plane
-inline void wrapping_sort(std::vector<V3>& faces)
-{
+inline void wrapping_sort(std::vector<V3>& faces) {
 	std::vector<V3> newWinding;
 	const V3 center = findAverage(faces);
 	
@@ -609,8 +555,7 @@ inline void barycentricCoordinates(const V3& a, const V3& b, const V3& c, const 
 	w3 = std::abs(volPABC) / sumVolumes;
 }
 
-inline const V3 findFurtestPoint(const std::vector<V3>& shapeVertices, const V3& direction)
-{
+inline const V3 findFurtestPoint(const std::vector<V3>& shapeVertices, const V3& direction) {
 	V3 farthestPoint;
 	float maxDotProduct = -FLT_MAX;
 
@@ -632,20 +577,17 @@ inline const V3 findFurtestPoint(const std::vector<V3>& shapeVertices, const V3&
 inline const V3 Support(
     const std::vector<V3>&const lhs,
     const std::vector<V3>&const rhs,
-    const V3& dir)
-{
+    const V3& dir) {
     return findFurtestPoint(lhs, dir) - findFurtestPoint(rhs, dir * -1.f);
 }
 
-inline bool same_direction(const V3& direction, const V3& other)
-{
+inline bool same_direction(const V3& direction, const V3& other) {
 	return Dot(direction, other) > 0;
 }
 
 inline bool line(
 	std::vector<V3>& simplex,
-	V3& newDir)
-{
+	V3& newDir) {
 	V3 a = simplex[0];
 	V3 b = simplex[1];
 
@@ -665,8 +607,7 @@ inline bool line(
 }
 
 inline bool triangle(std::vector<V3>& simplex,
-	V3& newDir)
-{
+	V3& newDir) {
 	V3 a = simplex[0];
 	V3 b = simplex[1];
 	V3 c = simplex[2];
@@ -712,8 +653,7 @@ inline bool triangle(std::vector<V3>& simplex,
 }
 
 inline bool tetrahedron(std::vector<V3>& simplex,
-	V3& newDir)
-{
+	V3& newDir) {
 	V3 a = simplex[0];
 	V3 b = simplex[1];
 	V3 c = simplex[2];
@@ -744,8 +684,7 @@ inline bool tetrahedron(std::vector<V3>& simplex,
 }
 
 inline bool next_simplex(std::vector<V3>& simplex,
-V3& newDir)
-{
+V3& newDir) {
 	switch (simplex.size())
 	{
 	case 2: return line(simplex, newDir);
@@ -760,8 +699,7 @@ V3& newDir)
 }
 
 inline bool gjk(std::vector<V3>& simplex_out, std::vector<V3>& lhs,
-std::vector<V3>& rhs)
-{
+std::vector<V3>& rhs) {
 	const V3 a = Support(lhs, rhs, V3(1.3f, 0, -1.f));
 	simplex_out.push_back(a);
 
@@ -788,8 +726,7 @@ std::vector<V3>& rhs)
 /// <summary>
 /// V4 is a 4 dimensional vector with homogeneous coordinates, or a rgba-value.
 /// </summary>
-struct V4
-{
+struct V4 {
 	union
 	{
 		struct
@@ -831,59 +768,50 @@ V4::V4(float x, float y, float z, float w = 0) : x(x), y(y), z(z), w(w) {}
 
 V4::V4(V3 vec, float w = 0) : x(vec.x), y(vec.y), z(vec.z), w(w) {}
 
-inline V3 V4::toV3()
-{
+inline V3 V4::toV3() {
 	return V3(this->x, this->y, this->z);
 }
 
 //	operator methods
-inline void V4::operator+=(V4 right)
-{
+inline void V4::operator+=(V4 right) {
 	for (size_t i = 0; i < 4; i++)
 		data[i] += right[i];
 }
 
-inline void V4::operator-=(V4 right)
-{
+inline void V4::operator-=(V4 right) {
 	for (size_t i = 0; i < 4; i++)
 		data[i] -= right[i];
 }
 
-inline void V4::operator*=(V4 right)
-{
+inline void V4::operator*=(V4 right) {
 	for (size_t i = 0; i < 3; i++)
 		data[i] *= right[i];
 }
 
-inline void V4::operator*=(float right)
-{
+inline void V4::operator*=(float right) {
 	for (size_t i = 0; i < 3; i++)
 		data[i] *= right;
 }
 
-inline void V4::operator/=(V4 right)
-{
+inline void V4::operator/=(V4 right) {
 	for (size_t i = 0; i < 4; i++)
 	{
 		data[i] /= right[i];
 	}
 }
 
-inline void V4::operator/=(float right)
-{
+inline void V4::operator/=(float right) {
 	for (size_t i = 0; i < 4; i++)
 	{
 		data[i] /= right;
 	}
 }
 
-inline float V4::Dot(V4 right)
-{
+inline float V4::Dot(V4 right) {
 	return x * right.x + y * right.y + z * right.z + w * right.w;
 }
 
-inline void V4::Cross(V4 right)
-{
+inline void V4::Cross(V4 right) {
 	x = y * right.z - z * right.y;
 	y = z * right.x - x * right.z;
 	z = x * right.y - y * right.x;
@@ -891,74 +819,63 @@ inline void V4::Cross(V4 right)
 }
 
 //	utilitiy methods
-inline float &V4::operator[](size_t index)
-{
+inline float &V4::operator[](size_t index) {
 	return data[index];
 }
 
-inline float V4::Length()
-{
+inline float V4::Length() {
 	return sqrtf(x * x + y * y + z * z);
 }
 
-inline float V4::Length2()
-{
+inline float V4::Length2() {
 	return x * x + y * y + z * z;
 }
 
-inline void V4::Normalize()
-{
+inline void V4::Normalize() {
 	float length = Length();
 	for (size_t i = 0; i < 3; i++)
 		data[i] /= length;
 }
 
 //	operator functions
-inline V4 operator+(V4 left, V4 right)
-{
+inline V4 operator+(V4 left, V4 right) {
 	for (size_t i = 0; i < 3; i++)
 		left[i] += right[i];
 	return left;
 }
 
-inline V4 operator-(V4 left, V4 right)
-{
+inline V4 operator-(V4 left, V4 right) {
 	for (size_t i = 0; i < 3; i++)
 		left[i] -= right[i];
 	return left;
 }
 
-inline V4 operator*(V4 left, V4 right)
-{
+inline V4 operator*(V4 left, V4 right) {
 	for (size_t i = 0; i < 3; i++)
 		left[i] *= right[i];
 	return left;
 }
 
-inline V4 operator*(V4 left, float right)
-{
+inline V4 operator*(V4 left, float right) {
 	for (size_t i = 0; i < 3; i++)
 		left[i] *= right;
 	return left;
 }
 
-inline V4 operator*(float left, V4 right)
-{
+inline V4 operator*(float left, V4 right) {
 	for (size_t i = 0; i < 3; i++)
 		right[i] *= left;
 	return right;
 }
 
-inline float Dot(V4 left, V4 right)
-{
+inline float Dot(V4 left, V4 right) {
 	float temp = 0;
 	for (size_t i = 0; i < 3; i++)
 		temp += left[i] * right[i];
 	return temp;
 }
 
-inline V4 Cross(V4 left, V4 right)
-{
+inline V4 Cross(V4 left, V4 right) {
 	return V4(
 		left.y * right.z -
 			left.z * right.y,
@@ -970,13 +887,11 @@ inline V4 Cross(V4 left, V4 right)
 			left.y * right.x);
 }
 
-inline float Length(V4 vector)
-{
+inline float Length(V4 vector) {
 	return sqrtf(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
 }
 
-inline float Length2(V4 vector)
-{
+inline float Length2(V4 vector) {
 	return vector.x * vector.x + vector.y * vector.y + vector.z * vector.z;
 }
 
@@ -985,8 +900,7 @@ inline float Length2(V4 vector)
 /// </summary>
 /// <param name="vector">the vector to normalize.</param>
 /// <returns></returns>
-inline V4 Normalize(V4 vector)
-{
+inline V4 Normalize(V4 vector) {
 	if (Length(vector) == 0)
 		return vector;
 	float length = Length(vector);
@@ -999,8 +913,7 @@ inline V4 Normalize(V4 vector)
 inline void GetFaceNormals(
 	std::pair<std::vector<V4>, size_t>& pair_out,
 	const std::vector<V3>& penetrationCenter,
-	const std::vector<size_t>& faces)
-{
+	const std::vector<size_t>& faces) {
 	std::vector<V4> normals;
 	size_t minTriangle = 0;
 	float  minDistance = FLT_MAX;
@@ -1033,8 +946,7 @@ inline void AddIfUniqueEdge(
 	std::vector<std::pair<size_t, size_t>>& edges,
 	const std::vector<size_t>& faces,
 	size_t a,
-	size_t b)
-{
+	size_t b) {
 	auto reverse = std::find(               //      0--<--3
 		edges.begin(),                      //     / \ B /   A: 2-0
 		edges.end(),                        //    / A \ /    B: 0-2
@@ -1050,8 +962,7 @@ inline void AddIfUniqueEdge(
 	}
 }
 
-struct CollisionPoints
-{
+struct CollisionPoints {
 	V3 Normal;
 	float PenetrationDepth;
 	bool HasCollision;
@@ -1061,8 +972,7 @@ struct CollisionPoints
 inline CollisionPoints epa(
 	const std::vector<V3>& simplex,
 	const std::vector<V3>& colliderA,
-	const std::vector<V3>& colliderB)
-{
+	const std::vector<V3>& colliderB) {
 	std::vector<V3> penetrationCenter(simplex.begin(), simplex.end());
 	std::vector<size_t> faces = {
 		0, 1, 2,
@@ -1158,8 +1068,7 @@ inline CollisionPoints epa(
 
 
 // data[rows][columns]
-struct M4
-{
+struct M4 {
 	V4 data[4];
 	V4 operator[](size_t index) const;
 	V4 &operator[](size_t index);
@@ -1171,22 +1080,19 @@ struct M4
 	void Transpose();
 };
 
-M4::M4()
-{
+M4::M4() {
 	for (size_t i = 0; i < 4; i++)
 	{
 		data[i] = V4(0, 0, 0, 0);
 	}
 }
 
-M4::M4(V4 v[4])
-{
+M4::M4(V4 v[4]) {
 	for (size_t i = 0; i < 4; i++)
 		(*this)[i] = v[i];
 }
 
-inline V3 M4::toV3()
-{
+inline V3 M4::toV3() {
 	// - - - x
 	// - - - y
 	// - - - z
@@ -1199,8 +1105,7 @@ inline V3 M4::toV3()
 	return temp;
 }
 
-inline V3 M4toV3(const M4& matrix)
-{
+inline V3 M4toV3(const M4& matrix) {
 	V3 temp;
 	for (size_t i = 0; i < 3; i++)
 	{
@@ -1209,26 +1114,22 @@ inline V3 M4toV3(const M4& matrix)
 	return temp;
 }
 
-inline V4 M4::operator[](size_t index) const
-{
+inline V4 M4::operator[](size_t index) const {
 	return data[index];
 }
 
-inline V4 &M4::operator[](size_t index)
-{
+inline V4 &M4::operator[](size_t index) {
 	return data[index];
 }
 
-inline M4 operator*(M4 left, M4 right)
-{
+inline M4 operator*(M4 left, M4 right) {
 	M4 temp;
 	for (size_t i = 0; i < 64; i++)
 		temp[(i / 16) % 4][(i / 4) % 4] += left[(i / 16) % 4][i % 4] * right[i % 4][(i / 4) % 4];
 	return temp;
 }
 
-inline V4 operator*(M4 left, V4 right)
-{
+inline V4 operator*(M4 left, V4 right) {
 	V4 temp;
 	for (size_t i = 0; i < 16; i++)
 		temp[(i / 4) % 4] += left[(i / 4) % 4][i % 4] * right[i % 4];
@@ -1236,8 +1137,7 @@ inline V4 operator*(M4 left, V4 right)
 	return temp;
 }
 
-inline void M4::Transpose()
-{
+inline void M4::Transpose() {
 	M4 temp = *this;
 	for (size_t i = 0; i < 16; i++)
 	{
@@ -1247,8 +1147,7 @@ inline void M4::Transpose()
 	}
 }
 
-inline M4 Transpose(M4 matrix)
-{
+inline M4 Transpose(M4 matrix) {
 	M4 temp = matrix;
 	for (size_t i = 0; i < 16; i++)
 	{
@@ -1263,8 +1162,7 @@ inline M4 Transpose(M4 matrix)
 /// Inverse a 4-by-4 matrix.
 /// </summary>
 /// <param name="matrix">the matrix to inverse</param>
-inline const M4 Inverse(const M4& matrix)
-{
+inline const M4 Inverse(const M4& matrix) {
 	// to hold the matrix values
 	float m[16];
 
@@ -1438,8 +1336,7 @@ inline const M4 Inverse(const M4& matrix)
 }
 
 // Line with direction of line and rotation around axis by theta radians
-inline M4 Rotation(V4 line, float theta)
-{
+inline M4 Rotation(V4 line, float theta) {
 	line.Normalize();
 	M4 temp;
 	temp[3].w = 1;
@@ -1471,8 +1368,7 @@ inline M4 Rotation(V4 line, float theta)
 /// </summary>
 /// <param name="pos">all 0s = identity matrix</param>
 /// <returns></returns>
-inline M4 Translate(V4 pos)
-{
+inline M4 Translate(V4 pos) {
 	M4 temp;
 	temp[0] = V4(1, 0, 0, pos[0]);
 	temp[1] = V4(0, 1, 0, pos[1]);
@@ -1481,8 +1377,7 @@ inline M4 Translate(V4 pos)
 	return temp;
 }
 
-inline M4 Scalar(float s)
-{
+inline M4 Scalar(float s) {
 	M4 temp;
 	temp[0] = V4(s, 0, 0, 0);
 	temp[1] = V4(0, s, 0, 0);
@@ -1491,8 +1386,7 @@ inline M4 Scalar(float s)
 	return temp;
 }
 
-inline M4 Scalar(V4 v)
-{
+inline M4 Scalar(V4 v) {
 	M4 temp;
 	temp[0] = V4(v[0], 0, 0, 0);
 	temp[1] = V4(0, v[1], 0, 0);
@@ -1505,8 +1399,7 @@ inline M4 Scalar(V4 v)
 /// <param name="aspect:">aspectRatio = width / heigth</param>
 /// <param name="n:">nearplane</param>
 /// <param name="f:">farplane</param>
-inline M4 projection(float fov, float aspect, float n, float f)
-{
+inline M4 projection(float fov, float aspect, float n, float f) {
 	M4 temp;
 	// solution
 	float d = tanf(2 * M_PI - fov * (M_PI / 180) / 2);
@@ -1521,14 +1414,28 @@ inline M4 projection(float fov, float aspect, float n, float f)
 }
 
 
-inline void apply_worldspace(
-	std::vector<V3>& verts,
-	M4 transform
-)
-{
-	for (V3& ff : verts)
-	{
+inline void apply_world_space(std::vector<V3>& verts, const M4& transform) {
+	for (V3& ff : verts) {
 		ff = ((transform) * V4(ff, 1)).toV3();
+	}
+}
+
+
+#pragma region Face
+
+struct Face {
+	std::vector<V3> vertices;
+	V3 normal;
+};
+
+#pragma endregion
+
+
+inline void apply_world_space(std::vector<Face> faces, const M4& transform) {
+	for (Face& ff : faces) {
+		for (V3& vert : ff.vertices) {
+			vert = ((transform)*V4(vert, 1)).toV3();
+		}
 	}
 }
 
@@ -1536,8 +1443,7 @@ inline void apply_worldspace(
 
 #pragma region Quaternions
 
-class Quaternion
-{
+class Quaternion {
 private:
 	float w, x, y, z; // Components of the quaternion: w + xi + yj + zk
 
@@ -1616,8 +1522,7 @@ public:
 
 // If the quaternion is not normalized, make sure to normalize it before converting it to a rotation matrix.
 
-inline const M4 quaternionToRotationMatrix(const Quaternion& shift)
-{
+inline const M4 quaternionToRotationMatrix(const Quaternion& shift) {
 	M4 rotationMatrix;
 
 	float w = shift.getW();
@@ -1665,8 +1570,7 @@ inline const M4 quaternionToRotationMatrix(const Quaternion& shift)
 #pragma region Plane
 
 
-struct Plane
-{
+struct Plane {
 	V3 normal;
 	V3 point;
 	
@@ -1674,14 +1578,12 @@ struct Plane
 	bool pointIsOnPlane(const V3& point, float epsilon=FLT_EPSILON);
 };
 
-Plane::Plane(V3 point, V3 normal) : point(point), normal(normal)
-{
+Plane::Plane(V3 point, V3 normal) : point(point), normal(normal) {
 
 }
 
 
-inline bool Plane::pointIsOnPlane(const V3& point, float epsion)
-{
+inline bool Plane::pointIsOnPlane(const V3& point, float epsion) {
 	float res = Dot(normal, point - this->point);
 	return res <= epsion || res >= -epsion;
 }
@@ -1690,8 +1592,7 @@ inline bool Plane::pointIsOnPlane(const V3& point, float epsion)
 
 #pragma region Ray
 
-struct Ray
-{
+struct Ray {
 #define NAN_V3 V3(NAN, NAN, NAN)
 	V3 origin;
 	V3 dir;
@@ -1700,18 +1601,15 @@ struct Ray
 	const V3 intersect(const Plane& plane, float epsilon);
 };
 
-inline Ray::Ray(V3 origin, V3 dir) : origin(origin), dir(dir)
-{
+inline Ray::Ray(V3 origin, V3 dir) : origin(origin), dir(dir) {
 
 }
 
-inline const V4 reflect(const V4& incident, const V4& normal)
-{
+inline const V4 reflect(const V4& incident, const V4& normal) {
 	return incident - 2.f * Dot(normal, incident) * normal;
 }
 
-inline const V3 Ray::intersect(const Plane& plane, float epsilon=1e-5f)
-{
+inline const V3 Ray::intersect(const Plane& plane, float epsilon=1e-5f) {
 	float dotProduct = Dot(plane.normal, dir);
 
 	if (!dotProduct) {
@@ -1726,8 +1624,7 @@ inline const V3 Ray::intersect(const Plane& plane, float epsilon=1e-5f)
 	return origin + t * dir;
 }
 
-inline const V3 Ray::minDist(const std::vector<V3>& others)
-{
+inline const V3 Ray::minDist(const std::vector<V3>& others) {
 	int min_index = -1;
 	float min = FLT_MAX;
 	for (int i = 0; i < others.size(); i++)
@@ -1911,20 +1808,9 @@ inline void inOrderTraversal(Node * root) {
 
 #pragma endregion
 
-#pragma region Face
-
-struct Face
-{
-	std::vector<V3> vertices;
-	V3 normal;
-};
-
-#pragma endregion
-
 #pragma region AABB
 
-struct AABB
-{
+struct AABB {
 	V3 min, max;
 
     bool intersects(const AABB& other) const {
@@ -1934,8 +1820,7 @@ struct AABB
     }
 };
 
-inline std::vector<std::pair<size_t, size_t>> aabbPlaneSweep(std::vector<AABB>& AABBs)
-{
+inline std::vector<std::pair<size_t, size_t>> aabbPlaneSweep(std::vector<AABB>& AABBs) {
 	std::vector<std::pair<size_t, size_t>> intersections;
 	// sort to find smallest x
 	std::sort(AABBs.begin(), AABBs.end(),

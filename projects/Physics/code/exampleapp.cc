@@ -511,7 +511,7 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 			// all_loaded.push_back(texturedCube);
 
 			// MeshResource
-			std::vector<unsigned> cubeIndices;
+			/*std::vector<unsigned> cubeIndices;
 			std::vector<V3> cubeCoords;
 			std::vector<V2> cubeTexels;
 			std::vector<V3> cubeNormals;
@@ -529,20 +529,20 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 			cubeMesh->max = cubeMesh->find_bounds().second;
 
 			cubeTexture = std::make_shared<TextureResource>("textures/red.png");
-			cubeTexture->LoadFromFile();
+			cubeTexture->LoadFromFile();*/
 
 			// shaderResource
-			cubeScript = std::make_shared<ShaderResource>();
-			cubeScript->LoadShader(cubeScript->vs, cubeScript->ps, "textures/vs.glsl", "textures/ps.glsl");
+			/*cubeScript = std::make_shared<ShaderResource>();
+			cubeScript->LoadShader(cubeScript->vs, cubeScript->ps, "textures/vs.glsl", "textures/ps.glsl");*/
 
 			// Actor
-			std::shared_ptr<Actor> cubeActor = std::make_shared<Actor>();
+		/*	std::shared_ptr<Actor> cubeActor = std::make_shared<Actor>();
 			cubeActor->mass = 300;
 			cubeActor->elasticity = 0.3;
-			cubeActor->isDynamic = false;
+			cubeActor->isDynamic = false;*/
 
 			// GraphicNode
-			floor = std::make_shared<GraphicNode>(cubeMesh, cubeTexture, cubeScript, cubeActor);
+			//floor = std::make_shared<GraphicNode>(cubeMesh, cubeTexture, cubeScript, cubeActor);
 
 			// all_loaded.push_back(floor);
 
@@ -935,15 +935,27 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 																			  // all_loaded[i]->actor->linearVelocity = V3(-1e-3f, 1e-3f, 0);
 		}
 
+		// floor
+		{
+			const GraphicNode node = *texturedCube.get();
+			size_t newest_box = all_loaded.size();
+			all_loaded.push_back(std::make_shared<GraphicNode>(node));
+			all_loaded[newest_box]->actor = std::make_shared<Actor>();
+			all_loaded[newest_box]->actor->elasticity = 1.000f;
+			all_loaded[newest_box]->actor->mass = 1000;
+			all_loaded[newest_box]->actor->isDynamic = false;
+			all_loaded[newest_box]->actor->transform = Translate(V4(0, -10.5f, 0));
+		}
+
 		all_loaded[0]->actor->mass = 100;
 		// all_loaded[0]->actor->elasticity = 0.4;
-		all_loaded[0]->actor->linearVelocity = V3(-1e-3f, 0, 0);
-		all_loaded[0]->actor->transform = Translate(V4(3.5f, -0.7f, 0));
+		//all_loaded[0]->actor->linearVelocity = V3(-1e-3f, 0, 0);
+		all_loaded[0]->actor->transform = Translate(V4(1.5f, -0.7f, 0));
 
-		all_loaded[1]->actor->transform = Translate(V4(-3.5f, 0.8f, 0));
+		all_loaded[1]->actor->transform = Translate(V4(-1.5f, 0.8f, 0));
 		all_loaded[1]->actor->mass = 100;
 		// all_loaded[1]->actor->elasticity = 0.5;
-		all_loaded[1]->actor->linearVelocity = V3(1e-3f, -0, 0);
+		//all_loaded[1]->actor->linearVelocity = V3(1e-3f, -0, 0);
 		// all_loaded[1]->actor->isDynamic = false;
 		// all_loaded[1]->actor->transform = Translate(V4(1 * 0.75f, 3.f * 1, 0));
 		//  deltatime
@@ -965,7 +977,7 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 		// std::cout << dt;
 
 		// set identities
-		floor->actor->transform = Translate(V4(0, -10.5f, 0));
+		//floor->actor->transform = Translate(V4(0, -10.5f, 0));
 
 		for (const std::shared_ptr<GraphicNode> g : all_loaded)
 		{
@@ -1060,10 +1072,10 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 
 				if (info.isColliding)
 				{
-					info.norm1 = V3(1, 0, 0);
-					info.norm2 = V3(-1, 0, 0);
-					info.polytope = V3(0, 0.0f, 0);
-					info.depth = 0;
+					//info.norm1 = V3(1, 0, 0);
+					//info.norm2 = V3(-1, 0, 0);
+					//info.polytope = V3(0, 0.0f, 0);
+					//info.depth = 0;
 
 					/* const */ float &m1 = ith->actor->mass;
 					/* const */ float &m2 = jth->actor->mass;
@@ -1146,12 +1158,12 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 				}
 			}
 
-			for (const auto node : all_loaded)
+			for (std::shared_ptr<GraphicNode> node : all_loaded)
 			{
 				const float &m = node->actor->mass;
 				if (node->actor->isDynamic)
 				{
-					// node->actor->apply_force(m * GRAVITY * 0.0001f, dt);
+					node->actor->apply_force(m * GRAVITY * 0.001f, dt);
 				}
 			}
 

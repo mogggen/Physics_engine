@@ -932,9 +932,11 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 		apply_world_space(j_faces, jth->actor->transform);
 		V3 j_cm = findAverage(j_vertices);
 
-		const CollisionInfo& info = sat(i_faces, j_faces);
+		CollisionInfo& info = sat(i_faces, j_faces);
 
 		if (!info.isColliding) return;
+
+		info.polytope = V3(0.5f, -10.5f, 0.f);
 
 		const float& m1 = ith->actor->mass;
 		const float& m2 = jth->actor->mass;

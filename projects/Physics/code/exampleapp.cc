@@ -985,24 +985,21 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 		o2 += w2;
 
 		if (axis1.Length2())
-			rot1 = Rotation(axis1, o1);
+			rot1 = Translate(axis1) * Rotation(axis1, o1);
 
-		// const V4 res = reflect(v1, info.norm1);
-		// const V3 kl = { res.x, res.y, res.z };
-		// ith->actor->apply_force(kl * 0.001f, dt);
 
 		u1 = v1 * ith->actor->isDynamic;
-		reflect(v1, info.norm1);
+		const V4 res = reflect(v1, info.norm1);
+		const V3 kl = { res.x, res.y, res.z };
+		ith->actor->apply_force(kl * 0.001f, 0.01f);
 
 		if (axis2.Length2())
-			rot2 = Rotation(axis2, o2);
-
-		// const V4 res = reflect(v2 * -1.f, info.norm2);
-		// const V3 kl = { res.x, res.y, res.z };
-		// jth->actor->apply_force(kl * 0.001f, dt);
+			rot2 = Translate(axis2) * Rotation(axis2, o2);
 
 		u2 = v2 * jth->actor->isDynamic;
-		reflect(v2 * -1.f, info.norm2);
+		const V4 res2 = reflect(v2 * -1.f, info.norm2);
+		const V3 kl2 = { res2.x, res2.y, res2.z };
+		jth->actor->apply_force(kl2 * 0.001f, 0.01f);
 	}
 
 	void
@@ -1113,7 +1110,7 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 				const float &m = node->actor->mass;
 				if (node->actor->isDynamic)
 				{
-					node->actor->apply_force(m * GRAVITY * 0.001f, dt);
+					node->actor->apply_force(m * GRAVITY * 0.01f, dt);
 				}
 			}
 

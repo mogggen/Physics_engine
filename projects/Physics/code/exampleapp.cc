@@ -43,7 +43,7 @@ namespace Example
 	/**
 	 */
 
-	std::pair<V3, V3> findAABB(MeshResource &mesh, M4 modelMatrix)
+	static std::pair<V3, V3> findAABB(MeshResource &mesh, const M4& modelMatrix)
 	{
 		V3 current = (modelMatrix * V4(mesh.min, 1)).toV3();
 		std::pair<V3, V3> ret = {current, current};
@@ -63,7 +63,7 @@ namespace Example
 		return ret;
 	}
 
-	inline const V3 find_AABB_intersection(Ray &ray, MeshResource &mesh)
+	inline static V3 find_AABB_intersection(Ray &ray, MeshResource &mesh)
 	{
 		Plane left_plane(V3(mesh.min[0], 0, 0), V3(mesh.min[0], 0, 0));
 		Plane right_plane(V3(mesh.max[0], 0, 0), V3(mesh.max[0], 0, 0));
@@ -96,9 +96,9 @@ namespace Example
 		return ray.minDist(tt);
 	}
 
-	const V3 ray_intersection(
+	inline static const V3 ray_intersection(
 		Ray &r,
-		M4 WorldSpaceTransform,
+		const M4& WorldSpaceTransform,
 		std::vector<V3> &i_worldSpace_coords,
 		std::vector<unsigned> &i_meshModel_indices,
 		std::vector<V3> *normals = nullptr)
@@ -149,7 +149,7 @@ namespace Example
 			}
 			isUndef = false;
 
-			if (point_in_Face_3D(currentIntersect, {a, b, c}))
+			if (IsPointInFace(currentIntersect, {a, b, c}))
 			{
 				if (isUndef)
 				{
@@ -173,7 +173,7 @@ namespace Example
 	}
 
 	// Function to find the intersection points between two faces
-	std::vector<V3> FindFaceIntersection(Face face1, Face face2)
+	static std::vector<V3> FindFaceIntersection(Face face1, Face face2)
 	{
 		std::vector<V3> intersectionPoints;
 
@@ -222,7 +222,7 @@ namespace Example
 	}
 
 	// Function to calculate the projection of an object onto a given axis
-	float ProjectOntoAxis(const std::vector<Face> &faces, const V3 &axis)
+	static float ProjectOntoAxis(const std::vector<Face> &faces, const V3 &axis)
 	{
 		float min = FLT_MAX;
 		float max = -FLT_MAX;
@@ -247,7 +247,7 @@ namespace Example
 	}
 
 	// Function to calculate the penetration point along the axis
-	const V3 CalculatePenetrationPoint(
+	static V3 CalculatePenetrationPoint(
 		const std::vector<Face> &i_faces,
 		const std::vector<Face> &j_faces,
 		const V3 &axis)
@@ -332,7 +332,7 @@ namespace Example
 		V3 norm2;
 	};
 
-	CollisionInfo sat(const std::vector<Face> &i_vertices, const std::vector<Face> &j_vertices)
+	static CollisionInfo sat(const std::vector<Face> &i_vertices, const std::vector<Face> &j_vertices)
 	{
 		CollisionInfo collisionInfo;
 		collisionInfo.isColliding = true;
@@ -578,7 +578,7 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 		// cube->actor->transform = Translate(V4(resultingHit, 1));
 	}
 
-	void bulk_update(size_t frames, size_t &dt)
+	static void bulk_update(size_t frames, size_t &dt)
 	{
 		// update movement
 		// if (collision)
@@ -879,7 +879,7 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 		}
 	};
 
-	void ConvertToFaces(std::shared_ptr<GraphicNode> &ith, std::vector<Face> &i_faces)
+	static void ConvertToFaces(std::shared_ptr<GraphicNode> &ith, std::vector<Face> &i_faces)
 	{
 		Face currFace;
 		//Plane plane = Plane();
@@ -909,7 +909,12 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 		}
 	}
 
-	void handle_collision(const std::shared_ptr<GraphicNode>& ith, const std::shared_ptr<GraphicNode>& jth)
+    static void PointIsOnLine(const V3& PointIsOnLine, const V3& line, const float margin = 0.0001f)
+    {
+
+    }
+
+	static void handle_collision(const std::shared_ptr<GraphicNode>& ith, const std::shared_ptr<GraphicNode>& jth)
 	{
 		// setup up point collision for one rigidbody against origo
 		// (use a single triangle face for +3 vertices plane of the cubes to act as point, line, triangle face, and merged faces changes

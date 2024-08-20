@@ -474,17 +474,36 @@ inline V3 Normalize(V3 vector) {
 	return vector;
 }
 
-inline bool point_in_Face_3D(const V3& p, const std::vector<V3> face) {
+inline bool IsPointOnPoint(const V3& lhs, const V3& rhs)
+{
+    return fabsf(Length2(rhs - lhs)) < FLT_EPSILON;
+}
+
+inline bool IsPointOnLine(const V3& point, const V3& start, const V3& end, const float margin = 0.0001f)
+{
+    return fabsf(Length2(start - point) + Length2(end - point) - Length2(end - start)) < FLT_EPSILON;
+}
+
+
+inline bool IsPointInFace(const V3& p, const std::vector<V3>& face) {
 	const V3& a = face[0];
 	const V3& b = face[1];
 	const V3& c = face[2];
 	const V3 x1 = Cross(b - a, p - a);
 	const V3 x2 = Cross(c - b, p - b);
 	const V3 x3 = Cross(a - c, p - c);
-	return
-		(Normalize(x1) == Normalize(x2) && Normalize(x2) == Normalize(x3))
-		&&
-		(Dot(x1, x2) > 0.f && Dot(x2, x3) > 0.f && Dot(x3, x1) > 0.f);
+	return fabsf(Length2(Normalize(x1) - Normalize(x2))) < FLT_EPSILON &&
+           fabsf(Length2(Normalize(x2) - Normalize(x3))) < FLT_EPSILON;
+}
+
+inline const std::pair<V3, V3> getLineOnFace(const V3& start, const V3& end, const std::vector<V3> face)
+{
+
+}
+
+inline const std::vector<V3> getFaceOnFace(const std::vector<Face>& lhs, const std::vector<Face>& rhs)
+{
+
 }
 
 

@@ -202,7 +202,7 @@ namespace Example
 				V3 d1 = edge2_start - edge1_start;
 				float cross = Cross(dir1, dir2).Length();
 
-				if (cross < 0.0001)
+				if (cross < FLT_MARGIN)
 				{ // Parallel or collinear
 					continue;
 				}
@@ -318,7 +318,7 @@ namespace Example
 			V3 closestPointOnLine1 = line1.origin + line1.dir * t;
 			V3 closestPointOnLine2 = line2.origin + line2.dir * t;
 
-			return findAverage({closestPointOnLine1, closestPointOnLine2});
+			return findAverage({ closestPointOnLine1, closestPointOnLine2 });
 		}
 		return findAverage(FindFaceIntersection(i_best, j_best));
 	}

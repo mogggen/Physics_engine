@@ -10,6 +10,9 @@
 #ifndef M_PI
 #define M_PI 3.141592553584
 #endif
+#ifndef FLT_MARGIN
+#define FLT_MARGIN 1e-2f
+#endif
 
 
 #pragma region Vector2
@@ -247,8 +250,8 @@ struct V3 {
 
 	bool operator!=(V3 const& rhs) const {
 		for (size_t i = 0; i < 3; ++i) {
-			if (data[i] + FLT_EPSILON <= rhs.data[i] &&
-				data[i] - FLT_EPSILON >= rhs.data[i]
+			if (data[i] + FLT_MARGIN <= rhs.data[i] &&
+				data[i] - FLT_MARGIN >= rhs.data[i]
 				) return false;
 		}
 		return true;
@@ -256,8 +259,8 @@ struct V3 {
 
 	bool operator==(V3 const& rhs) const {
 		for (size_t i = 0; i < 3; ++i) {
-			if (data[i] + FLT_EPSILON > rhs.data[i] &&
-				data[i] - FLT_EPSILON < rhs.data[i]
+			if (data[i] + FLT_MARGIN > rhs.data[i] &&
+				data[i] - FLT_MARGIN < rhs.data[i]
 				) return false;
 		}
 		return true;
@@ -265,7 +268,7 @@ struct V3 {
 
 	bool operator<(V3 const& rhs) const {
 		for (size_t i = 0; i < 3; ++i) {
-			if (data[i] - FLT_EPSILON >= rhs.data[i])
+			if (data[i] - FLT_MARGIN >= rhs.data[i])
 				return false;
 		}
 		return true;
@@ -273,7 +276,7 @@ struct V3 {
 
 	bool operator>(V3 const& rhs) const {
 		for (size_t i = 0; i < 3; ++i) {
-			if (data[i] + FLT_EPSILON <= rhs.data[i])
+			if (data[i] + FLT_MARGIN <= rhs.data[i])
 				return false;
 		}
 		return true;
@@ -281,7 +284,7 @@ struct V3 {
 
 	bool operator<=(V3 const& rhs) const {
 		for (size_t i = 0; i < 3; ++i) {
-			if (data[i] + FLT_EPSILON > rhs.data[i])
+			if (data[i] + FLT_MARGIN > rhs.data[i])
 				return false;
 		}
 		return true;
@@ -289,7 +292,7 @@ struct V3 {
 
 	bool operator>=(V3 const& rhs) const {
 		for (size_t i = 0; i < 3; ++i) {
-			if (data[i] - FLT_EPSILON < rhs.data[i])
+			if (data[i] - FLT_MARGIN < rhs.data[i])
 				return false;
 		}
 		return true;
@@ -476,12 +479,12 @@ inline V3 Normalize(V3 vector) {
 
 inline bool IsPointOnPoint(const V3& lhs, const V3& rhs)
 {
-    return fabsf(Length2(rhs - lhs)) < FLT_EPSILON;
+    return fabsf(Length2(rhs - lhs)) < FLT_MARGIN;
 }
 
 inline bool IsPointOnLine(const V3& point, const V3& start, const V3& end, const float margin = 0.0001f)
 {
-    return fabsf(Length2(start - point) + Length2(end - point) - Length2(end - start)) < FLT_EPSILON;
+    return fabsf(Length2(start - point) + Length2(end - point) - Length2(end - start)) < FLT_MARGIN;
 }
 
 
@@ -492,8 +495,8 @@ inline bool IsPointInFace(const V3& p, const std::vector<V3>& face) {
 	const V3 x1 = Cross(b - a, p - a);
 	const V3 x2 = Cross(c - b, p - b);
 	const V3 x3 = Cross(a - c, p - c);
-	return fabsf(Length2(Normalize(x1) - Normalize(x2))) < FLT_EPSILON &&
-           fabsf(Length2(Normalize(x2) - Normalize(x3))) < FLT_EPSILON;
+	return fabsf(Length2(Normalize(x1) - Normalize(x2))) < FLT_MARGIN &&
+           fabsf(Length2(Normalize(x2) - Normalize(x3))) < FLT_MARGIN;
 }
 
 inline const std::pair<V3, V3> getLineOnFace(const V3& start, const V3& end, const std::vector<V3> face)
@@ -1594,7 +1597,7 @@ struct Plane {
 	V3 point;
 	
 	inline Plane(V3 point, V3 normal);
-	bool pointIsOnPlane(const V3& point, float epsilon=FLT_EPSILON);
+	bool pointIsOnPlane(const V3& point, float epsilon=FLT_MARGIN);
 };
 
 Plane::Plane(V3 point, V3 normal) : point(point), normal(normal) {

@@ -483,7 +483,7 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 			std::vector<Vertex> fireVertices;
 			std::vector<Face> fireFaces;
 			// TODO: fix this later if required
-			fireHydrantMesh = MeshResource::LoadObj("textures/cube.obj", fireIndices, fireCoords, fireTexels, fireNormals, fireVertices, fireFaces);
+			fireHydrantMesh = MeshResource::Cube(fireFaces);
 			fireHydrantMesh->indicesAmount = fireIndices;
 			fireHydrantMesh->positions = fireCoords;
 			fireHydrantMesh->texels = fireTexels;

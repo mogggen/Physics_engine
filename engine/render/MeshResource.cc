@@ -49,7 +49,7 @@ void MeshResource::render()
 
 
 
-std::shared_ptr<MeshResource> MeshResource::Cube()
+std::shared_ptr<MeshResource> MeshResource::Cube(std::vector<Face>& facesOut)
 {
 	V4 top(0, 255, 0, 100);		  // red
 	V4 back(128, 66, 128, 100);	  // gray
@@ -67,194 +67,236 @@ std::shared_ptr<MeshResource> MeshResource::Cube()
 	bottom = bottom * factor;
 
 	Vertex vertices[] = // world points
+	{
+		// Mesh:	(0,1)	(1,1)	Tex:(0,0)	(1,0)
+		//		(0,0)	(1,0)		(0,1)	(1,1)
+
+		// xyz
+		// 000
+		Vertex // back : 0
 		{
-			// Mesh:	(0,1)	(1,1)	Tex:(0,0)	(1,0)
-			//		(0,0)	(1,0)		(0,1)	(1,1)
+			V3(-.5f, -.5f, -.5f), // position, will transform later with the projection matrix
+			back,				  // raw color 0-1 : black-white
+			V2(1, 1),			  // texture position, when the indicies are added, combined with this data, the orientation and size of the texture will make sense
+			V3(0, 1, 0)
+		},
+		Vertex // left : 1
+		{
+			V3(-.5f, -.5f, -.5f),
+			left,
+			V2(0, 1),
+			V3(0, 0, 0)},
+		Vertex // bottom : 2
+		{
+			V3(-.5f, -.5f, -.5f),
+			bottom,
+			V2(1, 0),
+			V3(0, 0, 0)},
 
-			// xyz
-			// 000
-			Vertex // back : 0
-			{
-				V3(-.5f, -.5f, -.5f), // position, will transform later with the projection matrix
-				back,				  // raw color 0-1 : black-white
-				V2(1, 1),			  // texture position, when the indicies are added, combined with this data, the orientation and size of the texture will make sense
-				V3(0, 1, 0)
-			},
-			Vertex // left : 1
-			{
-				V3(-.5f, -.5f, -.5f),
-				left,
-				V2(0, 1),
-				V3(0, 0, 0)},
-			Vertex // bottom : 2
-			{
-				V3(-.5f, -.5f, -.5f),
-				bottom,
-				V2(1, 0),
-				V3(0, 0, 0)},
+		// 100
+		Vertex // back : 3
+		{
+			V3(.5f, -.5f, -.5f),
+			back,
+			V2(0, 1),
+			V3(0, 0, 0)},
+		Vertex // right : 4
+		{
+			V3(.5f, -.5f, -.5f),
+			right,
+			V2(1, 1),
+			V3(0, 0, 0)},
+		Vertex // bottom : 5
+		{
+			V3(.5f, -.5f, -.5f),
+			bottom,
+			V2(0, 0),
+			V3(0, 0, 0)},
 
-			// 100
-			Vertex // back : 3
-			{
-				V3(.5f, -.5f, -.5f),
-				back,
-				V2(0, 1),
-				V3(0, 0, 0)},
-			Vertex // right : 4
-			{
-				V3(.5f, -.5f, -.5f),
-				right,
-				V2(1, 1),
-				V3(0, 0, 0)},
-			Vertex // bottom : 5
-			{
-				V3(.5f, -.5f, -.5f),
-				bottom,
-				V2(0, 0),
-				V3(0, 0, 0)},
+		// 010
+		Vertex // back : 6
+		{
+			V3(-.5f, .5f, -.5f),
+			back,
+			V2(1, 0),
+			V3(0, 0, 0)},
+		Vertex // left : 7
+		{
+			V3(-.5f, .5f, -.5f),
+			left,
+			V2(0, 0),
+			V3(0, 0, 0)},
+		Vertex // top : 8
+		{
+			V3(-.5f, .5f, -.5f),
+			top,
+			V2(0, 0),
+			V3(0, 0, 0)},
 
-			// 010
-			Vertex // back : 6
-			{
-				V3(-.5f, .5f, -.5f),
-				back,
-				V2(1, 0),
-				V3(0, 0, 0)},
-			Vertex // left : 7
-			{
-				V3(-.5f, .5f, -.5f),
-				left,
-				V2(0, 0),
-				V3(0, 0, 0)},
-			Vertex // top : 8
-			{
-				V3(-.5f, .5f, -.5f),
-				top,
-				V2(0, 0),
-				V3(0, 0, 0)},
+		// 110
+		Vertex // back : 9
+		{
+			V3(.5f, .5f, -.5f),
+			back,
+			V2(0, 0),
+			V3(0, 0, 0)},
+		Vertex // right : 10
+		{
+			V3(.5f, .5f, -.5f),
+			right,
+			V2(1, 0),
+			V3(0, 0, 0)},
+		Vertex // top : 11
+		{
+			V3(.5f, .5f, -.5f),
+			top,
+			V2(1, 0),
+			V3(0, 0, 0)},
 
-			// 110
-			Vertex // back : 9
-			{
-				V3(.5f, .5f, -.5f),
-				back,
-				V2(0, 0),
-				V3(0, 0, 0)},
-			Vertex // right : 10
-			{
-				V3(.5f, .5f, -.5f),
-				right,
-				V2(1, 0),
-				V3(0, 0, 0)},
-			Vertex // top : 11
-			{
-				V3(.5f, .5f, -.5f),
-				top,
-				V2(1, 0),
-				V3(0, 0, 0)},
+		// 001
+		Vertex // left : 12
+		{
+			V3(-.5f, -.5f, .5f),
+			left,
+			V2(1, 1),
+			V3(0, 0, 0)},
+		Vertex // front : 13
+		{
+			V3(-.5f, -.5f, .5f),
+			front,
+			V2(0, 1),
+			V3(0, 0, 0)},
+		Vertex // bottom : 14
+		{
+			V3(-.5f, -.5f, .5f),
+			bottom,
+			V2(1, 1),
+			V3(0, 0, 0)},
 
-			// 001
-			Vertex // left : 12
-			{
-				V3(-.5f, -.5f, .5f),
-				left,
-				V2(1, 1),
-				V3(0, 0, 0)},
-			Vertex // front : 13
-			{
-				V3(-.5f, -.5f, .5f),
-				front,
-				V2(0, 1),
-				V3(0, 0, 0)},
-			Vertex // bottom : 14
-			{
-				V3(-.5f, -.5f, .5f),
-				bottom,
-				V2(1, 1),
-				V3(0, 0, 0)},
+		// 101
+		Vertex // right : 15
+		{
+			V3(.5f, -.5f, .5f),
+			right,
+			V2(0, 1),
+			V3(0, 0, 0)},
+		Vertex // front : 16
+		{
+			V3(.5f, -.5f, .5f),
+			front,
+			V2(1, 1),
+			V3(0, 0, 0)},
+		Vertex // bottom : 17
+		{
+			V3(.5f, -.5f, .5f),
+			bottom,
+			V2(0, 1),
+			V3(0, 0, 0)},
 
-			// 101
-			Vertex // right : 15
-			{
-				V3(.5f, -.5f, .5f),
-				right,
-				V2(0, 1),
-				V3(0, 0, 0)},
-			Vertex // front : 16
-			{
-				V3(.5f, -.5f, .5f),
-				front,
-				V2(1, 1),
-				V3(0, 0, 0)},
-			Vertex // bottom : 17
-			{
-				V3(.5f, -.5f, .5f),
-				bottom,
-				V2(0, 1),
-				V3(0, 0, 0)},
+		// 011
+		Vertex // left : 18
+		{
+			V3(-.5f, .5f, .5f),
+			left,
+			V2(1, 0),
+			V3(0, 0, 0)},
+		Vertex // front : 19
+		{
+			V3(-.5f, .5f, .5f),
+			front,
+			V2(0, 0),
+			V3(0, 0, 0)},
+		Vertex // top : 20
+		{
+			V3(-.5f, .5f, .5f),
+			top,
+			V2(0, 1),
+			V3(0, 0, 0)},
 
-			// 011
-			Vertex // left : 18
-			{
-				V3(-.5f, .5f, .5f),
-				left,
-				V2(1, 0),
-				V3(0, 0, 0)},
-			Vertex // front : 19
-			{
-				V3(-.5f, .5f, .5f),
-				front,
-				V2(0, 0),
-				V3(0, 0, 0)},
-			Vertex // top : 20
-			{
-				V3(-.5f, .5f, .5f),
-				top,
-				V2(0, 1),
-				V3(0, 0, 0)},
-
-			// 111
-			Vertex // right : 21
-			{
-				V3(.5f, .5f, .5f),
-				right,
-				V2(0, 0),
-				V3(0, 0, 0)},
-			Vertex // front : 22
-			{
-				V3(.5f, .5f, .5f),
-				front,
-				V2(1, 0),
-				V3(0, 0, 0)},
-			Vertex // top : 23
-			{
-				V3(.5f, .5f, .5f),
-				top,
-				V2(1, 1),
-				V3(0, 0, 0)},
-		};
+		// 111
+		Vertex // right : 21
+		{
+			V3(.5f, .5f, .5f),
+			right,
+			V2(0, 0),
+			V3(0, 0, 0)},
+		Vertex // front : 22
+		{
+			V3(.5f, .5f, .5f),
+			front,
+			V2(1, 0),
+			V3(0, 0, 0)},
+		Vertex // top : 23
+		{
+			V3(.5f, .5f, .5f),
+			top,
+			V2(1, 1),
+			V3(0, 0, 0)},
+	};
 
 	uint32_t indices[] // World point's relations to form triangles and surfaces with razterisation
-		{
-			0, 3, 6,
-			3, 6, 9, // back
+	{
+		0, 3, 6,
+		3, 6, 9, // back
 
-			1, 12, 7,
-			7, 12, 18, // left
+		1, 12, 7,
+		7, 12, 18, // left
 
-			4, 15, 10,
-			10, 15, 21, // right
+		4, 15, 10,
+		10, 15, 21, // right
 
-			13, 16, 19,
-			16, 19, 22, // front
+		13, 16, 19,
+		16, 19, 22, // front
 
-			20, 8, 23,
-			8, 23, 11, // top
+		20, 8, 23,
+		8, 23, 11, // top
 
-			2, 5, 14,
-			5, 14, 17, // bottom
-		};
+		2, 5, 14,
+		5, 14, 17, // bottom
+	};
 	
+    {
+        Face f = Face();
+        f.vertices = { vertices[0].pos, vertices[3].pos, vertices[6].pos, vertices[9].pos };
+        f.normal = vertices[0].normal;
+        facesOut.push_back(f);
+    }
+
+    {
+        Face f = Face();
+        f.vertices = { vertices[1].pos, vertices[12].pos, vertices[7].pos, vertices[18].pos };
+        f.normal = vertices[1].normal;
+        facesOut.push_back(f);
+    }
+
+    {
+        Face f = Face();
+        f.vertices = { vertices[4].pos, vertices[15].pos, vertices[10].pos, vertices[21].pos };
+        f.normal = vertices[4].normal;
+        facesOut.push_back(f);
+    }
+
+    {
+        Face f = Face();
+        f.vertices = { vertices[13].pos, vertices[16].pos, vertices[19].pos, vertices[22].pos };
+        f.normal = vertices[13].normal;
+        facesOut.push_back(f);
+    }
+
+    {
+        Face f = Face();
+        f.vertices = { vertices[20].pos, vertices[8].pos, vertices[23].pos, vertices[11].pos };
+        f.normal = vertices[20].normal;
+        facesOut.push_back(f);
+    }
+
+    {
+        Face f = Face();
+        f.vertices = { vertices[2].pos, vertices[5].pos, vertices[14].pos, vertices[17].pos };
+        f.normal = vertices[2].normal;
+        facesOut.push_back(f);
+    }
+
 	return std::make_shared<MeshResource>(vertices, sizeof(vertices) / sizeof(Vertex), indices, sizeof(indices) / sizeof(uint64_t));
 }
 

@@ -14,6 +14,7 @@
 #define FLT_MARGIN 1e-2f
 #endif
 
+struct Face;
 
 #pragma region Vector2
 //	Vector operations: +, -, *, length, normalize

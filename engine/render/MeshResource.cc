@@ -49,7 +49,12 @@ void MeshResource::render()
 
 
 
-std::shared_ptr<MeshResource> MeshResource::Cube(std::vector<Face>& facesOut)
+std::shared_ptr<MeshResource> MeshResource::Cube(
+	std::vector<uint32>& _indices,
+	std::vector<V3>& _pos,
+	std::vector<V3>& _normals,
+	std::vector<Vertex>& _vertices,
+	std::vector<Face>& _faces)
 {
 	V4 top(0, 255, 0, 100);		  // red
 	V4 back(128, 66, 128, 100);	  // gray
@@ -259,43 +264,51 @@ std::shared_ptr<MeshResource> MeshResource::Cube(std::vector<Face>& facesOut)
         Face f = Face();
         f.vertices = { vertices[0].pos, vertices[3].pos, vertices[6].pos, vertices[9].pos };
         f.normal = vertices[0].normal;
-        facesOut.push_back(f);
+        _faces.push_back(f);
     }
 
     {
         Face f = Face();
         f.vertices = { vertices[1].pos, vertices[12].pos, vertices[7].pos, vertices[18].pos };
         f.normal = vertices[1].normal;
-        facesOut.push_back(f);
+        _faces.push_back(f);
     }
 
     {
         Face f = Face();
         f.vertices = { vertices[4].pos, vertices[15].pos, vertices[10].pos, vertices[21].pos };
         f.normal = vertices[4].normal;
-        facesOut.push_back(f);
+        _faces.push_back(f);
     }
 
     {
         Face f = Face();
         f.vertices = { vertices[13].pos, vertices[16].pos, vertices[19].pos, vertices[22].pos };
         f.normal = vertices[13].normal;
-        facesOut.push_back(f);
+        _faces.push_back(f);
     }
 
     {
         Face f = Face();
         f.vertices = { vertices[20].pos, vertices[8].pos, vertices[23].pos, vertices[11].pos };
         f.normal = vertices[20].normal;
-        facesOut.push_back(f);
+        _faces.push_back(f);
     }
 
     {
         Face f = Face();
         f.vertices = { vertices[2].pos, vertices[5].pos, vertices[14].pos, vertices[17].pos };
         f.normal = vertices[2].normal;
-        facesOut.push_back(f);
+        _faces.push_back(f);
     }
+
+	for (size_t i = 0; i < sizeof(vertices) / sizeof(*vertices); i++)
+	{
+		_pos.push_back(vertices[i].pos);
+		_normals.push_back(vertices[i].normal);
+		_vertices.push_back(vertices[i]);
+		_indices.push_back(indices[i]);
+	}
 
 	return std::make_shared<MeshResource>(vertices, sizeof(vertices) / sizeof(Vertex), indices, sizeof(indices) / sizeof(uint64_t));
 }

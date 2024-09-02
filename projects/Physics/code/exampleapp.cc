@@ -452,7 +452,9 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 			case GLFW_KEY_S: s = action; break;
 			case GLFW_KEY_A: a = action; break;
 			case GLFW_KEY_D: d = action; break;
-
+			case GLFW_KEY_G: showDebugRender = false; break;
+			case GLFW_KEY_Z: showDebugRender = true; break;
+			
 			case GLFW_KEY_LEFT_SHIFT: shift = action; break;
 			case GLFW_KEY_SPACE: space = action; break;
 			} });

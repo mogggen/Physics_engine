@@ -32,7 +32,13 @@ public:
 	//float top;
 	//float back;
 	
-	static std::shared_ptr<MeshResource> Cube(std::vector<Face>& facesOut);
+	static std::shared_ptr<MeshResource> Cube(
+		std::vector<uint32>& _indices,
+		std::vector<V3>& _pos,
+		std::vector<V3>& _normals,
+		std::vector<Vertex>& _vertices,
+		std::vector<Face>& _faces);
+
 	std::pair<V3, V3> find_bounds();
 	static std::shared_ptr<MeshResource> LoadObj(const char *pathToFile,
 		std::vector<uint32>& _indices,

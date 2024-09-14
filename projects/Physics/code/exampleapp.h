@@ -17,6 +17,7 @@
 #include "render/Debug.h"
 #include "core/Physics.h"
 #include "render/Actor.h"
+#include "render/Sutherland_hogdman.h"
 
 namespace Example
 {

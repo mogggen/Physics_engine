@@ -34,6 +34,8 @@ SET(files_render_display
 	
 	DebugPShader.glsl
 	DebugVShader.glsl
+	
+	Sutherland_hogdman.h
 
 	stb_image.h)
 SOURCE_GROUP("display" FILES ${files_render_display})

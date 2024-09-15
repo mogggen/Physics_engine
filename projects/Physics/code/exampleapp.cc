@@ -20,14 +20,14 @@
 #endif
 struct Actor;
 
-static void Print(V4 v)
+static void Print(const V4& v)
 {
 	std::cout << '(';
 	for (size_t i = 0; i < 4; i++)
 		std::cout << v.data[i] << (i == 3 ? ")\n" : ", ");
 }
 
-static void Print(M4 m)
+static void Print(const M4& m)
 {
 	for (size_t i = 0; i < 4; i++)
 	{
@@ -946,12 +946,12 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 
 	static void handle_collision(const std::shared_ptr<GraphicNode>& ith, const std::shared_ptr<GraphicNode>& jth)
 	{
-		// setup up point collision for one rigidbody against origo
+		// setup up point collision for one rigid body against origo
 		// (use a single triangle face for +3 vertices plane of the cubes to act as point, line, triangle face, and merged faces changes
 		// then draw a line through the z-axis
 		// then face-on-face get average point collision
 
-		// the correct subtraction in relative momentum one rigidbody is statitionary no matter what.
+		// the correct subtraction in relative momentum one rigid body is stationary no matter what.
 		
 		// i
 		std::vector<V3>& i_vertices = ith->getMesh()->positions;
@@ -964,7 +964,7 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 		std::vector<V3>& j_vertices = jth->getMesh()->positions;
 		apply_world_space(j_vertices, jth->actor->transform);
 		std::vector<Face> j_faces = jth->getMesh()->faces;
-		apply_world_space(j_faces, jth->actor->transform);
+        apply_world_space(j_faces, jth->actor->transform);
 		V3 j_cm = findAverage(j_vertices);
 
 		CollisionInfo& info = sat(i_faces, j_faces);
@@ -1006,48 +1006,48 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 		 //const V4 v2 = u2/* - impulse * (1 / m2) */;
 
 
-		auto headOnCoefficent = 0.3; // i_cm.xy - j_cm.xy
+		auto headOnCoef = 0.00005; // i_cm.xy - j_cm.xy
 
-		const V4 v1 = 0.3 * (((m1 - m2) / (m1 + m2)) * u1 + ((2 * m2 * u2) * (1 / (m1 + m2))));
-		const V4 v2 = 0.3 * (((m2 - m1) / (m1 + m2)) * u2 + ((2 * m1 * u1) * (1 / (m1 + m2))));
+        const V4 v1 = headOnCoef * (i_cm - j_cm);// * (((m1 - m2) / (m1 + m2)) * u1 + ((2 * m2 * u2) * (1 / (m1 + m2))));
+        const V4 v2 = headOnCoef * (j_cm - i_cm);// * (((m2 - m1) / (m1 + m2)) * u2 + ((2 * m1 * u1) * (1 / (m1 + m2))));
 
 		// info.polytope should be the center of the colliding point/line/face
-		// fix point-to-point colision first.
+		// fix point-to-point collision first.
 		// fix point-to-line same way.
 		// fix-line-to-line easy.
 		// fix-face-to-face very difficult.
 
 
-		 r1 = j_cm - i_cm;
-		 r1.x += 1;
-		//r1 = info.polytope - j_cm;
-		//r2 = info.polytope - j_cm;
+		 //r1 = j_cm - i_cm;
+		 //r1.x += 1;
+		r1 = (info.polytope.size() ? findAverage(info.polytope) : V4()) - i_cm;
+		r2 = (info.polytope.size() ? findAverage(info.polytope) : V4()) - j_cm;
 		V4 axis1 = Cross(r1, info.norm1);
-		//V4 axis2 = Cross(r2, info.norm2);
-		w1 = 0.005; //Length(axis1) / (m1 * Length(r1)) * e1;
-		//w2 = Length(axis2) / (m2 * Length(r2)) * e2;
+		V4 axis2 = Cross(r2, info.norm2);
+		w1 = Length(axis1) / (m1 * Length(r1)) * e1;
+        w2 = Length(axis2) / (m2 * Length(r2)) * e2;
 		
-		o1 += 0.004;
-		o1 = 0.004f;
-		o2 += w2;
+		o1 = w1;
+		o2 = w2;
 
 		if (axis1.Length2())
 			// the result that I want
-			rot1 = Rotation(V4(0,0,1), o1);
+			rot1 = Rotation(axis1, o1);
 
 
-		u1 = v1 * ith->actor->isDynamic;
-		const V4 res = reflect(v1, info.norm1);
-		const V3 kl = { res.x, res.y, res.z };
-		ith->actor->apply_force(kl * 0.001f, 0.01f);
+		//const V4 res = reflect(v1, info.norm1);
+		//const V3 kl = { res.x, res.y, res.z };
+		//u1 = v1 * Dot(v1, info.norm1) * (Length(v1)) * ith->actor->isDynamic;
+        ith->actor->apply_force(V3(0.0003, m1 * 9.806e-3f * 0.02f * (info.depth == 0 ? Length2(j_cm - i_cm) : info.depth), 0), 0.1);
+		//ith->actor->apply_force((findAverage(info.polytope) - i_cm) * 0.01f, 0.01f);
 
-		/*if (axis2.Length2())
-			rot2 = Rotation(axis2, o2);*/
+		if (axis2.Length2())
+			rot2 = Rotation(axis2, o2);
 
-		u2 = v2 * jth->actor->isDynamic;
-		const V4 res2 = reflect(v2 * -1.f, info.norm2);
-		const V3 kl2 = { res2.x, res2.y, res2.z };
-		jth->actor->apply_force(kl2 * 0.001f, 0.01f);
+		//const V4 res2 = reflect(v2, info.norm2);
+		//const V3 kl2 = { res2.x, res2.y, res2.z };
+		//u2 = v2 * Dot(v2, info.norm2) * Length(v1) * jth->actor->isDynamic;
+		//jth->actor->apply_force((i_cm - j_cm) * 0.01f, 0.01f);
 	}
 
 	void
@@ -1060,7 +1060,7 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 		time_t f = time(nullptr);
 		// std::cout << "seed: " << f << std::endl;
 		srand(f);
-		float x_rand = 0; // rand() / (float)RAND_MAX * 20.f - 10.f;
+		float x_rand = rand() / (float)RAND_MAX * 20.f - 10.f;
 		float z_rand = rand() / (float)RAND_MAX * 20.f - 10.f;
 
 		for (size_t i = 0; i < 2; i++)
@@ -1068,7 +1068,7 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 			const GraphicNode node = *texturedCube.get();
 			all_loaded.push_back(std::make_shared<GraphicNode>(node));
 			all_loaded[i]->actor = std::make_shared<Actor>();
-			all_loaded[i]->actor->elasticity = 1.000f;
+			all_loaded[i]->actor->elasticity = 0.600f;
 			all_loaded[i]->actor->mass = 2;
 			all_loaded[i]->actor->isDynamic = true;
 
@@ -1078,7 +1078,7 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 
 		// floor
 		{
-			all_loaded[1]->actor->transform = Translate(V4(0, -10.5f, 0));
+			all_loaded[1]->actor->transform = Translate(V4(0, -10.5f, 0)) * Scalar(V3(1.f, 1.f, 1.f));
 			all_loaded[1]->actor->mass = 1000;
 			all_loaded[1]->actor->elasticity = 0.0001f;
 			all_loaded[1]->actor->isDynamic = false;
@@ -1101,7 +1101,7 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 
 		// gravity
 		const float g = -9.806e-3f;
-#define GRAVITY V3(0, g, 0)
+#define GRAVITY V3(0, g * 20, 0)
 
 		Camera cam(90, (float)width / height, 0.01f, 1000.0f);
 		cam.setPos(V4(0, 1, -3));

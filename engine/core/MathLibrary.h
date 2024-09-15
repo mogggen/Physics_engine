@@ -1454,11 +1454,9 @@ struct Face {
 #pragma endregion
 
 
-inline void apply_world_space(std::vector<Face> faces, const M4& transform) {
+inline void apply_world_space(std::vector<Face>& faces, const M4& transform) {
 	for (Face& ff : faces) {
-		for (V3& vert : ff.vertices) {
-			vert = ((transform)*V4(vert, 1)).toV3();
-		}
+        apply_world_space(ff.vertices, transform);
 	}
 }
 

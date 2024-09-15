@@ -1,6 +1,6 @@
 #pragma once
 
-static void Print_f(V4 v)
+static void Print_f(const V4& v)
 {
     std::cout << '(';
     for (size_t i = 0; i < 4; i++)
@@ -42,20 +42,20 @@ inline std::vector<V3> ClipPolygonAgainstPlane(const std::vector<V3>& vertices, 
 
 inline std::vector<V3> ClipFaceAgainstFace(const Face& faceA, const Face& faceB)
 {
-    printf("\n");
-    for (const V3& a : faceA.vertices)
-    {
-        Print_f(a);
-    }
-    printf("\n");
-    Print_f(faceA.normal);
-    for (const V3& b: faceB.vertices)
-    {
-        Print_f(b);
-    }
-    printf("\n");
-    Print_f(faceA.normal);
-    printf("\n");
+    //printf("\n");
+    //for (const V3& a : faceA.vertices)
+    //{
+    //    Print_f(a);
+    //}
+    //printf("\n");
+    //Print_f(faceA.normal);
+    //for (const V3& b: faceB.vertices)
+    //{
+    //    Print_f(b);
+    //}
+    //printf("\n");
+    //Print_f(faceB.normal);
+    //printf("\n");
 
     std::vector<V3> clippedVertices = faceA.vertices;
 
@@ -68,8 +68,8 @@ inline std::vector<V3> ClipFaceAgainstFace(const Face& faceA, const Face& faceB)
         // Clip the vertices of faceA against this plane
         clippedVertices = ClipPolygonAgainstPlane(clippedVertices, faceB.vertices[i], clipPlaneNormal);
 
-        for each (V3 vert in clippedVertices) Print_f(findAverage(clippedVertices));
-        printf("%i\n", i);
+        //for each (V3 vert in clippedVertices) Print_f(findAverage(clippedVertices));
+        //printf("%i\n", i);
 
         // If all vertices are outside the clipping plane, return an empty set (no collision)
         if (clippedVertices.empty())

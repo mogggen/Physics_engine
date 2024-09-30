@@ -410,7 +410,7 @@ namespace Example
 	}
 
 	/**
-This function calulates the velocities after a 3D collision vaf, vbf, waf and wbf from information about the colliding bodies
+This function calculates the velocities after a 3D collision vaf, vbf, waf and wbf from information about the colliding bodies
 @param double e coefficient of restitution which depends on the nature of the two colliding materials
 @param double ma total mass of body a
 @param double mb total mass of body b
@@ -432,28 +432,28 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 @param V4 waf final angular velocity of object a
 @param V4 wbf final angular velocity of object b
 */
-// void CollisionResponse(float e,float ma,float mb,M4 Ia,M4 Ib,V4 ra,V4 rb,V4 n,
-//     V4 vai, V4 vbi, V4 wai, V4 wbi, V4 vaf, V4 vbf, V4 waf, V4 wbf) {
-//   M4 IaInverse = Inverse(Ia);
-//   V4 normal = Normalize(n);
-//   V4 angularVelChangea  = normal; // start calculating the change in angular rotation of a
-//   angularVelChangea.Cross(ra);
-//   IaInverse.transform(angularVelChangea);
-//   V4 vaLinDueToR = angularVelChangea.Cross(ra);  // calculate the linear velocity of collision point on a due to rotation of a
-//   float scalar = 1 / ma + vaLinDueToR.Dot(normal);
-//   M4 IbInverse = Inverse(Ib);
-//   V4 angularVelChangeb = normal; // start calculating the change in angular rotation of b
-//   angularVelChangeb.Cross(rb);
-//   IbInverse.transform(angularVelChangeb);
-//   V4 vbLinDueToR = angularVelChangeb.Cross(rb);  // calculate the linear velocity of collision point on b due to rotation of b
-//   scalar += 1/mb + vbLinDueToR.Dot(normal);
-//   float Jmod = (e+1)*(vai-vbi).Length()/scalar;
-//   V4 J = normal * Jmod;
-//   vaf = vai - J * (1.f / ma);
-//   vbf = vbi - J * (1.f / mb);
-//   waf = wai - angularVelChangea;
-//   wbf = wbi - angularVelChangeb;
-// }
+ void CollisionResponse(float e,float ma,float mb,M4 Ia,M4 Ib,V4 ra,V4 rb,V4 n,
+     V4 vai, V4 vbi, V4 wai, V4 wbi, V4& vaf, V4& vbf, V4& waf, V4& wbf) {
+   M4 IaInverse = Inverse(Ia);
+   V4 normal = Normalize(n);
+   V4 angularVelChangea  = normal; // start calculating the change in angular rotation of a
+   angularVelChangea = Cross(angularVelChangea,ra);
+   angularVelChangea = IaInverse * angularVelChangea;
+   V4 vaLinDueToR = Cross(angularVelChangea, ra);  // calculate the linear velocity of collision point on a due to rotation of a
+   float scalar = 1 / ma + Dot(vaLinDueToR, normal);
+   M4 IbInverse = Inverse(Ib);
+   V4 angularVelChangeb = normal; // start calculating the change in angular rotation of b
+   angularVelChangeb = Cross(angularVelChangeb, rb);
+   angularVelChangeb = IbInverse * angularVelChangeb;
+   V4 vbLinDueToR = Cross(angularVelChangeb, rb);  // calculate the linear velocity of collision point on b due to rotation of b
+   scalar += 1 / mb + Dot(vbLinDueToR, normal);
+   float Jmod = (e + 1) * (vai - vbi).Length() / scalar;
+   V4 J = normal * Jmod;
+   vaf = vai - J * (1.f / ma);
+   vbf = vbi - J * (1.f / mb);
+   waf = wai - angularVelChangea;
+   wbf = wbi - angularVelChangeb;
+ }
 
 	bool
 	ExampleApp::Open()
@@ -724,6 +724,47 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 		return {cube1, cube2};
 	}
 
+    void magic2()
+    {
+            // Example values for the objects and collision
+            float e = 0.8f; // Coefficient of restitution (elasticity of collision)
+
+            float ma = 5.0f; // Mass of body A
+            float mb = 7.0f; // Mass of body B
+
+            // Inertia tensors for A and B (in 4x4 matrix form, simplified here as identity matrices)
+            M4 Ia = Translate(V4(0, 3, 0));
+            M4 Ib = Translate(V4(11, 0, 66));
+
+            // Position of the collision point relative to the centers of mass of A and B
+            V4 ra = V4(1, 0, 0, 0);  // Example: collision point on A at (1, 0, 0)
+            V4 rb = V4(-1, 0, 0, 0); // Example: collision point on B at (-1, 0, 0)
+
+            // Collision normal (unit vector, assumed to be along the x-axis)
+            V4 n = V4(1, 0, 0, 0);
+
+            // Initial velocities of the centers of mass (before collision)
+            V4 vai = V4(5, 0, 0, 0); // Body A is moving at 5 units/sec along the x-axis
+            V4 vbi = V4(-2, 0, 0, 0); // Body B is moving at -2 units/sec along the x-axis
+
+            // Initial angular velocities (before collision)
+            V4 wai = V4(0, 0, 1, 0); // Body A rotating around z-axis
+            V4 wbi = V4(0, 1, 0, 0); // Body B rotating around y-axis
+
+            // Variables to store the final velocities after the collision
+            V4 vaf, vbf;   // Final linear velocities
+            V4 waf, wbf;   // Final angular velocities
+
+            // Call the collision response function to compute final velocities
+            CollisionResponse(e, ma, mb, Ia, Ib, ra, rb, n, vai, vbi, wai, wbi, vaf, vbf, waf, wbf);
+
+            // Output the results
+            std::cout << "Final linear velocity of A: " << vaf.x << ", " << vaf.y << ", " << vaf.z << std::endl;
+            std::cout << "Final linear velocity of B: " << vbf.x << ", " << vbf.y << ", " << vbf.z << std::endl;
+            std::cout << "Final angular velocity of A: " << waf.x << ", " << waf.y << ", " << waf.z << std::endl;
+            std::cout << "Final angular velocity of B: " << wbf.x << ", " << wbf.y << ", " << wbf.z << std::endl;
+    }
+
 	// for (const V3& point : points) {
 	// 	std::cout << "Intersection Point: (" << point.x << ", " << point.y << ", " << point.z << ")" << std::endl;
 	// }
@@ -964,7 +1005,7 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 		std::vector<V3>& j_vertices = jth->getMesh()->positions;
 		apply_world_space(j_vertices, jth->actor->transform);
 		std::vector<Face> j_faces = jth->getMesh()->faces;
-        apply_world_space(j_faces, jth->actor->transform);
+		apply_world_space(j_faces, jth->actor->transform);
 		V3 j_cm = findAverage(j_vertices);
 
 		CollisionInfo& info = sat(i_faces, j_faces);
@@ -1008,8 +1049,8 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 
 		auto headOnCoef = 0.00005; // i_cm.xy - j_cm.xy
 
-        const V4 v1 = headOnCoef * (i_cm - j_cm);// * (((m1 - m2) / (m1 + m2)) * u1 + ((2 * m2 * u2) * (1 / (m1 + m2))));
-        const V4 v2 = headOnCoef * (j_cm - i_cm);// * (((m2 - m1) / (m1 + m2)) * u2 + ((2 * m1 * u1) * (1 / (m1 + m2))));
+		const V4 v1 = headOnCoef * (i_cm - j_cm);// * (((m1 - m2) / (m1 + m2)) * u1 + ((2 * m2 * u2) * (1 / (m1 + m2))));
+		const V4 v2 = headOnCoef * (j_cm - i_cm);// * (((m2 - m1) / (m1 + m2)) * u2 + ((2 * m1 * u1) * (1 / (m1 + m2))));
 
 		// info.polytope should be the center of the colliding point/line/face
 		// fix point-to-point collision first.
@@ -1025,7 +1066,7 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 		V4 axis1 = Cross(r1, info.norm1);
 		V4 axis2 = Cross(r2, info.norm2);
 		w1 = Length(axis1) / (m1 * Length(r1)) * e1;
-        w2 = Length(axis2) / (m2 * Length(r2)) * e2;
+		w2 = Length(axis2) / (m2 * Length(r2)) * e2;
 		
 		o1 = w1;
 		o2 = w2;
@@ -1038,7 +1079,7 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 		//const V4 res = reflect(v1, info.norm1);
 		//const V3 kl = { res.x, res.y, res.z };
 		//u1 = v1 * Dot(v1, info.norm1) * (Length(v1)) * ith->actor->isDynamic;
-        ith->actor->apply_force(V3(0.0003, m1 * 9.806e-3f * 0.02f * (info.depth == 0 ? Length2(j_cm - i_cm) : info.depth), 0), 0.1);
+		ith->actor->apply_force(V3(0.0003, m1 * 9.806e-3f * 0.02f * (info.depth == 0 ? Length2(j_cm - i_cm) : info.depth), 0), 0.1);
 		//ith->actor->apply_force((findAverage(info.polytope) - i_cm) * 0.01f, 0.01f);
 
 		if (axis2.Length2())
@@ -1053,6 +1094,8 @@ This function calulates the velocities after a 3D collision vaf, vbf, waf and wb
 	void
 	ExampleApp::Run()
 	{
+        magic2();
+        return;
 		// auto [ShapeA, ShapeB] = magic();
 		//  reflect hit with normal and and scale the vector with the other factors
 		glEnable(GL_DEPTH_TEST);

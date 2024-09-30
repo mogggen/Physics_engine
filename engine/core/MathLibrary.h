@@ -857,7 +857,8 @@ inline float V4::Length2() {
 inline void V4::Normalize() {
 	float length = Length();
 	for (size_t i = 0; i < 3; i++)
-		data[i] /= length;
+        if (length)
+		    data[i] /= length;
 }
 
 //	operator functions

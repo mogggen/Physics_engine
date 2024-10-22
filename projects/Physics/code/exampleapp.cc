@@ -414,14 +414,10 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 @param double e coefficient of restitution which depends on the nature of the two colliding materials
 @param double ma total mass of body a
 @param double mb total mass of body b
-@param M4 Ia inertia tensor for body a in absolute coordinates (if this is known in local body coordinates it must
-				 be converted before this is called).
-@param M4 Ib inertia tensor for body b in absolute coordinates (if this is known in local body coordinates it must
-				 be converted before this is called).
-@param V4 ra position of collision point relative to centre of mass of body a in absolute coordinates (if this is
-				 known in local body coordinates it must be converted before this is called).
-@param V4 rb position of collision point relative to centre of mass of body b in absolute coordinates (if this is
-				 known in local body coordinates it must be converted before this is called).
+@param M4 Ia inertia tensor for body a in absolute coordinates (if this is known in local body coordinates it must be converted before this is called).
+@param M4 Ib inertia tensor for body b in absolute coordinates (if this is known in local body coordinates it must be converted before this is called).
+@param V4 ra position of collision point relative to centre of mass of body a in absolute coordinates (if this is known in local body coordinates it must be converted before this is called).
+@param V4 rb position of collision point relative to centre of mass of body b in absolute coordinates (if this is known in local body coordinates it must be converted before this is called).
 @param V4 n normal to collision point, the line along which the impulse acts.
 @param V4 vai initial velocity of centre of mass on object a
 @param V4 vbi initial velocity of centre of mass on object b
@@ -432,27 +428,27 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 @param V4 waf final angular velocity of object a
 @param V4 wbf final angular velocity of object b
 */
- void CollisionResponse(float e,float ma,float mb,M4 Ia,M4 Ib,V4 ra,V4 rb,V4 n,
-     V4 vai, V4 vbi, V4 wai, V4 wbi, V4& vaf, V4& vbf, V4& waf, V4& wbf) {
+	static void CollisionResponse(float e,float ma,float mb,M4 Ia,M4 Ib,V4 ra,V4 rb,V4 n,
+	 V4 vai, V4 vbi, V4 wai, V4 wbi, V4& vaf, V4& vbf, V4& waf, V4& wbf) {
    M4 IaInverse = Inverse(Ia);
    V4 normal = Normalize(n);
-   V4 angularVelChangea  = normal; // start calculating the change in angular rotation of a
-   angularVelChangea = Cross(angularVelChangea,ra);
-   angularVelChangea = IaInverse * angularVelChangea;
-   V4 vaLinDueToR = Cross(angularVelChangea, ra);  // calculate the linear velocity of collision point on a due to rotation of a
+   V4 angularVelChangeA  = normal; // start calculating the change in angular rotation of a
+   angularVelChangeA = Cross(angularVelChangeA,ra);
+   angularVelChangeA = IaInverse * angularVelChangeA;
+   V4 vaLinDueToR = Cross(angularVelChangeA, ra);  // calculate the linear velocity of collision point on a due to rotation of a
    float scalar = 1 / ma + Dot(vaLinDueToR, normal);
    M4 IbInverse = Inverse(Ib);
-   V4 angularVelChangeb = normal; // start calculating the change in angular rotation of b
-   angularVelChangeb = Cross(angularVelChangeb, rb);
-   angularVelChangeb = IbInverse * angularVelChangeb;
-   V4 vbLinDueToR = Cross(angularVelChangeb, rb);  // calculate the linear velocity of collision point on b due to rotation of b
+   V4 angularVelChangeB = normal; // start calculating the change in angular rotation of b
+   angularVelChangeB = Cross(angularVelChangeB, rb);
+   angularVelChangeB = IbInverse * angularVelChangeB;
+   V4 vbLinDueToR = Cross(angularVelChangeB, rb);  // calculate the linear velocity of collision point on b due to rotation of b
    scalar += 1 / mb + Dot(vbLinDueToR, normal);
-   float Jmod = (e + 1) * (vai - vbi).Length() / scalar;
+   float Jmod = (e + 1) * Length(vai - vbi) / scalar;
    V4 J = normal * Jmod;
    vaf = vai - J * (1.f / ma);
    vbf = vbi - J * (1.f / mb);
-   waf = wai - angularVelChangea;
-   wbf = wbi - angularVelChangeb;
+   waf = wai - angularVelChangeA;
+   wbf = wbi - angularVelChangeB;
  }
 
 	bool
@@ -724,46 +720,46 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		return {cube1, cube2};
 	}
 
-    void magic2()
-    {
-            // Example values for the objects and collision
-            float e = 0.8f; // Coefficient of restitution (elasticity of collision)
+	void magic2()
+	{
+			// Example values for the objects and collision
+			float e = 0.8f; // Coefficient of restitution (elasticity of collision)
 
-            float ma = 5.0f; // Mass of body A
-            float mb = 7.0f; // Mass of body B
+			float ma = 1.0f; // Mass of body A
+			float mb = 1e38f; // Mass of body B
 
-            // Inertia tensors for A and B (in 4x4 matrix form, simplified here as identity matrices)
-            M4 Ia = Translate(V4(0, 3, 0));
-            M4 Ib = Translate(V4(11, 0, 66));
+			// Inertia tensors for A and B (in 4x4 matrix form, simplified here as identity matrices)
+			M4 Ia = Translate(V4(0, 0, 0));
+			M4 Ib = Translate(V4(0, 0, 0));
 
-            // Position of the collision point relative to the centers of mass of A and B
-            V4 ra = V4(1, 0, 0, 0);  // Example: collision point on A at (1, 0, 0)
-            V4 rb = V4(-1, 0, 0, 0); // Example: collision point on B at (-1, 0, 0)
+			// Position of the collision point relative to the centers of mass of A and B
+			V4 ra = V4(2/3, 0.5f, 0, 0);  // Example: collision point on A at (1, 0, 0)
+			V4 rb = V4(-1/2 + 1/3, -0.5f, 0, 0); // Example: collision point on B at (-1, 0, 0)
 
-            // Collision normal (unit vector, assumed to be along the x-axis)
-            V4 n = V4(1, 0, 0, 0);
+			// Collision normal (unit vector, assumed to be along the x-axis)
+			V4 n = V4(0, 1, 0, 0);
 
-            // Initial velocities of the centers of mass (before collision)
-            V4 vai = V4(5, 0, 0, 0); // Body A is moving at 5 units/sec along the x-axis
-            V4 vbi = V4(-2, 0, 0, 0); // Body B is moving at -2 units/sec along the x-axis
+			// Initial velocities of the centers of mass (before collision)
+			V4 vai = V4(0, -9.806, 0, 0); // Body A is moving at 5 units/sec along the x-axis
+			V4 vbi = V4(0, 0, 0, 0); // Body B is moving at -2 units/sec along the x-axis
 
-            // Initial angular velocities (before collision)
-            V4 wai = V4(0, 0, 1, 0); // Body A rotating around z-axis
-            V4 wbi = V4(0, 1, 0, 0); // Body B rotating around y-axis
+			// Initial angular velocities (before collision)
+			V4 wai = V4(0, 0, 0, 0); // Body A rotating around z-axis
+			V4 wbi = V4(0, 0, 0, 0); // Body B rotating around y-axis
 
-            // Variables to store the final velocities after the collision
-            V4 vaf, vbf;   // Final linear velocities
-            V4 waf, wbf;   // Final angular velocities
+			// Variables to store the final velocities after the collision
+			V4 vaf, vbf;   // Final linear velocities
+			V4 waf, wbf;   // Final angular velocities
 
-            // Call the collision response function to compute final velocities
-            CollisionResponse(e, ma, mb, Ia, Ib, ra, rb, n, vai, vbi, wai, wbi, vaf, vbf, waf, wbf);
+			// Call the collision response function to compute final velocities
+			CollisionResponse(e, ma, mb, Ia, Ib, ra, rb, n, vai, vbi, wai, wbi, vaf, vbf, waf, wbf);
 
-            // Output the results
-            std::cout << "Final linear velocity of A: " << vaf.x << ", " << vaf.y << ", " << vaf.z << std::endl;
-            std::cout << "Final linear velocity of B: " << vbf.x << ", " << vbf.y << ", " << vbf.z << std::endl;
-            std::cout << "Final angular velocity of A: " << waf.x << ", " << waf.y << ", " << waf.z << std::endl;
-            std::cout << "Final angular velocity of B: " << wbf.x << ", " << wbf.y << ", " << wbf.z << std::endl;
-    }
+			// Output the results
+			std::cout << "Final linear velocity of A: " << vaf.x << ", " << vaf.y << ", " << vaf.z << std::endl;
+			std::cout << "Final linear velocity of B: " << vbf.x << ", " << vbf.y << ", " << vbf.z << std::endl;
+			std::cout << "Final angular velocity of A: " << waf.x << ", " << waf.y << ", " << waf.z << std::endl;
+			std::cout << "Final angular velocity of B: " << wbf.x << ", " << wbf.y << ", " << wbf.z << std::endl;
+	}
 
 	// for (const V3& point : points) {
 	// 	std::cout << "Intersection Point: (" << point.x << ", " << point.y << ", " << point.z << ")" << std::endl;
@@ -1063,11 +1059,28 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		 //r1.x += 1;
 		r1 = (info.polytope.size() ? findAverage(info.polytope) : V4()) - i_cm;
 		r2 = (info.polytope.size() ? findAverage(info.polytope) : V4()) - j_cm;
+		
+
 		V4 axis1 = Cross(r1, info.norm1);
 		V4 axis2 = Cross(r2, info.norm2);
-		w1 = Length(axis1) / (m1 * Length(r1)) * e1;
-		w2 = Length(axis2) / (m2 * Length(r2)) * e2;
+		//w1 = Length(axis1) / (m1 * Length(r1)) * e1;
+		//w2 = Length(axis2) / (m2 * Length(r2)) * e2;
 		
+		V4 wa = axis1 * w1;
+		V4 wb = axis2 * w2;
+		
+		V4 u1In = u1;
+		V4 u2In = u2;
+
+		CollisionResponse(0.5f, m1, m2, Translate(V4()), Translate(V4()), r1, r2, info.norm1, v1, v2, axis1 * w1, axis2 * w2,
+			u1In, u2In, wa, wb);
+		if (ith->actor->isDynamic)
+			u1 = u1In;
+		if (jth->actor->isDynamic)
+			u2 = u2In;
+		rot1 = ith->actor->isDynamic ? Rotation(axis1, Length(wa * 0.9) * 0.00005) : rot1;
+		rot2 = jth->actor->isDynamic ? Rotation(axis2, Length(wb * 0.9) * 0.00005) : rot2;
+		return;
 		o1 = w1;
 		o2 = w2;
 
@@ -1094,8 +1107,6 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 	void
 	ExampleApp::Run()
 	{
-        magic2();
-        return;
 		// auto [ShapeA, ShapeB] = magic();
 		//  reflect hit with normal and and scale the vector with the other factors
 		glEnable(GL_DEPTH_TEST);
@@ -1106,7 +1117,7 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		float x_rand = rand() / (float)RAND_MAX * 20.f - 10.f;
 		float z_rand = rand() / (float)RAND_MAX * 20.f - 10.f;
 
-		for (size_t i = 0; i < 2; i++)
+		for (size_t i = 0; i < 5; i++)
 		{
 			const GraphicNode node = *texturedCube.get();
 			all_loaded.push_back(std::make_shared<GraphicNode>(node));
@@ -1121,10 +1132,31 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 
 		// floor
 		{
-			all_loaded[1]->actor->transform = Translate(V4(0, -10.5f, 0)) * Scalar(V3(1.f, 1.f, 1.f));
+			all_loaded[1]->actor->transform = Translate(V4(0, -10.5f, 2)) * Scalar(V3(1.f, 1.f, 1.f));
 			all_loaded[1]->actor->mass = 1000;
 			all_loaded[1]->actor->elasticity = 0.0001f;
 			all_loaded[1]->actor->isDynamic = false;
+		}
+
+		{
+			all_loaded[2]->actor->transform = Translate(V4(2.5f, -10.5f, 2)) * Scalar(V3(1.f, 1.f, 1.f));
+			all_loaded[2]->actor->mass = 1000;
+			all_loaded[2]->actor->elasticity = 0.0001f;
+			all_loaded[2]->actor->isDynamic = false;
+		}
+
+		{
+			all_loaded[3]->actor->transform = Translate(V4(0, -10.5f, -2)) * Scalar(V3(1.f, 1.f, 1.f));
+			all_loaded[3]->actor->mass = 1000;
+			all_loaded[3]->actor->elasticity = 0.0001f;
+			all_loaded[3]->actor->isDynamic = false;
+		}
+
+		{
+			all_loaded[4]->actor->transform = Translate(V4(2.5f, -10.5f, -2)) * Scalar(V3(1.f, 1.f, 1.f));
+			all_loaded[4]->actor->mass = 1000;
+			all_loaded[4]->actor->elasticity = 0.0001f;
+			all_loaded[4]->actor->isDynamic = false;
 		}
 
 		all_loaded[0]->actor->mass = 100;
@@ -1139,7 +1171,7 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		// all_loaded[1]->actor->isDynamic = false;
 		// all_loaded[1]->actor->transform = Translate(V4(1 * 0.75f, 3.f * 1, 0));
 		//  deltatime
-		float dt = 0.01;
+		float dt = 0.001;
 		Ray ray(V3(FLT_MAX, FLT_MAX, FLT_MAX), V3(FLT_MAX, FLT_MAX, FLT_MAX));
 
 		// gravity
@@ -1255,6 +1287,7 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		ImGui::Begin("Panel", &show, ImGuiWindowFlags_NoSavedSettings);
 		ImGui::Checkbox("Debug Mode: ", &showDebugRender);
 		ImGui::Text("frames: %d %.0f", frameIndex);
+		ImGui::Text("det: %.5f", Determinant(all_loaded[0]->actor->rotation));
 		ImGui::End();
 	}
 

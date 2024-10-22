@@ -1,0 +1,12 @@
+L = angular momentum (kg * m^2/s)
+I = Interia Tensor (kg * m^2)
+ω = angular velocity (rad/s)
+
+L = I / ω
+
+I = R*I0*Transpose(T)
+R = RotationMatrix
+
+I0 = Inital Inertia Tensor for RigidBody =
+
+Normalize the rotationMatrix so the determinent remains 0

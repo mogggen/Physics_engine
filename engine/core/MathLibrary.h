@@ -1197,8 +1197,7 @@ inline const M4 Inverse(const M4& matrix) {
 	{
 		for (size_t j = 0; j < 4; j++)
 		{
-			m[k] = matrix[i][j];
-			k++;
+			m[k++] = matrix[i][j];
 		}
 	}
 	float det;
@@ -1438,10 +1437,278 @@ inline M4 projection(float fov, float aspect, float n, float f) {
 }
 
 
+inline const float Determinant(const M4& a) {
+    float det = 1.0;
+    for (int i = 0; i < 4; i++) {
+        int pivot = i;
+        for (int j = i + 1; j < 4; j++) {
+            if (fabsf(a[j][i]) > fabsf(a[pivot][i])) {
+                pivot = j;
+            }
+        }
+        if (pivot != i) {
+            std::swap(a[i], a[pivot]);
+            det *= -1;
+        }
+        if (a[i][i] == 0) {
+            return 0;
+        }
+        det *= a[i][i];
+        for (int j = i + 1; j < 4; j++) {
+            float factor = a[j][i] / a[i][i];
+            for (int k = i + 1; k < 4; k++) {
+                a[j][k] -= factor * a[i][k];
+            }
+        }
+    }
+    return det;
+}
+
+
+//
+//float M4::determinant()
+//{
+//    float det = 1.0;
+//    for (int i = 0; i < 4; i++) {
+//        int pivot = i;
+//        for (int j = i + 1; j < 4; j++) {
+//            if (fabsf((*this)[j][i]) > fabsf((*this)[pivot][i])) {
+//                pivot = j;
+//            }
+//        }
+//        if (pivot != i) {
+//            std::swap((*this)[i], (*this)[pivot]);
+//            det *= -1;
+//        }
+//        if ((*this)[i][i] == 0) {
+//            return 0;
+//        }
+//        det *= (*this)[i][i];
+//        for (int j = i + 1; j < 4; j++) {
+//            float factor = (*this)[j][i] / (*this)[i][i];
+//            for (int k = i + 1; k < 4; k++) {
+//                (*this)[j][k] -= factor * (*this)[i][k];
+//            }
+//        }
+//    }
+//    return det;
+//}
+
+
 inline void apply_world_space(std::vector<V3>& verts, const M4& transform) {
 	for (V3& ff : verts) {
 		ff = ((transform) * V4(ff, 1)).toV3();
 	}
+}
+
+
+static void SkAssign3(float *LHS, float *RHS);
+
+static float SkDot3(float *A, float *B);
+
+static void SkAssignCross(float *LHS, float *A, float *B);
+
+static float SkScalarTripleProduct(float *A, float *B, float *C);
+
+static void SkDivide3(float *LHS, float Denom);
+
+static void SkScale3(float *LHS, float S);
+
+static void SkAdd3(float *LHS, float *Addend);
+
+static float SkDeterminant3x3(float *E);
+
+static void SkInverse3x3(float *E, float *O);
+
+static float SkTet3InertiaMoment(float *P, unsigned I);
+
+static float SkTet3IntertiaProduct(float *P, unsigned I, unsigned J);
+
+static void SkComputeInertia3x3(void *User, unsigned TriangleCount, float Density, float *I0, float *CoM, float *M,
+                                void (*GetTrianglePositions)(void *, unsigned, float *));
+// NOTE(blackedout):
+// Matrix elements are assumed to be stored in row major format by default.
+#ifdef SIMKN_COL_MAJOR
+#define X3(Row, Col) (3*(Col) + (Row))
+#else
+#define X3(Row, Col) (3*(Row) + (Col))
+#endif
+
+#define SkSq(X) ((X)*(X))
+
+static void SkAssign3(float *LHS, float *RHS) {
+    LHS[0] = RHS[0];
+    LHS[1] = RHS[1];
+    LHS[2] = RHS[2];
+}
+
+static float SkDot3(float *A, float *B) {
+    float Result = A[0]*B[0] + A[1]*B[1] + A[2]*B[2];
+    return Result;
+}
+
+static void SkAssignCross(float *LHS, float *A, float *B) {
+    LHS[0] = A[1]*B[2] - B[1]*A[2];
+    LHS[1] = A[2]*B[0] - B[2]*A[0];
+    LHS[2] = A[0]*B[1] - B[0]*A[1];
+}
+
+static float SkScalarTripleProduct(float *A, float *B, float *C) {
+    float Tmp[3];
+    SkAssignCross(Tmp, B, C);
+    float Result = SkDot3(A, Tmp);
+    return Result;
+}
+
+static void SkScale3(float *LHS, float S) {
+    LHS[0] *= S;
+    LHS[1] *= S;
+    LHS[2] *= S;
+}
+
+static void SkDivide3(float *LHS, float Denom) {
+    LHS[0] /= Denom;
+    LHS[1] /= Denom;
+    LHS[2] /= Denom;
+}
+
+static void SkAdd3(float *LHS, float *Addend) {
+    LHS[0] += Addend[0];
+    LHS[1] += Addend[1];
+    LHS[2] += Addend[2];
+}
+
+static float SkDeterminant3x3(float *E) {
+    // NOTE(blackedout): Compare to SkCross and
+    // https://matrixcalc.org/en/#determinant({{x_0,a_0,b_0},{x_1,a_1,b_1},{x_2,a_2,b_2}})
+    
+    float X0 = E[X3(0, 0)];
+    float X1 = E[X3(1, 0)];
+    float X2 = E[X3(2, 0)];
+    
+    float A0 = E[X3(0, 1)];
+    float A1 = E[X3(1, 1)];
+    float A2 = E[X3(2, 1)];
+    
+    float B0 = E[X3(0, 2)];
+    float B1 = E[X3(1, 2)];
+    float B2 = E[X3(2, 2)];
+    
+    float Result =
+        X0*(A1*B2 - B1*A2) +
+        X1*(A2*B0 - B2*A0) +
+        X2*(A0*B1 - B0*A1);
+    return Result;
+}
+
+static void SkInverse3x3(float *E, float *O) {
+    // NOTE(blackedout): Compare to
+    // https://matrixcalc.org/en/#inverse({{x_0,a_0,b_0},{x_1,a_1,b_1},{x_2,a_2,b_2}})
+    
+    float X0 = E[X3(0, 0)];
+    float X1 = E[X3(1, 0)];
+    float X2 = E[X3(2, 0)];
+    
+    float A0 = E[X3(0, 1)];
+    float A1 = E[X3(1, 1)];
+    float A2 = E[X3(2, 1)];
+    
+    float B0 = E[X3(0, 2)];
+    float B1 = E[X3(1, 2)];
+    float B2 = E[X3(2, 2)];
+    
+    float Det = SkDeterminant3x3(E);
+    
+    O[X3(0, 0)] = (A1*B2 - B1*A2)/Det;
+    O[X3(0, 1)] = (A2*B0 - B2*A0)/Det;
+    O[X3(0, 2)] = (A0*B1 - B0*A1)/Det;
+    
+    O[X3(1, 0)] = (B1*X2 - X1*B2)/Det;
+    O[X3(1, 1)] = (B2*X0 - X2*B0)/Det;
+    O[X3(1, 2)] = (B0*X1 - X0*B1)/Det;
+    
+    O[X3(2, 0)] = (X1*A2 - A1*X2)/Det;
+    O[X3(2, 1)] = (X2*A0 - A2*X0)/Det;
+    O[X3(2, 2)] = (X0*A1 - A0*X1)/Det;
+}
+
+static float SkTet3InertiaMoment(float *P, unsigned I) {
+    float Result = SkSq(P[3*0 + I]) + P[3*1 + I]*P[3*2 + I]
+               + SkSq(P[3*1 + I]) + P[3*0 + I]*P[3*2 + I]
+               + SkSq(P[3*2 + I]) + P[3*0 + I]*P[3*1 + I];
+    return Result;
+}
+
+static float SkTet3IntertiaProduct(float *P, unsigned I, unsigned J) {
+    float Result = 2.0*P[3*0 + I]*P[3*0 + J] + P[3*1 + I]*P[3*2 + J] + P[3*2 + I]*P[3*1 + J]
+               + 2.0*P[3*1 + I]*P[3*1 + J] + P[3*0 + I]*P[3*2 + J] + P[3*2 + I]*P[3*0 + J]
+               + 2.0*P[3*2 + I]*P[3*2 + J] + P[3*0 + I]*P[3*1 + J] + P[3*1 + I]*P[3*0 + J];
+    return Result;
+}
+
+static void SkCuboidInertia3(float Density, float *Size, float *I) {
+    float XX = SkSq(Size[0]);
+    float YY = SkSq(Size[1]);
+    float ZZ = SkSq(Size[2]);
+    float Mass = Density*Size[0]*Size[1]*Size[2];
+    I[0] = Mass*(YY + ZZ)/12.0;
+    I[1] = Mass*(XX + ZZ)/12.0;
+    I[2] = Mass*(XX + YY)/12.0;
+}
+
+static void SkComputeInertia3x3(void *User, unsigned TriangleCount, float Density, float *I0, float *CoM, float *M,
+                                void (*GetTrianglePositions)(void *, unsigned, float *)) {
+    float Mass = 0.0;
+    float MassCenter[3] = {0};
+    float Ia = 0.0, Ib = 0.0, Ic = 0.0, Iap = 0.0, Ibp = 0.0, Icp = 0.0;
+    float P[9];
+    for(unsigned I = 0; I < TriangleCount; ++I) {
+        GetTrianglePositions(User, I, P);
+        
+        // NOTE(blackedout): The following three properties are signed
+        float DetJ = SkScalarTripleProduct(P + 0, P + 3, P + 6);
+        float TetVolume = DetJ/6.0;
+        float TetMass = Density*TetVolume;
+        
+        float TetMassCenter[3] = {0};
+        SkAdd3(TetMassCenter, P + 0);
+        SkAdd3(TetMassCenter, P + 3);
+        SkAdd3(TetMassCenter, P + 6);
+        SkDivide3(TetMassCenter, 4.0);
+        
+        float V100 = SkTet3InertiaMoment(P, 0);
+        float V010 = SkTet3InertiaMoment(P, 1);
+        float V001 = SkTet3InertiaMoment(P, 2);
+        
+        Ia += DetJ*(V010 + V001);
+        Ib += DetJ*(V100 + V001);
+        Ic += DetJ*(V100 + V010);
+        Iap += DetJ*SkTet3IntertiaProduct(P, 1, 2);
+        Ibp += DetJ*SkTet3IntertiaProduct(P, 0, 1);
+        Icp += DetJ*SkTet3IntertiaProduct(P, 0, 2);
+        
+        SkScale3(TetMassCenter, TetMass);
+        SkAdd3(MassCenter, TetMassCenter);
+        Mass += TetMass;
+    }
+    
+    SkDivide3(MassCenter, Mass);
+    Ia = Density*Ia/60.0 - Mass*(SkSq(MassCenter[1]) + SkSq(MassCenter[2]));
+    Ib = Density*Ib/60.0 - Mass*(SkSq(MassCenter[0]) + SkSq(MassCenter[2]));
+    Ic = Density*Ic/60.0 - Mass*(SkSq(MassCenter[0]) + SkSq(MassCenter[1]));
+    Iap = Density*Iap/120.0 - Mass*(MassCenter[1]*MassCenter[2]);
+    Ibp = Density*Ibp/120.0 - Mass*(MassCenter[0]*MassCenter[1]);
+    Icp = Density*Icp/120.0 - Mass*(MassCenter[0]*MassCenter[2]);
+    
+    I0[0] = Ia;
+    I0[4] = Ib;
+    I0[8] = Ic;
+    I0[1] = I0[3] = -Ibp;
+    I0[2] = I0[6] = -Icp;
+    I0[5] = I0[7] = -Iap;
+    
+    SkAssign3(CoM, MassCenter);
+    *M = Mass;
 }
 
 

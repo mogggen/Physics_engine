@@ -1386,6 +1386,34 @@ inline M4 Rotation(V4 line, float theta) {
 	return temp;
 }
 
+//inline (V4, float) ConvertFromMatrixToDirectionAndAngle(const M4 matIn)
+//{
+//x_ = cos(a) + (1 - cos(a) * x^2)
+//y_ = cos(a) + (1 - cos(a) * y^2)
+//z_ = cos(a) + (1 - cos(a) * z^2)
+//
+//x_ - cos(a) = 1 - cos(a) * x^2
+//y_ - cos(a) = 1 - cos(a) * y^2
+//z_ - cos(a) = 1 - cos(a) * z^2
+//
+//x_ - cos(a) = 1
+//y_ - cos(a) = 1
+//z_ - cos(a) = 1
+//
+//x_ - cos(a) + cos(a) * x ^ 2 = 1
+//y_ - cos(a) + cos(a) * y ^ 2 = 1
+//z_ - cos(a) + cos(a) * z ^ 2 = 1
+//
+//x_ + cos(a) * x ^ 2 = 1 - cos(a)
+//y_ + cos(a) * y ^ 2 = 1 - cos(a)
+//z_ + cos(a) * z ^ 2 = 1 - cos(a)
+//
+//x_ / cos(a) + x ^ 2 = (1 - cos(a)) / cos(a)
+//y_ / cos(a) + y ^ 2 = (1 - cos(a)) / cos(a)
+//z_ / cos(a) + z ^ 2 = (1 - cos(a)) / cos(a)
+//
+//}
+
 /// <summary>
 /// returns the matrix to give the resulting product of a translation along the given vector
 /// </summary>

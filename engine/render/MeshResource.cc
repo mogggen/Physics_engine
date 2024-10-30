@@ -73,7 +73,7 @@ std::shared_ptr<MeshResource> MeshResource::Cube(
 	//front = front * factor;
 	//bottom = bottom * factor;
 
-    top = back = left = right = front = bottom = walter_white * factor;
+	top = back = left = right = front = bottom = walter_white * factor;
 
 	Vertex vertices[] = // world points
 	{
@@ -264,47 +264,47 @@ std::shared_ptr<MeshResource> MeshResource::Cube(
 		5, 14, 17, // bottom
 	};
 	
-    {
-        Face f = Face();
-        f.vertices = { vertices[0].pos, vertices[3].pos, vertices[6].pos, vertices[9].pos };
-        f.normal = vertices[0].normal;
-        _faces.push_back(f);
-    }
+	{
+		Face f = Face();
+		f.vertices = { vertices[0].pos, vertices[3].pos, vertices[6].pos, vertices[9].pos };
+		f.normal = vertices[0].normal;
+		_faces.push_back(f);
+	}
 
-    {
-        Face f = Face();
-        f.vertices = { vertices[1].pos, vertices[12].pos, vertices[7].pos, vertices[18].pos };
-        f.normal = vertices[1].normal;
-        _faces.push_back(f);
-    }
+	{
+		Face f = Face();
+		f.vertices = { vertices[1].pos, vertices[12].pos, vertices[7].pos, vertices[18].pos };
+		f.normal = vertices[1].normal;
+		_faces.push_back(f);
+	}
 
-    {
-        Face f = Face();
-        f.vertices = { vertices[4].pos, vertices[15].pos, vertices[10].pos, vertices[21].pos };
-        f.normal = vertices[4].normal;
-        _faces.push_back(f);
-    }
+	{
+		Face f = Face();
+		f.vertices = { vertices[4].pos, vertices[15].pos, vertices[10].pos, vertices[21].pos };
+		f.normal = vertices[4].normal;
+		_faces.push_back(f);
+	}
 
-    {
-        Face f = Face();
-        f.vertices = { vertices[13].pos, vertices[16].pos, vertices[19].pos, vertices[22].pos };
-        f.normal = vertices[13].normal;
-        _faces.push_back(f);
-    }
+	{
+		Face f = Face();
+		f.vertices = { vertices[13].pos, vertices[16].pos, vertices[19].pos, vertices[22].pos };
+		f.normal = vertices[13].normal;
+		_faces.push_back(f);
+	}
 
-    {
-        Face f = Face();
-        f.vertices = { vertices[20].pos, vertices[8].pos, vertices[23].pos, vertices[11].pos };
-        f.normal = vertices[20].normal;
-        _faces.push_back(f);
-    }
+	{
+		Face f = Face();
+		f.vertices = { vertices[20].pos, vertices[8].pos, vertices[23].pos, vertices[11].pos };
+		f.normal = vertices[20].normal;
+		_faces.push_back(f);
+	}
 
-    {
-        Face f = Face();
-        f.vertices = { vertices[2].pos, vertices[5].pos, vertices[14].pos, vertices[17].pos };
-        f.normal = vertices[2].normal;
-        _faces.push_back(f);
-    }
+	{
+		Face f = Face();
+		f.vertices = { vertices[2].pos, vertices[5].pos, vertices[14].pos, vertices[17].pos };
+		f.normal = vertices[2].normal;
+		_faces.push_back(f);
+	}
 
 	for (size_t i = 0; i < sizeof(vertices) / sizeof(*vertices); i++)
 	{

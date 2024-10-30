@@ -217,6 +217,7 @@ namespace Example
 				V3 dir1 = edge1_end - edge1_start;
 				V3 dir2 = edge2_end - edge2_start;
 				V3 d1 = edge2_start - edge1_start;
+				V3 d2 = edge1_start - edge2_start;
 				float cross = Cross(dir1, dir2).Length();
 
 				if (cross < FLT_MARGIN)
@@ -224,8 +225,8 @@ namespace Example
 					continue;
 				}
 
-				float t1 = Length(Cross(d1, dir2)) / cross;
-				float t2 = Length(Cross(d1, dir1)) / cross;
+				float t1 = Length(Cross(d1, dir1)) / cross;
+				float t2 = Length(Cross(d2, dir2)) / cross;
 
 				if (t1 >= 0 && t1 <= 1 && t2 >= 0 && t2 <= 1)
 				{
@@ -471,6 +472,7 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 			case GLFW_KEY_S: s = action; break;
 			case GLFW_KEY_A: a = action; break;
 			case GLFW_KEY_D: d = action; break;
+			case GLFW_KEY_F: f = action; break;
 			case GLFW_KEY_G: showDebugRender = false; break;
 			case GLFW_KEY_Z: showDebugRender = true; break;
 			
@@ -1111,58 +1113,65 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		//  reflect hit with normal and and scale the vector with the other factors
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
-		time_t f = time(nullptr);
+		time_t seed = time(nullptr);
 		// std::cout << "seed: " << f << std::endl;
-		srand(f);
+		srand(seed);
 		float x_rand = rand() / (float)RAND_MAX * 20.f - 10.f;
 		float z_rand = rand() / (float)RAND_MAX * 20.f - 10.f;
 
-		for (size_t i = 0; i < 5; i++)
+		for (size_t i = 0; i < 4; i++)
 		{
 			const GraphicNode node = *texturedCube.get();
 			all_loaded.push_back(std::make_shared<GraphicNode>(node));
 			all_loaded[i]->actor = std::make_shared<Actor>();
 			all_loaded[i]->actor->elasticity = 0.600f;
-			all_loaded[i]->actor->mass = 2;
-			all_loaded[i]->actor->isDynamic = true;
+			all_loaded[i]->actor->mass = 2000;
+			all_loaded[i]->actor->isDynamic = false;
 
-			all_loaded[i]->actor->transform = Translate(V4(i * 0.75f, 0, 0)); // *Rotation(V4(0, 0, 1), M_PI / 4.f)* Rotation(V4(0, 0, 1), z_rand);
+			all_loaded[i]->actor->transform = /*Scalar(V3(10.f, 0.1f, 10.f)) * */Translate(V4(i * 0.75f - 2.f, 0, 0)); // *Rotation(V4(0, 0, 1), M_PI / 4.f)* Rotation(V4(0, 0, 1), z_rand);
 																			  // all_loaded[i]->actor->linearVelocity = V3(-1e-3f, 1e-3f, 0);
+		}
+
+		{
+			all_loaded[0]->actor->transform = Translate(V4(0, 10.5f, 0)) * Scalar(V3(1.f, 1.f, 1.f));
+			all_loaded[0]->actor->mass = 1;
+			all_loaded[0]->actor->elasticity = 0.5f;
+			all_loaded[0]->actor->isDynamic = true;
 		}
 
 		// floor
 		{
-			all_loaded[1]->actor->transform = Translate(V4(0, -10.5f, 2)) * Scalar(V3(1.f, 1.f, 1.f));
-			all_loaded[1]->actor->mass = 1000;
-			all_loaded[1]->actor->elasticity = 0.0001f;
-			all_loaded[1]->actor->isDynamic = false;
+			all_loaded[1]->actor->transform = Translate(V4(6.5f, 10.5f, 0)) * Scalar(V3(1.f, 1.f, 1.f));
+			all_loaded[1]->actor->mass = 1;
+			all_loaded[1]->actor->elasticity = 0.5f;
+			all_loaded[1]->actor->isDynamic = true;
 		}
 
 		{
-			all_loaded[2]->actor->transform = Translate(V4(2.5f, -10.5f, 2)) * Scalar(V3(1.f, 1.f, 1.f));
-			all_loaded[2]->actor->mass = 1000;
-			all_loaded[2]->actor->elasticity = 0.0001f;
+			all_loaded[2]->actor->transform = Translate(V4(0, 2.0f, 0)) * Scalar(V3(1.f, 1.f, 1.f));
+			all_loaded[2]->actor->mass = 190;
+			all_loaded[2]->actor->elasticity = 0.1f;
 			all_loaded[2]->actor->isDynamic = false;
 		}
 
 		{
-			all_loaded[3]->actor->transform = Translate(V4(0, -10.5f, -2)) * Scalar(V3(1.f, 1.f, 1.f));
-			all_loaded[3]->actor->mass = 1000;
-			all_loaded[3]->actor->elasticity = 0.0001f;
+			all_loaded[3]->actor->transform = Translate(V4(6.3f, 4.5f, 0)) * Scalar(V3(1.f, 1.f, 1.f));
+			all_loaded[3]->actor->mass = 190;
+			all_loaded[3]->actor->elasticity = 0.1f;
 			all_loaded[3]->actor->isDynamic = false;
 		}
 
-		{
-			all_loaded[4]->actor->transform = Translate(V4(2.5f, -10.5f, -2)) * Scalar(V3(1.f, 1.f, 1.f));
-			all_loaded[4]->actor->mass = 1000;
-			all_loaded[4]->actor->elasticity = 0.0001f;
-			all_loaded[4]->actor->isDynamic = false;
-		}
+		//{
+		//	all_loaded[4]->actor->transform = Translate(V4(2.5f, 10.5f, -1.5)) * Scalar(V3(1.f, 1.f, 1.f));
+		//	all_loaded[4]->actor->mass = 1;
+		//	all_loaded[4]->actor->elasticity = 0.1f;
+		//	all_loaded[4]->actor->isDynamic = true;
+		//}
 
-		all_loaded[0]->actor->mass = 100;
+		//all_loaded[0]->actor->mass = 100;
 		// all_loaded[0]->actor->elasticity = 0.4;
 		//all_loaded[0]->actor->linearVelocity = V3(-1e-3f, 0, 0);
-		all_loaded[0]->actor->transform = Translate(V4(1.5f, -0.7f, 0));
+		//all_loaded[0]->actor->transform = Translate(V4(1.5f, 0.7f, 0));
 
 		//all_loaded[1]->actor->transform = Translate(V4(-1.5f, 0.8f, 0));
 		//all_loaded[1]->actor->mass = 100;
@@ -1204,7 +1213,16 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 			auto start = std::chrono::high_resolution_clock::now();
 			// cube->actor->linearVelocity = V3(.05f * cos(frameIndex / 10.f)+0.001f, sin(frameIndex / 30.f) * 0.02f, 0);
 			//--------------------math section--------------------
-			cam.setPos(cam.getPos() + Normalize(V4((a - d), (shift - space), (w - s))) * camSpeed);
+			if (this->f)
+			{
+				auto gg = all_loaded[0]->actor->transform * all_loaded[0]->actor->rotation * Rotation(V4(1, 0, 0), -M_PI / 4);
+				//cam.setPos(gg + V4(0, -1.f, -3.f, 1));
+				cam.setRot(V4(1, 0, 0, 0), -M_PI / 4);
+			}
+			else
+			{
+				cam.setPos(cam.getPos() + Normalize(V4((a - d), (shift - space), (w - s))) * camSpeed);
+			}
 			V3 rayOrigin = cam.getPos() * 1.f;
 
 

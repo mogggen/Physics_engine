@@ -2,9 +2,7 @@
 // exampleapp.cc
 // (C) 2015-2020 Individual contributors, see AUTHORS file
 //------------------------------------------------------------------------------
-// 1. TODO: make sure that min max is correct
 // 2. TODO: fix remaining bugs
-// 3. TODO: Debug::DrawSphere()
 #include "config.h"
 #include "imgui.h"
 #include "stb_image.h"
@@ -68,7 +66,7 @@ namespace Example
 
 		for (size_t i = 1; i < 8; i++)
 		{
-			current = ((modelMatrix)*V4(data[i / 4], data[2 + (i / 2) % 2], data[4 + i % 2], 1)).toV3();
+			current = (modelMatrix*V4(data[i / 4], data[2 + (i / 2) % 2], data[4 + i % 2], 1)).toV3();
 			for (size_t j = 0; j < 3; j++)
 			{
 				if (current[j] < ret.first[j])
@@ -132,9 +130,9 @@ namespace Example
 			// V3 b = i_worldSpace_coords[i_meshModel_indices[i + 1]];
 			// V3 c = i_worldSpace_coords[i_meshModel_indices[i + 2]];
 
-			V4 a4 = V4(/*Transpose*/ (WorldSpaceTransform)*V4(i_worldSpace_coords[i_meshModel_indices[i + 0]], 1));
-			V4 b4 = V4(/*Transpose*/ (WorldSpaceTransform)*V4(i_worldSpace_coords[i_meshModel_indices[i + 1]], 1));
-			V4 c4 = V4(/*Transpose*/ (WorldSpaceTransform)*V4(i_worldSpace_coords[i_meshModel_indices[i + 2]], 1));
+			V4 a4 = V4(/*Transpose*/ WorldSpaceTransform*V4(i_worldSpace_coords[i_meshModel_indices[i + 0]], 1));
+			V4 b4 = V4(/*Transpose*/ WorldSpaceTransform*V4(i_worldSpace_coords[i_meshModel_indices[i + 1]], 1));
+			V4 c4 = V4(/*Transpose*/ WorldSpaceTransform*V4(i_worldSpace_coords[i_meshModel_indices[i + 2]], 1));
 
 			V3 a = V3(a4.x, a4.y, a4.z);
 			V3 b = V3(b4.x, b4.y, b4.z);
@@ -429,7 +427,7 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 @param V4 waf final angular velocity of object a
 @param V4 wbf final angular velocity of object b
 */
-	static void CollisionResponse(float e,float ma,float mb,M4 Ia,M4 Ib,V4 ra,V4 rb,V4 n,
+	static void CollisionResponse(float e,float ma,float mb,M4& Ia,M4& Ib,V4 ra,V4 rb,V4 n,
 	 V4 vai, V4 vbi, V4 wai, V4 wbi, V4& vaf, V4& vbf, V4& waf, V4& wbf) {
    M4 IaInverse = Inverse(Ia);
    V4 normal = Normalize(n);
@@ -459,12 +457,12 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		this->window = new Display::Window;
 
 		// assign ExampleApp variables
-		w = a = s = d = shift = space = false;
+		w = a = s = d = f = shift = space = false;
 		window->GetSize(width, height);
 
-		window->SetKeyPressFunction([this](int32 keycode, int32 scancode, int32 action, int32 mods)
+		window->SetKeyPressFunction([this](int32 keycode, int32, int32 action, int32)
 									{
-			//deltatime
+			//delta time
 			switch (keycode)
 			{
 			case GLFW_KEY_ESCAPE: window->Close(); break;
@@ -478,9 +476,10 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 			
 			case GLFW_KEY_LEFT_SHIFT: shift = action; break;
 			case GLFW_KEY_SPACE: space = action; break;
+			default: break;
 			} });
 
-		window->SetMousePressFunction([this](int32 button, int32 action, int32 mods)
+		window->SetMousePressFunction([this](int32 button, int32 action, int32)
 									  { isPressed = button == GLFW_MOUSE_BUTTON_1 && action; });
 
 		window->SetMouseMoveFunction([this](float64 x, float64 y)
@@ -816,6 +815,7 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 	{
 		bool AreColliding(CollisionData *out_coldata)
 		{
+			return false;
 			//	if (!shapeA || !shapeB)
 			//		return false;
 
@@ -891,7 +891,7 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 			//	return true;
 		}
 
-		inline bool CheckCollisionAxis(std::vector<Face> shapeA, std::vector<Face> shapeB,
+		inline bool CheckCollisionAxis(//std::vector<Face>& shapeA, std::vector<Face>& shapeB,
 									   const V3 &axis, CollisionData &out_coldata)
 		{
 			// Overlap Test
@@ -995,14 +995,14 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		// i
 		std::vector<V3>& i_vertices = ith->getMesh()->positions;
 		apply_world_space(i_vertices, ith->actor->transform);
-		std::vector<Face> i_faces = ith->getMesh()->faces;
+		std::vector<Face>& i_faces = ith->getMesh()->faces;
 		apply_world_space(i_faces, ith->actor->transform);
 		V3 i_cm = findAverage(i_vertices);
 
 		// j
 		std::vector<V3>& j_vertices = jth->getMesh()->positions;
 		apply_world_space(j_vertices, jth->actor->transform);
-		std::vector<Face> j_faces = jth->getMesh()->faces;
+		std::vector<Face>& j_faces = jth->getMesh()->faces;
 		apply_world_space(j_faces, jth->actor->transform);
 		V3 j_cm = findAverage(j_vertices);
 
@@ -1082,9 +1082,17 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 			u2 = u2In;
 		rot1 = ith->actor->isDynamic ? Rotation(axis1, Length(wa * 0.9) * 0.00005) : rot1;
 		rot2 = jth->actor->isDynamic ? Rotation(axis2, Length(wb * 0.9) * 0.00005) : rot2;
+		
+		//std::copy(i_vertices.begin(), i_vertices.end(), ith->getMesh()->positions);
+		ith->getMesh()->positions = i_vertices;
+		//std::copy(i_faces.begin(), i_faces.end(), ith->getMesh()->faces);
+		ith->getMesh()->faces = i_faces;
+
+		//std::copy(j_vertices.begin(), j_vertices.end(), jth->getMesh()->positions);
+		jth->getMesh()->positions = j_vertices;
+		//std::copy(j_faces.begin(), j_faces.end(), jth->getMesh()->faces);
+		jth->getMesh()->faces = j_faces;
 		return;
-		o1 = w1;
-		o2 = w2;
 
 		if (axis1.Length2())
 			// the result that I want
@@ -1094,7 +1102,7 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		//const V4 res = reflect(v1, info.norm1);
 		//const V3 kl = { res.x, res.y, res.z };
 		//u1 = v1 * Dot(v1, info.norm1) * (Length(v1)) * ith->actor->isDynamic;
-		ith->actor->apply_force(V3(0.0003, m1 * 9.806e-3f * 0.02f * (info.depth == 0 ? Length2(j_cm - i_cm) : info.depth), 0), 0.1);
+		//ith->actor->apply_force(V3(0.0003, m1 * 9.806e-3f * 0.02f * (info.depth == 0 ? Length2(j_cm - i_cm) : info.depth), 0), 0.1);
 		//ith->actor->apply_force((findAverage(info.polytope) - i_cm) * 0.01f, 0.01f);
 
 		if (axis2.Length2())
@@ -1121,8 +1129,12 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 
 		for (size_t i = 0; i < 4; i++)
 		{
-			const GraphicNode node = *texturedCube.get();
-			all_loaded.push_back(std::make_shared<GraphicNode>(node));
+			auto node = std::make_shared<GraphicNode>(
+				std::make_shared<MeshResource>(*texturedCube->getMesh().get()),
+				texturedCube->getTexture(),
+				texturedCube->getShader(),
+				std::make_shared<Actor>(*texturedCube->getActor().get()));
+			all_loaded.push_back(node);
 			all_loaded[i]->actor = std::make_shared<Actor>();
 			all_loaded[i]->actor->elasticity = 0.600f;
 			all_loaded[i]->actor->mass = 2000;
@@ -1135,15 +1147,15 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		{
 			all_loaded[0]->actor->transform = Translate(V4(0, 10.5f, 0)) * Scalar(V3(1.f, 1.f, 1.f));
 			all_loaded[0]->actor->mass = 1;
-			all_loaded[0]->actor->elasticity = 0.5f;
+			all_loaded[0]->actor->elasticity = 0.1f;
 			all_loaded[0]->actor->isDynamic = true;
 		}
 
 		// floor
 		{
-			all_loaded[1]->actor->transform = Translate(V4(6.5f, 10.5f, 0)) * Scalar(V3(1.f, 1.f, 1.f));
+			all_loaded[1]->actor->transform = Translate(V4(1.2f, 7.5f, 0)) * Scalar(V3(1.f, 1.f, 1.f));
 			all_loaded[1]->actor->mass = 1;
-			all_loaded[1]->actor->elasticity = 0.5f;
+			all_loaded[1]->actor->elasticity = 0.1f;
 			all_loaded[1]->actor->isDynamic = true;
 		}
 
@@ -1155,7 +1167,7 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		}
 
 		{
-			all_loaded[3]->actor->transform = Translate(V4(6.3f, 4.5f, 0)) * Scalar(V3(1.f, 1.f, 1.f));
+			all_loaded[3]->actor->transform = Translate(V4(0.3f, 7.25f, 0)) * Scalar(V3(1.f, 1.f, 1.f));
 			all_loaded[3]->actor->mass = 190;
 			all_loaded[3]->actor->elasticity = 0.1f;
 			all_loaded[3]->actor->isDynamic = false;
@@ -1180,7 +1192,7 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		// all_loaded[1]->actor->isDynamic = false;
 		// all_loaded[1]->actor->transform = Translate(V4(1 * 0.75f, 3.f * 1, 0));
 		//  deltatime
-		float dt = 0.001;
+		float dt = 0.0001f;
 		Ray ray(V3(FLT_MAX, FLT_MAX, FLT_MAX), V3(FLT_MAX, FLT_MAX, FLT_MAX));
 
 		// gravity
@@ -1200,9 +1212,9 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		// set identities
 		//floor->actor->transform = Translate(V4(0, -10.5f, 0));
 
-		for (const std::shared_ptr<GraphicNode> g : all_loaded)
+		for (const std::shared_ptr<GraphicNode> graphN : all_loaded)
 		{
-			std::pair<V3, V3> t = findAABB(*g->getMesh(), g->actor->transform);
+			std::pair<V3, V3> t = findAABB(*graphN->getMesh(), graphN->actor->transform);
 			aabbs.push_back({t.first, t.second});
 		}
 
@@ -1236,11 +1248,11 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 			}
 
 			std::vector<std::pair<size_t, size_t>> _ = aabbPlaneSweep(aabbs);
-			for (std::pair<size_t, size_t> &a : _)
+			for (std::pair<size_t, size_t> &ants : _)
 			{
 				// prepare arguments
-				std::shared_ptr<GraphicNode> ith = all_loaded[a.first];
-				std::shared_ptr<GraphicNode> jth = all_loaded[a.second];
+				std::shared_ptr<GraphicNode> ith = all_loaded[ants.first];
+				std::shared_ptr<GraphicNode> jth = all_loaded[ants.second];
 
 				handle_collision(ith, jth);
 			}
@@ -1258,16 +1270,16 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 			//--------------------real-time render section--------------------
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			for (std::shared_ptr<GraphicNode> a : all_loaded)
+			for (std::shared_ptr<GraphicNode> sample_a : all_loaded)
 			{
 				const V4 color(1, 1, 1, 1);
 
-				a->getShader()->setM4(cam.pv(), "m4ProjViewPos");
+				sample_a->getShader()->setM4(cam.pv(), "m4ProjViewPos");
 
-				std::shared_ptr<ShaderResource> script = a->getShader();
+				std::shared_ptr<ShaderResource> script = sample_a->getShader();
 
-				a->actor->update(3);
-				M4 &wst = a->actor->transform;
+				sample_a->actor->update(3);
+				M4 &wst = sample_a->actor->transform;
 				if (showDebugRender)
 				{
 					//if (isPressed)
@@ -1275,14 +1287,14 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 					//	std::cout << std::endl;
 					//}
 
-					MeshResource &m = *a->getMesh();
+					MeshResource &m = *sample_a->getMesh();
 					Debug::DrawBB(m, V4(0, 1, 1, 1), wst);
 
 					std::pair<V3, V3> aabb = findAABB(m, wst);
 					Debug::DrawAABB(aabb, V4(1, 0, 0, 1));
 				}
 				light.bindLight(script, cam.getPos());
-				a->DrawScene(cam.pv() * wst, color);
+				sample_a->DrawScene(cam.pv() * wst, color);
 			}
 			if (showDebugRender)
 			{
@@ -1306,6 +1318,12 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		ImGui::Checkbox("Debug Mode: ", &showDebugRender);
 		ImGui::Text("frames: %d %.0f", frameIndex);
 		ImGui::Text("det: %.5f", Determinant(all_loaded[0]->actor->rotation));
+
+		for (size_t i = 0; i < all_loaded.size(); i++)
+		{
+			ImGui::Checkbox(std::string("make dynamic cube" + i).c_str(), &all_loaded[i]->actor->isDynamic);
+		}
+
 		ImGui::End();
 	}
 

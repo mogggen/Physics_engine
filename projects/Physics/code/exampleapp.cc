@@ -998,6 +998,13 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		std::vector<Face>& i_faces = ith->getMesh()->faces;
 		apply_world_space(i_faces, ith->actor->transform);
 		V3 i_cm = findAverage(i_vertices);
+        {
+            
+            for (Face& f : i_faces)
+            {
+                f.normal = Normalize(Cross(f.vertices[2] - f.vertices[0], f.vertices[1] - f.vertices[0]));
+            }
+        }
 
 		// j
 		std::vector<V3>& j_vertices = jth->getMesh()->positions;
@@ -1005,6 +1012,13 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		std::vector<Face>& j_faces = jth->getMesh()->faces;
 		apply_world_space(j_faces, jth->actor->transform);
 		V3 j_cm = findAverage(j_vertices);
+        {
+
+            for (Face& f : j_faces)
+            {
+                f.normal = Normalize(Cross(f.vertices[2] - f.vertices[0], f.vertices[1] - f.vertices[0]));
+            }
+        }
 
 		CollisionInfo& info = sat(i_faces, j_faces);
 
@@ -1145,7 +1159,7 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		}
 
 		{
-			all_loaded[0]->actor->transform = Translate(V4(0, 10.5f, 0)) * Scalar(V3(1.f, 1.f, 1.f));
+			all_loaded[0]->actor->transform = Translate(V4(0, 10.5f, 0)) * Rotation(V4(1, 1, 1), 0.34f);
 			all_loaded[0]->actor->mass = 1;
 			all_loaded[0]->actor->elasticity = 0.1f;
 			all_loaded[0]->actor->isDynamic = true;
@@ -1153,24 +1167,10 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 
 		// floor
 		{
-			all_loaded[1]->actor->transform = Translate(V4(1.2f, 7.5f, 0)) * Scalar(V3(1.f, 1.f, 1.f));
+			all_loaded[1]->actor->transform = Translate(V4(0.f, 7.5f, 0)) * Scalar(V3(1.f, 1.f, 1.f));
 			all_loaded[1]->actor->mass = 1;
 			all_loaded[1]->actor->elasticity = 0.1f;
 			all_loaded[1]->actor->isDynamic = true;
-		}
-
-		{
-			all_loaded[2]->actor->transform = Translate(V4(0, 2.0f, 0)) * Scalar(V3(1.f, 1.f, 1.f));
-			all_loaded[2]->actor->mass = 190;
-			all_loaded[2]->actor->elasticity = 0.1f;
-			all_loaded[2]->actor->isDynamic = false;
-		}
-
-		{
-			all_loaded[3]->actor->transform = Translate(V4(0.3f, 7.25f, 0)) * Scalar(V3(1.f, 1.f, 1.f));
-			all_loaded[3]->actor->mass = 190;
-			all_loaded[3]->actor->elasticity = 0.1f;
-			all_loaded[3]->actor->isDynamic = false;
 		}
 
 		//{

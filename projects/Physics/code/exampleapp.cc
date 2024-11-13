@@ -372,7 +372,7 @@ namespace Example
 					collisionInfo.isColliding = false;
 					return collisionInfo; // No collision
 				}
-				//else if (overlap < collisionInfo.depth)
+				else if (overlap < collisionInfo.depth)
 				{
 					// Store penetration depth and the penetration points
 					collisionInfo.depth = overlap;
@@ -983,7 +983,7 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 
 	}
 
-	static void handle_collision(const std::shared_ptr<GraphicNode>& ith, const std::shared_ptr<GraphicNode>& jth)
+	static void handle_collision(const std::shared_ptr<GraphicNode>& ith, const std::shared_ptr<GraphicNode>& jth, int frameIndex)
 	{
 		// setup up point collision for one rigid body against origo
 		// (use a single triangle face for +3 vertices plane of the cubes to act as point, line, triangle face, and merged faces changes
@@ -1008,7 +1008,14 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 
 		CollisionInfo& info = sat(i_faces, j_faces);
 
-		if (!info.isColliding) return;
+
+		if (!info.isColliding)
+		{
+			std::cout << "before index" << frameIndex << std::endl;
+			return;
+		}
+		else
+			std::cout << "after index" << frameIndex << std::endl;
 
 		//info.polytope = V3(0.5f, -10.5f, 0.f);
 
@@ -1127,7 +1134,7 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		float x_rand = rand() / (float)RAND_MAX * 20.f - 10.f;
 		float z_rand = rand() / (float)RAND_MAX * 20.f - 10.f;
 
-		for (size_t i = 0; i < 4; i++)
+		for (size_t i = 0; i < 2; i++)
 		{
 			auto node = std::make_shared<GraphicNode>(
 				std::make_shared<MeshResource>(*texturedCube->getMesh().get()),
@@ -1156,7 +1163,6 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 			all_loaded[1]->actor->transform = Translate(V4(0.f, 7.5f, 0)) * Scalar(V3(1.f, 1.f, 1.f));
 			all_loaded[1]->actor->mass = 1;
 			all_loaded[1]->actor->elasticity = 0.1f;
-			all_loaded[1]->actor->isDynamic = true;
 		}
 
 		//{
@@ -1240,7 +1246,7 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 				std::shared_ptr<GraphicNode> ith = all_loaded[ants.first];
 				std::shared_ptr<GraphicNode> jth = all_loaded[ants.second];
 
-				handle_collision(ith, jth);
+				handle_collision(ith, jth, frameIndex);
 			}
 
 			// effect of gravity

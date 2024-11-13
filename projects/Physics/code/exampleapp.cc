@@ -998,13 +998,6 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		std::vector<Face>& i_faces = ith->getMesh()->faces;
 		apply_world_space(i_faces, ith->actor->transform);
 		V3 i_cm = findAverage(i_vertices);
-        {
-            
-            for (Face& f : i_faces)
-            {
-                f.normal = Normalize(Cross(f.vertices[2] - f.vertices[0], f.vertices[1] - f.vertices[0]));
-            }
-        }
 
 		// j
 		std::vector<V3>& j_vertices = jth->getMesh()->positions;
@@ -1012,13 +1005,6 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		std::vector<Face>& j_faces = jth->getMesh()->faces;
 		apply_world_space(j_faces, jth->actor->transform);
 		V3 j_cm = findAverage(j_vertices);
-        {
-
-            for (Face& f : j_faces)
-            {
-                f.normal = Normalize(Cross(f.vertices[2] - f.vertices[0], f.vertices[1] - f.vertices[0]));
-            }
-        }
 
 		CollisionInfo& info = sat(i_faces, j_faces);
 

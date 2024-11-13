@@ -1753,6 +1753,7 @@ struct Face {
 inline void apply_world_space(std::vector<Face>& faces, const M4& transform) {
 	for (Face& ff : faces) {
         apply_world_space(ff.vertices, transform);
+        ff.normal = Normalize(Cross(ff.vertices[1] - ff.vertices[0], ff.vertices[2] - ff.vertices[0]));
 	}
 }
 

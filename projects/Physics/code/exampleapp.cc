@@ -18,12 +18,12 @@
 #endif
 struct Actor;
 
-static void Print(const V4& v)
-{
-	std::cout << '(';
-	for (size_t i = 0; i < 4; i++)
-		std::cout << v.data[i] << (i == 3 ? ")\n" : ", ");
-}
+//static void Print(const V4& v)
+//{
+//	std::cout << '(';
+//	for (size_t i = 0; i < 4; i++)
+//		std::cout << v.data[i] << (i == 3 ? ")\n" : ", ");
+//}
 
 static void Print(const M4& m)
 {
@@ -985,6 +985,10 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 
 	static void handle_collision(const std::shared_ptr<GraphicNode>& ith, const std::shared_ptr<GraphicNode>& jth, int frameIndex)
 	{
+		if (frameIndex == 4668)
+		{
+			std::cout << "Gath\n";
+		}
 		// setup up point collision for one rigid body against origo
 		// (use a single triangle face for +3 vertices plane of the cubes to act as point, line, triangle face, and merged faces changes
 		// then draw a line through the z-axis
@@ -1010,12 +1014,11 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 
 
 		if (!info.isColliding)
-		{
-			std::cout << "before index" << frameIndex << std::endl;
 			return;
-		}
 		else
 			std::cout << "after index" << frameIndex << std::endl;
+
+		if (Dot(info.norm1, info.norm2) > 0) std::cout << "" << std::endl;
 
 		//info.polytope = V3(0.5f, -10.5f, 0.f);
 
@@ -1024,7 +1027,11 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 
 		V4 r1 = findAverage(info.polytope) - i_cm; // figure this out last
 		V4 r2 = findAverage(info.polytope) - j_cm; // figure this out last
-
+		if (info.polytope.size() > 0)
+		{
+			std::cout << "AAAHHHH" << std::endl;
+			exit(0);
+		}
 		const float& e1 = ith->actor->elasticity;
 		const float& e2 = jth->actor->elasticity;
 
@@ -1087,8 +1094,8 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 			u1 = u1In;
 		if (jth->actor->isDynamic)
 			u2 = u2In;
-		rot1 = ith->actor->isDynamic ? Rotation(axis1, Length(wa * 0.9) * 0.00005) : rot1;
-		rot2 = jth->actor->isDynamic ? Rotation(axis2, Length(wb * 0.9) * 0.00005) : rot2;
+		rot1 = ith->actor->isDynamic ? Rotation(axis1, Length(wa) * 0.0005) : rot1;
+		rot2 = jth->actor->isDynamic ? Rotation(axis2, Length(wb) * 0.0005) : rot2;
 		
 		//std::copy(i_vertices.begin(), i_vertices.end(), ith->getMesh()->positions);
 		ith->getMesh()->positions = i_vertices;
@@ -1144,7 +1151,7 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 			all_loaded.push_back(node);
 			all_loaded[i]->actor = std::make_shared<Actor>();
 			all_loaded[i]->actor->elasticity = 0.600f;
-			all_loaded[i]->actor->mass = 2000;
+			all_loaded[i]->actor->mass = 2;
 			all_loaded[i]->actor->isDynamic = false;
 
 			all_loaded[i]->actor->transform = /*Scalar(V3(10.f, 0.1f, 10.f)) * */Translate(V4(i * 0.75f - 2.f, 0, 0)); // *Rotation(V4(0, 0, 1), M_PI / 4.f)* Rotation(V4(0, 0, 1), z_rand);
@@ -1152,7 +1159,7 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		}
 
 		{
-			all_loaded[0]->actor->transform = Translate(V4(0, 10.5f, 0)) * Rotation(V4(1, 1, 1), 0.34f);
+			all_loaded[0]->actor->transform = Translate(V4(0, 10.5f, 0)) * Rotation(V4(1, 1, 1), -0.35f);
 			all_loaded[0]->actor->mass = 1;
 			all_loaded[0]->actor->elasticity = 0.1f;
 			all_loaded[0]->actor->isDynamic = true;
@@ -1161,7 +1168,7 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		// floor
 		{
 			all_loaded[1]->actor->transform = Translate(V4(0.f, 7.5f, 0)) * Scalar(V3(1.f, 1.f, 1.f));
-			all_loaded[1]->actor->mass = 1;
+			all_loaded[1]->actor->mass = 100;
 			all_loaded[1]->actor->elasticity = 0.1f;
 		}
 
@@ -1246,7 +1253,7 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 				std::shared_ptr<GraphicNode> ith = all_loaded[ants.first];
 				std::shared_ptr<GraphicNode> jth = all_loaded[ants.second];
 
-				handle_collision(ith, jth, frameIndex);
+				handle_collision(all_loaded[0], all_loaded[1], frameIndex);
 			}
 
 			// effect of gravity
@@ -1255,7 +1262,7 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 				const float &m = node->actor->mass;
 				if (node->actor->isDynamic)
 				{
-					node->actor->apply_force(m * GRAVITY * 0.01f, dt);
+					node->actor->apply_force(m * GRAVITY * 0.1f, dt);
 				}
 			}
 
@@ -1313,7 +1320,7 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 
 		for (size_t i = 0; i < all_loaded.size(); i++)
 		{
-			ImGui::Checkbox(std::string("make dynamic cube" + i).c_str(), &all_loaded[i]->actor->isDynamic);
+			ImGui::Checkbox(std::string("Make dynamic cube " + std::to_string(i) + ": " + std::string(all_loaded[i]->actor->isDynamic ? "true" : "false")).c_str(), &all_loaded[i]->actor->isDynamic);
 		}
 
 		ImGui::End();

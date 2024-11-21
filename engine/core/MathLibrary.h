@@ -1080,6 +1080,12 @@ inline CollisionPoints epa(
 	return points;
 }
 
+static void Print(const V4& v)
+{
+	std::cout << '(';
+	for (size_t i = 0; i < 4; i++)
+		std::cout << v.data[i] << (i == 3 ? ")\n" : ", ");
+}
 
 #pragma endregion
 
@@ -1753,7 +1759,9 @@ struct Face {
 inline void apply_world_space(std::vector<Face>& faces, const M4& transform) {
 	for (Face& ff : faces) {
         apply_world_space(ff.vertices, transform);
-        ff.normal = Normalize(Cross(ff.vertices[1] - ff.vertices[0], ff.vertices[2] - ff.vertices[0]));
+		std::vector<V3>& normal = std::vector<V3>({ ff.normal });
+		apply_world_space(normal, transform);
+		ff.normal = normal[0];
 	}
 }
 

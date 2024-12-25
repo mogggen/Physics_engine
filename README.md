@@ -1,3 +1,11 @@
+point-against-face
+-3,-3 97,0 100,100
+Rotera med 45° längst +X-axeln vid hörn 97,0
+0,0 0,100 100,100 100,0
+
+97,0
+Z:0-100
+
 face-against-face
 0,-99 0,1 100,1 100,-99
 0,0 0,100 100,100 100,0

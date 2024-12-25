@@ -1,4 +1,10 @@
-line-aganst-face
+face-against-face
+0,-99 0,1 100,1 100,-99
+0,0 0,100 100,100 100,0
+
+0,1 100,1
+
+line-against-face
 input:
 5,0 10,-5 5,-10 0,-5
 0,0 0,10 10,10 10,0

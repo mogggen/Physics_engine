@@ -1,27 +1,3 @@
-point-against-face
--3,-3 97,0 100,100
-Rotera med 45° längst +X-axeln vid hörn 97,0
-0,0 0,100 100,100 100,0
-
-97,0
-Z:0-100
-
-face-against-face
-0,-99 0,1 100,1 100,-99
-0,0 0,100 100,100 100,0
-
-0,1 100,1
-
-line-against-face
-input:
-5,0 10,-5 5,-10 0,-5
-0,0 0,10 10,10 10,0
-
-output:
-5,0
-
-z: 0-10
-
 # lab-env
 C++11 based application base for developing apps.
 

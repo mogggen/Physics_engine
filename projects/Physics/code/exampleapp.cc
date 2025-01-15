@@ -7,6 +7,7 @@
 #include "imgui.h"
 #include "stb_image.h"
 #include "exampleapp.h"
+#include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -58,58 +59,68 @@ namespace Example
 	/**
 	 */
 
-	static std::pair<V3, V3> findAABB(MeshResource &mesh, const M4& modelMatrix)
+	static std::pair<V3, V3> findAABB(const MeshResource &mesh, const M4& modelMatrix)
 	{
-		V3 current = (modelMatrix * V4(mesh.min, 1)).toV3();
-		std::pair<V3, V3> ret = {current, current};
-		float data[6] = {mesh.min[0], mesh.max[0], mesh.min[1], mesh.max[1], mesh.min[2], mesh.max[2]};
+        V3 corners[8] = {
+            {mesh.min.x, mesh.min.y, mesh.min.z}, {mesh.min.x, mesh.min.y, mesh.max.z},
+            {mesh.min.x, mesh.max.y, mesh.min.z}, {mesh.min.x, mesh.max.y, mesh.max.z},
+            {mesh.max.x, mesh.min.y, mesh.min.z}, {mesh.max.x, mesh.min.y, mesh.max.z},
+            {mesh.max.x, mesh.max.y, mesh.min.z}, {mesh.max.x, mesh.max.y, mesh.max.z}
+        };
 
-		for (size_t i = 1; i < 8; i++)
-		{
-			current = (modelMatrix*V4(data[i / 4], data[2 + (i / 2) % 2], data[4 + i % 2], 1)).toV3();
-			for (size_t j = 0; j < 3; j++)
-			{
-				if (current[j] < ret.first[j])
-					ret.first[j] = current[j];
-				if (current[j] > ret.second[j])
-					ret.second[j] = current[j];
-			}
-		}
-		return ret;
-	}
+        V3 transformedCorners[8];
+        for (int i = 0; i < sizeof(transformedCorners) / sizeof(transformedCorners[0]); ++i)
+        {
+            transformedCorners[i] = (modelMatrix * V4(corners[i], 1)).toV3();
+        }
 
-	inline static V3 find_AABB_intersection(Ray &ray, MeshResource &mesh)
-	{
-		Plane left_plane(V3(mesh.min[0], 0, 0), V3(mesh.min[0], 0, 0));
-		Plane right_plane(V3(mesh.max[0], 0, 0), V3(mesh.max[0], 0, 0));
+        V3 min = transformedCorners[0];
+        V3 max = transformedCorners[0];
 
-		Plane bottom_plane(V3(0, mesh.min[1], 0), V3(0, mesh.min[1], 0));
-		Plane top_plane(V3(0, mesh.max[1], 0), V3(0, mesh.max[1], 0));
+        for (V3& tf : transformedCorners)
+        {
+            for (size_t i = 0; i < 3; ++i)
+            {
+                min[i] = std::min(tf[i], min[i]);
+                max[i] = std::max(tf[i], max[i]);
+            }
+        }
 
-		Plane front_plane(V3(0, 0, mesh.max[2]), V3(0, 0, mesh.max[2]));
-		Plane back_plane(V3(0, 0, mesh.min[2]), V3(0, 0, mesh.min[2]));
+        return { min, max };
+}
 
-		V3 res_left = ray.intersect(left_plane);
-		V3 res_two = ray.intersect(right_plane);
+inline static V3 find_AABB_intersection(Ray& ray, MeshResource& mesh)
+{
+    Plane left_plane(V3(mesh.min[0], 0, 0), V3(mesh.min[0], 0, 0));
+    Plane right_plane(V3(mesh.max[0], 0, 0), V3(mesh.max[0], 0, 0));
 
-		V3 res_bottom = ray.intersect(bottom_plane);
-		V3 res_top = ray.intersect(top_plane);
+    Plane bottom_plane(V3(0, mesh.min[1], 0), V3(0, mesh.min[1], 0));
+    Plane top_plane(V3(0, mesh.max[1], 0), V3(0, mesh.max[1], 0));
 
-		V3 res_front = ray.intersect(front_plane);
-		V3 res_back = ray.intersect(back_plane);
+    Plane front_plane(V3(0, 0, mesh.max[2]), V3(0, 0, mesh.max[2]));
+    Plane back_plane(V3(0, 0, mesh.min[2]), V3(0, 0, mesh.min[2]));
 
-		std::vector<V3> tt;
-		tt.push_back(res_left);
-		tt.push_back(res_two);
+    V3 res_left = ray.intersect(left_plane);
+    V3 res_two = ray.intersect(right_plane);
 
-		tt.push_back(res_top);
-		tt.push_back(res_bottom);
+    V3 res_bottom = ray.intersect(bottom_plane);
+    V3 res_top = ray.intersect(top_plane);
 
-		tt.push_back(res_front);
-		tt.push_back(res_back);
+    V3 res_front = ray.intersect(front_plane);
+    V3 res_back = ray.intersect(back_plane);
 
-		return ray.minDist(tt);
-	}
+    std::vector<V3> tt;
+    tt.push_back(res_left);
+    tt.push_back(res_two);
+
+    tt.push_back(res_top);
+    tt.push_back(res_bottom);
+
+    tt.push_back(res_front);
+    tt.push_back(res_back);
+
+    return ray.minDist(tt);
+}
 
 	inline static const V3 ray_intersection(
 		Ray &r,

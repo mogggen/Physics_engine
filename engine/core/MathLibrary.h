@@ -1104,6 +1104,8 @@ struct M4 {
 	V4 &operator[](size_t index);
 
 	inline M4();
+	inline M4(std::initializer_list<float> list);
+	inline M4(float f[16]);
 	inline M4(V4 v[4]);
 	V3 toV3();
 
@@ -1115,6 +1117,21 @@ M4::M4() {
 	{
 		data[i] = V4(0, 0, 0, 0);
 	}
+}
+
+M4::M4(std::initializer_list<float> list)
+{
+	const float* it = list.begin();
+	for (int i = 0; i < 4; ++i)
+		for (int j = 0; j < 4; ++j)
+			data[i][j] = *it++;
+}
+
+M4::M4(float f[16])
+{
+	for (size_t i = 0; i < 4; i++)
+		for (size_t j = 0; j < 4; j++)
+			(*this)[i][j] = f[i * 4 + j];
 }
 
 M4::M4(V4 v[4]) {

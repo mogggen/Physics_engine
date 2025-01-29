@@ -26,6 +26,21 @@ struct Actor;
 //		std::cout << v.data[i] << (i == 3 ? ")\n" : ", ");
 //}
 
+M4 getCubeInertiaTensor(float mass, float size)
+{
+	float other = mass * size * -1.f / 4.f;
+	float diag = size * 2.f / 3.f;
+	return M4({diag, other, other, 0,
+	    other, diag, other, 0,
+	    other, other, diag, 0,
+		0, 0, 0, 1 });
+}
+#define CUBE_INERTIA_TENSOR(mass, side_length) mass * side_length * \
+M4({2/3.f, -1/4.f, -1/4.f, 0,\
+	-1/4.f, 2/3.f, -1/4.f, 0,\
+	-1/4.f, -1/4.f, 2/3.f, 0,\
+	0, 0, 0, 1})
+
 static void Print(const M4& m)
 {
 	for (size_t i = 0; i < 4; i++)
@@ -1098,9 +1113,18 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		
 		V4 u1In = u1;
 		V4 u2In = u2;
+		M4 i1 = getCubeInertiaTensor(m1, 2); // should include current rotation (I think)
+		M4 i2 = getCubeInertiaTensor(m2, 2);
 
-		CollisionResponse(0.5f, m1, m2, Translate(V4()), Translate(V4()), r1, r2, info.norm1, v1, v2, axis1 * w1, axis2 * w2,
-			u1In, u2In, wa, wb);
+		CollisionResponse(0.5f,
+			m1, m2,
+			i1, i2,
+			r1, r2,
+			Normalize(info.norm2), // there are occations where both normals point in positive Y direction
+			v1, v2,
+			axis1 * w1, axis2 * w2,
+			u1In, u2In,
+			wa, wb);
 		if (ith->actor->isDynamic)
 			u1 = u1In;
 		if (jth->actor->isDynamic)
@@ -1298,7 +1322,7 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 					//}
 
 					MeshResource &m = *sample_a->getMesh();
-					Debug::DrawBB(m, V4(0, 1, 1, 1), wst);
+					//Debug::DrawBB(m, V4(0, 1, 1, 1), wst);
 
 					std::pair<V3, V3> aabb = findAABB(m, wst);
 					Debug::DrawAABB(aabb, V4(1, 0, 0, 1));

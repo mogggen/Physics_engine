@@ -1,0 +1,48 @@
+gjk - en kollisionspunkt.
+
+SAT - flera kollisionspunkter.
+
+Collision info
+{
+
+}
+
+frameInfo
+{
+delta time
+cube
+{
+position
+rotation
+scale
+
+}
+}
+
+räkna ut collisions punkten.
+
+spara deltatime
+
+alla frames sparas, med all data
+
+inverse Inersia tensor i world space.
+(strular)
+Ingen Collision response.
+
+fixa kollision rotation vid klick
+
+negative normals
+
+(negative) Kontakt punkter / normal
+
+Face spelar bara roll om det är SAT.
+t
+
+låg velocity velocity
+
+Quaternions till M4
+
+Response:
+negativ normal
+
+Stutsmatta impulse response är OK lösning

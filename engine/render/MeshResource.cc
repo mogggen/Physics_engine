@@ -355,7 +355,7 @@ std::shared_ptr<MeshResource> MeshResource::LoadGLTF(const tinygltf::Model& mode
 				}
 
 				// Iterate through indices data and convert to indices
-				for (size_t i = 0; i < indicesAccessor.count; ++i) {
+				for (size_t i = 0; i < indicesAccessor.count; i += 3) {
 					const void* indexPtr = indicesData + i * indicesAccessor.ByteStride(indicesBufferView);
 					if (indicesAccessor.componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT)
 					{

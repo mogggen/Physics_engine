@@ -6,6 +6,7 @@
 	(C) 2015-2020 Individual contributors, see AUTHORS file
 */
 //------------------------------------------------------------------------------
+#include <map>
 #include "core/app.h"
 #include "render/Vertex.h"
 #include "render/MeshResource.h"
@@ -21,6 +22,16 @@
 
 namespace Example
 {
+    struct TimeFrame
+    {
+        float deltaTime;
+        std::vector<std::vector<V3>> Cubes;
+        std::vector<V3> velocities;
+        std::vector<V3> transform;
+        std::vector<V3> forces;
+        std::vector<std::pair<V3, V3>> collisionPair;
+    };
+
 	class ExampleApp : public Core::App
 	{
 	public:
@@ -35,10 +46,12 @@ namespace Example
 		void Run();
 
     private:
+        
         void RenderUI();
+        std::map<int, TimeFrame> timeline;
         uint64_t duration;
         int width, height;
-        uint32_t frameIndex = 0;
+        int frameIndex = 0;
         Plane *plane;
 		float x, y, z;
 

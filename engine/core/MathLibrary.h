@@ -1,5 +1,8 @@
 ﻿//#include "config.h"
 #pragma once
+#include <random>
+#include <functional>
+#include <chrono>
 #include <cmath>
 #include <algorithm>
 #include <iostream>
@@ -480,11 +483,21 @@ inline V3 Normalize(V3 vector) {
 
 inline bool IsPointOnPoint(const V3& lhs, const V3& rhs)
 {
+    // it the distance between to points is close to zero they are pretty much in the same place.
     return fabsf(Length2(rhs - lhs)) < FLT_MARGIN;
+}
+
+inline bool IsPointOnLine(const V3& point, const V3& origin, const V3& direction)
+{
+    return IsPointOnLine(point, origin, origin + direction, 1e-4f);
 }
 
 inline bool IsPointOnLine(const V3& point, const V3& start, const V3& end, const float margin = 0.0001f)
 {
+    if (end == point) return true;
+    // the shortest distance for p to travel from start to end is end - start,
+    // so if the sum of the distances p - end and p - start is a lot more than end - start,
+    // the point doesn't lie on the shortest path, because the shortest path is always a straight line.
     return fabsf(Length2(start - point) + Length2(end - point) - Length2(end - start)) < FLT_MARGIN;
 }
 
@@ -492,10 +505,10 @@ inline bool IsPointOnLine(const V3& point, const V3& start, const V3& end, const
 inline bool IsPointInFace(const V3& p, const std::vector<V3>& face) {
 	const V3& a = face[0];
 	const V3& b = face[1];
-	const V3& c = face[2];
-	const V3 x1 = Cross(b - a, p - a);
-	const V3 x2 = Cross(c - b, p - b);
-	const V3 x3 = Cross(a - c, p - c);
+	const V3& c = face[2]; // collects the minimum to populate a face
+	const V3 x1 = Cross(b - a, p - a); //     B
+	const V3 x2 = Cross(c - b, p - b); //   / |
+	const V3 x3 = Cross(a - c, p - c); // A---C
 	return fabsf(Length2(Normalize(x1) - Normalize(x2))) < FLT_MARGIN &&
            fabsf(Length2(Normalize(x2) - Normalize(x3))) < FLT_MARGIN;
 }

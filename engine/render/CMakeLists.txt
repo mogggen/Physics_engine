@@ -14,6 +14,8 @@ SET(files_render_display
 	Camera.h
 	Camera.cc
 
+	Eye.h
+
 	TextureResource.h
 	TextureResource.cc
 

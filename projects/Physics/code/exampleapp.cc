@@ -18,6 +18,7 @@
 #include <unistd.h>
 #endif
 struct Actor;
+struct TimeFrame;
 
 //static void Print(const V4& v)
 //{
@@ -869,7 +870,7 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 			//	// provided above . ( This is only needed when dealing with 3D
 			//	// collision shapes )
 
-			//	// As mentioned in the tutorial , this should be the edge vector ’s
+			//	// As mentioned in the tutorial , this should be the edge vector 's
 			//	// not normals we test against , however for a cuboid example this
 			//	// is the same as testing the normals as each normal / will / match
 			//	// a given edge elsewhere on the object .
@@ -1036,11 +1037,14 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		apply_world_space(j_faces, jth->actor->transform);
 		V3 j_cm = findAverage(j_vertices);
 
-		CollisionInfo& info = sat(i_faces, j_faces);
-
-
+		//CollisionInfo& info = sat(i_faces, j_faces);
+        std::vector<V3>& simplexManifold = (std::vector<V3>());
+        CollisionInfo info;
+        info.isColliding = gjk(simplexManifold, i_vertices, j_vertices);
+        info.polytope = simplexManifold;
+        info.norm1 = V3(); // Find a way to get ONE normal from the gjk algorithm.
 		if (!info.isColliding)
-			return;
+			return; // TODO: TRY AND USE GLTF INSTEAD OF OBJ. YOU GET THE OBJECT FOR FREE AND EVERYTHING IS NEAT AND DANDY.
 		else
 			std::cout << "after index" << frameIndex << std::endl;
 
@@ -1163,6 +1167,43 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		//jth->actor->apply_force((i_cm - j_cm) * 0.01f, 0.01f);
 	}
 
+    void ultraSoundMachine(unsigned seed = static_cast<unsigned>(time(nullptr)))
+    {
+       std::cout << "Seed: " << seed << std::endl;
+       std::mt19937 generator(seed);
+       std::uniform_int_distribution<int> distribution(0, 999);
+
+       auto start = std::chrono::high_resolution_clock::now();
+       auto random1 = V3(static_cast<float>(distribution(generator)), static_cast<float>(distribution(generator)), static_cast<float>(distribution(generator)));
+       auto random2 = V3(static_cast<float>(distribution(generator)), static_cast<float>(distribution(generator)), static_cast<float>(distribution(generator)));
+       auto random3 = V3(static_cast<float>(distribution(generator)), static_cast<float>(distribution(generator)), static_cast<float>(distribution(generator)));
+       std::vector<V3> triangleFace = { random1, random2, random3 };
+
+       auto randomPoint = V3(static_cast<float>(distribution(generator)), static_cast<float>(distribution(generator)), static_cast<float>(distribution(generator)));
+       for (int z = 0; z < 1000; ++z)
+       {
+           std::cout << "Z: " << z << std::endl;
+           for (int y = 0; y < 1000; ++y)
+           {
+               for (int x = 0; x < 1000; ++x)
+               {
+
+                   V3 point(x, y, z);
+                   if (IsPointInFace(point, triangleFace))
+                   {
+                       std::cout << "Point (" << round(x) << ", " << round(y) << ", " << round(z) << ") is on the face" << std::endl;
+                   }
+                   /*if (IsPointOnPoint(point, randomPoint))
+                   {
+                       std::cout << "Point (" << round(x) << ", " << round(y) << ", " << round(z) << ") is on the point" << std::endl;
+                   }*/
+               }
+           }
+       }
+
+       auto stop = std::chrono::high_resolution_clock::now();
+    }
+    
 	void
 	ExampleApp::Run()
 	{
@@ -1334,14 +1375,137 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 			{
 				Debug::Render(cam.pv());
 			}
-
-			frameIndex++;
+            // click the cube to rotate it.
+            auto tf = TimeFrame();
+			timeline[frameIndex++] = tf;
 			this->window->Update();
 			this->window->SwapBuffers();
 
 			auto stop = std::chrono::high_resolution_clock::now();
 			using ms = std::chrono::duration<float, std::milli>;
 			// dt = std::chrono::duration_cast<ms>(stop - start).count();
+		}
+		// Example collision interactions
+		{
+			// Point-to-point collision example
+			V3 point1(1.0f, 1.0f, 1.0f);
+			V3 point2(1.01f, 0.99f, 1.02f); // Very close to point1
+			if (IsPointOnPoint(point1, point2)) {
+				printf("Point-to-point collision detected\n");
+				// Collision response would be calculated here
+				V3 collisionNormal = Normalize(point2 - point1);
+				float penetrationDepth = Length(point2 - point1);
+				// Use these for collision response
+			}
+
+			// Point-to-line collision example
+			V3 point(1.0f, 1.0f, 0.0f);
+			V3 lineStart(0.0f, 0.0f, 0.0f);
+			V3 lineEnd(2.0f, 2.0f, 0.0f);
+			if (IsPointOnLine(point, lineStart, lineEnd)) {
+				printf("Point-to-line collision detected\n");
+				// Get closest point on line
+				V3 lineDir = Normalize(lineEnd - lineStart);
+				float t = Dot(point - lineStart, lineDir);
+				V3 closestPoint = lineStart + lineDir * t;
+				V3 collisionNormal = Normalize(point - closestPoint);
+				float penetrationDepth = Length(point - closestPoint);
+			}
+
+			// Line-to-line collision example
+			V3 line1Start(0.0f, 0.0f, 0.0f);
+			V3 line1End(2.0f, 0.0f, 0.0f);
+			V3 line2Start(1.0f, -1.0f, 0.0f);
+			V3 line2End(1.0f, 1.0f, 0.0f);
+			
+			// Calculate intersection point
+			V3 line1Dir = line1End - line1Start;
+			V3 line2Dir = line2End - line2Start;
+			V3 cross = Cross(line1Dir, line2Dir);
+			
+			if (Length2(cross) < FLT_MARGIN) { // Lines are parallel
+				// Check if lines overlap
+				float t = Dot(line2Start - line1Start, line1Dir) / Dot(line1Dir, line1Dir);
+				if (t >= 0.0f && t <= 1.0f) {
+					printf("Line-to-line collision detected (parallel)\n");
+					V3 collisionPoint = line1Start + line1Dir * t;
+				}
+			} else {
+				// Lines intersect
+				float t = Dot(Cross(line2Start - line1Start, line2Dir), cross) / Length2(cross);
+				if (t >= 0.0f && t <= 1.0f) {
+					printf("Line-to-line collision detected (intersecting)\n");
+					V3 collisionPoint = line1Start + line1Dir * t;
+				}
+			}
+
+			// Face-to-point collision example
+			V3 testPoint(0.5f, 0.5f, 0.0f);
+			std::vector<V3> triangleFace = {
+				V3(0.0f, 0.0f, 0.0f),
+				V3(1.0f, 0.0f, 0.0f),
+				V3(0.0f, 1.0f, 0.0f)
+			};
+			
+			if (IsPointInFace(testPoint, triangleFace)) {
+				printf("Face-to-point collision detected\n");
+				// Calculate face normal
+				V3 edge1 = triangleFace[1] - triangleFace[0];
+				V3 edge2 = triangleFace[2] - triangleFace[0];
+				V3 faceNormal = Normalize(Cross(edge1, edge2));
+				float penetrationDepth = Dot(testPoint - triangleFace[0], faceNormal);
+			}
+
+			// Face-to-line collision example
+			V3 lineStart3(0.5f, -1.0f, 0.0f);
+			V3 lineEnd3(0.5f, 2.0f, 0.0f);
+			std::vector<V3> triangleFace2 = {
+				V3(0.0f, 0.0f, 0.0f),
+				V3(1.0f, 0.0f, 0.0f),
+				V3(0.0f, 1.0f, 0.0f)
+			};
+			
+			// First check if line intersects plane containing face
+			V3 edge1 = triangleFace2[1] - triangleFace2[0];
+			V3 edge2 = triangleFace2[2] - triangleFace2[0];
+			V3 faceNormal = Normalize(Cross(edge1, edge2));
+			Plane facePlane(triangleFace2[0], faceNormal);
+			
+			Ray lineRay(lineStart3, Normalize(lineEnd3 - lineStart3));
+			V3 intersection = lineRay.intersect(facePlane);
+			
+			if (!isnan(intersection.x) && IsPointInFace(intersection, triangleFace2)) {
+				printf("Face-to-line collision detected\n");
+				float penetrationDepth = Length(intersection - lineStart3);
+			}
+
+			// Face-to-face collision example
+			Face face1;
+			face1.vertices = {
+				V3(0.0f, 0.0f, 0.0f),
+				V3(1.0f, 0.0f, 0.0f),
+				V3(0.0f, 1.0f, 0.0f)
+			};
+			face1.normal = V3(0.0f, 0.0f, 1.0f);
+
+			Face face2;
+			face2.vertices = {
+				V3(0.5f, 0.5f, 0.1f),
+				V3(1.5f, 0.5f, 0.1f),
+				V3(0.5f, 1.5f, 0.1f)
+			};
+			face2.normal = V3(0.0f, 0.0f, -1.0f);
+
+			std::vector<V3> intersectionPoints = FindFaceIntersection(face1, face2);
+			if (!intersectionPoints.empty()) {
+				printf("Face-to-face collision detected\n");
+				// Calculate penetration depth
+				float penetrationDepth = fabsf(Dot(face2.vertices[0] - face1.vertices[0], face1.normal));
+				// Collision point is average of intersection points
+				V3 collisionPoint = findAverage(intersectionPoints);
+			}
+
+            //ultraSoundMachine(IsPointOnPoint, std::vector<V3>{point2});
 		}
 	}
 
@@ -1350,9 +1514,9 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		bool show = true;
 		ImGui::Begin("Panel", &show, ImGuiWindowFlags_NoSavedSettings);
 		ImGui::Checkbox("Debug Mode: ", &showDebugRender);
-		ImGui::Text("frames: %d %.0f", frameIndex);
+		ImGui::InputInt("frames: %d %.0f", &frameIndex);
+        ImGui::SliderInt("LoadFrame", &frameIndex, 0, INT_MAX);
 		ImGui::Text("det: %.5f", Determinant(all_loaded[0]->actor->rotation));
-
 		for (size_t i = 0; i < all_loaded.size(); i++)
 		{
 			ImGui::Checkbox(std::string("Make dynamic cube " + std::to_string(i) + ": " + std::string(all_loaded[i]->actor->isDynamic ? "true" : "false")).c_str(), &all_loaded[i]->actor->isDynamic);

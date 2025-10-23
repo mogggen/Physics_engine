@@ -13,6 +13,9 @@
 #ifndef FLT_MARGIN
 #define FLT_MARGIN 1e-2f
 #endif
+#ifndef FLT_MAX
+#define FLT_MAX 1.72e308
+#endif
 
 struct Face;
 
@@ -239,8 +242,8 @@ struct V3 {
 	void operator/=(float right);
 	float &operator[](size_t index);
 
-	bool V3::operator==(V3 rhs);
-	bool V3::operator!=(V3 rhs);
+	// bool V3::operator==(V3 rhs);
+	// bool V3::operator!=(V3 rhs);
 
 	float Dot(V3 right);
 	void Cross(V3 right);
@@ -374,21 +377,21 @@ inline V3 V3::Normalize() {
 	return *this;
 }
 
-inline bool V3::operator==(V3 rhs) {
-	if ((isnan(x) &&
-		isnan(y) &&
-		isnan(z)) &&
+// inline bool V3::operator==(V3 rhs) {
+// 	if ((isnan(x) &&
+// 		isnan(y) &&
+// 		isnan(z)) &&
 
-		(isnan(rhs.x) &&
-			isnan(rhs.y) &&
-			isnan(rhs.z))
-		) return false;
-	return x == rhs.x && y == rhs.y && z == rhs.z;
-}
+// 		(isnan(rhs.x) &&
+// 			isnan(rhs.y) &&
+// 			isnan(rhs.z))
+// 		) return false;
+// 	return x == rhs.x && y == rhs.y && z == rhs.z;
+// }
 
-inline bool V3::operator!=(V3 rhs) {
-	return !operator==(rhs);
-}
+// inline bool V3::operator!=(V3 rhs) {
+// 	return !operator==(rhs);
+// }
 
 //	operator functions
 inline V3 operator+(V3 left, V3 right) {
@@ -578,7 +581,7 @@ inline void barycentricCoordinates(const V3& a, const V3& b, const V3& c, const 
 	w3 = std::abs(volPABC) / sumVolumes;
 }
 
-inline const V3 findFurtestPoint(const std::vector<V3>& shapeVertices, const V3& direction) {
+inline const V3 findFurtestPoint(std::vector<V3>& shapeVertices, V3 direction) {
 	V3 farthestPoint;
 	float maxDotProduct = -FLT_MAX;
 
@@ -598,9 +601,9 @@ inline const V3 findFurtestPoint(const std::vector<V3>& shapeVertices, const V3&
 }
 
 inline const V3 Support(
-    const std::vector<V3>&const lhs,
-    const std::vector<V3>&const rhs,
-    const V3& dir) {
+    std::vector<V3>& lhs,
+    std::vector<V3>& rhs,
+    V3 dir) {
     return findFurtestPoint(lhs, dir) - findFurtestPoint(rhs, dir * -1.f);
 }
 
@@ -995,8 +998,8 @@ struct CollisionPoints {
 // std::vec<V3> => Collider, Simplex, CollisionPoints
 inline CollisionPoints epa(
 	const std::vector<V3>& simplex,
-	const std::vector<V3>& colliderA,
-	const std::vector<V3>& colliderB) {
+	std::vector<V3>& colliderA,
+	std::vector<V3>& colliderB) {
 	std::vector<V3> penetrationCenter(simplex.begin(), simplex.end());
 	std::vector<size_t> faces = {
 		0, 1, 2,
@@ -1013,14 +1016,14 @@ inline CollisionPoints epa(
 	V3 minNormal;
 	float minDistance = FLT_MAX;
 
-	while (minDistance == FLT_MAX) {
+	while (minDistance - FLT_MAX == 0) {
 		minNormal = normals[minFace].toV3();
 		minDistance = normals[minFace].w;
 
 		V3 support = Support(colliderA, colliderB, minNormal);
 		float sDistance = Dot(minNormal, support);
 
-		if (abs(sDistance - minDistance) > 0.001f) {
+		if (fabsf(sDistance - minDistance) > 0.001f) {
 			minDistance = FLT_MAX;
 			std::vector<std::pair<size_t, size_t>> uniqueEdges;
 
@@ -1471,7 +1474,7 @@ inline M4 projection(float fov, float aspect, float n, float f) {
 }
 
 
-inline const float Determinant(const M4& a) {
+inline const float Determinant(M4 a) {
     float det = 1.0;
     for (int i = 0; i < 4; i++) {
         int pivot = i;
@@ -1759,7 +1762,7 @@ struct Face {
 inline void apply_world_space(std::vector<Face>& faces, const M4& transform) {
 	for (Face& ff : faces) {
         apply_world_space(ff.vertices, transform);
-		std::vector<V3>& normal = std::vector<V3>({ ff.normal });
+		std::vector<V3> normal = std::vector<V3>({ ff.normal });
 		apply_world_space(normal, transform);
 		ff.normal = normal[0];
 	}
@@ -1923,7 +1926,7 @@ struct Ray {
 	V3 origin;
 	V3 dir;
 	Ray(V3 origin, V3 dir);
-	const V3 Ray::minDist(const std::vector<V3>& others);
+	const V3 minDist(const std::vector<V3>& others);
 	const V3 intersect(const Plane& plane, float epsilon);
 };
 

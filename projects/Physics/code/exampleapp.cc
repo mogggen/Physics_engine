@@ -348,7 +348,7 @@ namespace Example
 		V3 norm2;
 	};
 
-	static CollisionInfo sat(const std::vector<Face> &i_vertices, const std::vector<Face> &j_vertices)
+	static CollisionInfo sat(std::vector<Face> &i_vertices, std::vector<Face> &j_vertices)
 	{
 		CollisionInfo collisionInfo;
 		collisionInfo.isColliding = true;
@@ -427,7 +427,7 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 @param V4 waf final angular velocity of object a
 @param V4 wbf final angular velocity of object b
 */
-	static void CollisionResponse(float e,float ma,float mb,M4& Ia,M4& Ib,V4 ra,V4 rb,V4 n,
+	static void CollisionResponse(float e,float ma,float mb,M4 Ia,M4 Ib,V4 ra,V4 rb,V4 n,
 	 V4 vai, V4 vbi, V4 wai, V4 wbi, V4& vaf, V4& vbf, V4& waf, V4& wbf) {
    M4 IaInverse = Inverse(Ia);
    V4 normal = Normalize(n);
@@ -1010,7 +1010,7 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		apply_world_space(j_faces, jth->actor->transform);
 		V3 j_cm = findAverage(j_vertices);
 
-		CollisionInfo& info = sat(i_faces, j_faces);
+		CollisionInfo info = sat(i_faces, j_faces);
 
 
 		if (!info.isColliding)
@@ -1315,7 +1315,7 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		bool show = true;
 		ImGui::Begin("Panel", &show, ImGuiWindowFlags_NoSavedSettings);
 		ImGui::Checkbox("Debug Mode: ", &showDebugRender);
-		ImGui::Text("frames: %d %.0f", frameIndex);
+		ImGui::Text("frames: %d", frameIndex);
 		ImGui::Text("det: %.5f", Determinant(all_loaded[0]->actor->rotation));
 
 		for (size_t i = 0; i < all_loaded.size(); i++)

@@ -320,31 +320,22 @@ std::shared_ptr<MeshResource> MeshResource::Cube(
 std::pair<V3, V3> MeshResource::find_bounds()
 {
 	// can't be less than the minimum value of 'undefined', so let's not, mate?
-	min[0] = max[0] = positions[0][0];
-	min[1] = max[1] = positions[0][1];
-	min[2] = max[2] = positions[0][2];
-
+	for (size_t i = 0; i < 3; i++)
+	{
+		min[i] = max[i] = positions[0][i];
+	}
 	// I should actually do this for all 6 of them but.. nah
 
 	for (size_t i = 1; i < positions.size(); i++)
 	{
-		if (positions[i][0] < min[0])
-			min[0] = positions[i][0];
+		for (size_t j = 0; j < 3; j++)
+		{
+			if (positions[i][j] < min[j])
+				min[j] = positions[i][j];
 
-		if (positions[i][1] < min[1])
-			min[1] = positions[i][1];
-
-		if (positions[i][2] < min[2])
-			min[2] = positions[i][2];
-		
-		if (positions[i][0] > max[0])
-			max[0] = positions[i][0];
-
-		if (positions[i][1] > max[1])
-			max[1] = positions[i][1];
-
-		if (positions[i][2] > max[2])
-			max[2] = positions[i][2];
+			if (positions[i][j] > max[j])
+				max[j] = positions[i][j];
+		}
 	}
 
 	return { min, max };

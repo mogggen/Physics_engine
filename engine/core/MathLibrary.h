@@ -1561,7 +1561,26 @@ inline const float Determinant(const M4& a) {
 
 inline void apply_world_space(std::vector<V3>& verts, const M4& transform) {
 	for (V3& ff : verts) {
-		ff = ((transform) * V4(ff, 1)).toV3();
+		ff = (transform * V4(ff, 1)).toV3();
+	}
+}
+
+
+#pragma region Face
+
+struct Face
+{
+	std::vector<V3> vertices;
+	V3 normal;
+};
+
+#pragma endregion
+
+inline void apply_world_space(std::vector<Face>& faces, const M4& transform) {
+	for (Face& ff : faces) {
+		for (V3& vert : ff.vertices) {
+			vert = (transform * V4(vert, 1)).toV3();
+		}
 	}
 }
 

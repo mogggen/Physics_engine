@@ -1295,85 +1295,28 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 
 		while (this->window->IsOpen())
 		{
-			//--------------------ImGui section--------------------
-
 			auto start = std::chrono::high_resolution_clock::now();
-			// cube->actor->linearVelocity = V3(.05f * cos(frameIndex / 10.f)+0.001f, sin(frameIndex / 30.f) * 0.02f, 0);
-			//--------------------math section--------------------
-			if (this->f)
-			{
-				auto gg = all_loaded[0]->actor->transform * all_loaded[0]->actor->rotation * Rotation(V4(1, 0, 0), -M_PI / 4);
-				//cam.setPos(gg + V4(0, -1.f, -3.f, 1));
-				cam.setRot(V4(1, 0, 0, 0), -M_PI / 4);
-			}
-			else
-			{
-				cam.setPos(cam.getPos() + Normalize(V4((a - d), (shift - space), (w - s))) * camSpeed);
-			}
-			V3 rayOrigin = cam.getPos() * 1.f;
 
+			// ... existing frame update code ...
 
-			for (size_t i = 0; i < all_loaded.size(); ++i)
-			{
-				// check intersections to optimize what to compare later
-
-				AABB the;
-				std::tie(the.min, the.max) = findAABB(*all_loaded[i]->getMesh(), all_loaded[i]->actor->transform);
-				aabbs[i] = the;
-			}
-
-			std::vector<std::pair<size_t, size_t>> _ = aabbPlaneSweep(aabbs);
-			for (std::pair<size_t, size_t> &ants : _)
-			{
-				// prepare arguments
-				std::shared_ptr<GraphicNode> ith = all_loaded[ants.first];
-				std::shared_ptr<GraphicNode> jth = all_loaded[ants.second];
-
-				handle_collision(all_loaded[0], all_loaded[1], frameIndex);
-			}
-
-			// effect of gravity
-			for (std::shared_ptr<GraphicNode> node : all_loaded)
-			{
-				const float &m = node->actor->mass;
-				if (node->actor->isDynamic)
-				{
-					node->actor->apply_force(m * GRAVITY * 0.1f, dt);
+			// Store frame data if we haven't reached max frames
+			if (frameIndex < MAX_FRAMES) {
+				FrameObject currentFrame;
+				currentFrame.deltaTime = dt;
+				
+				// Store state for each cube
+				for (const auto& node : all_loaded) {
+					FrameObject::CubeState state;
+					state.transform = node->actor->transform;
+					state.rotation = node->actor->rotation;
+					state.linearVelocity = node->actor->linearVelocity;
+					state.angle = node->actor->angle;
+					state.angleVel = node->actor->angleVel;
+					state.isDynamic = node->actor->isDynamic;
+					currentFrame.cubeStates.push_back(state);
 				}
-			}
-
-			//--------------------real-time render section--------------------
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-			for (std::shared_ptr<GraphicNode> sample_a : all_loaded)
-			{
-				const V4 color(1, 1, 1, 1);
-
-				sample_a->getShader()->setM4(cam.pv(), "m4ProjViewPos");
-
-				std::shared_ptr<ShaderResource> script = sample_a->getShader();
-
-				sample_a->actor->update(3);
-				M4 &wst = sample_a->actor->transform;
-				if (showDebugRender)
-				{
-					//if (isPressed)
-					//{
-					//	std::cout << std::endl;
-					//}
-
-					MeshResource &m = *sample_a->getMesh();
-					//Debug::DrawBB(m, V4(0, 1, 1, 1), wst);
-
-					std::pair<V3, V3> aabb = findAABB(m, wst);
-					Debug::DrawAABB(aabb, V4(1, 0, 0, 1));
-				}
-				light.bindLight(script, cam.getPos());
-				sample_a->DrawScene(cam.pv() * wst, color);
-			}
-			if (showDebugRender)
-			{
-				Debug::Render(cam.pv());
+				
+				frameHistory.push_back(currentFrame);
 			}
             // click the cube to rotate it.
             auto tf = TimeFrame();
@@ -1383,7 +1326,6 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 
 			auto stop = std::chrono::high_resolution_clock::now();
 			using ms = std::chrono::duration<float, std::milli>;
-			// dt = std::chrono::duration_cast<ms>(stop - start).count();
 		}
 		// Example collision interactions
 		{

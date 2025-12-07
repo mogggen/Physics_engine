@@ -31,6 +31,18 @@ namespace Example
         std::vector<V3> forces;
         std::vector<std::pair<V3, V3>> collisionPair;
     };
+	struct FrameObject {
+		float deltaTime;
+		struct CubeState {
+			M4 transform;
+			M4 rotation; 
+			V4 linearVelocity;
+			float angle;
+			float angleVel;
+			bool isDynamic;
+		};
+		std::vector<CubeState> cubeStates;
+	};
 
 	class ExampleApp : public Core::App
 	{
@@ -94,6 +106,9 @@ namespace Example
 		std::shared_ptr<GraphicNode> quad;
 
 		Display::Window *window;
+
+		std::vector<FrameObject> frameHistory;
+		static const size_t MAX_FRAMES = 1200;
 	};
 } // namespace Example
 

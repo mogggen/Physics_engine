@@ -264,6 +264,90 @@ inline static V3 find_AABB_intersection(Ray& ray, MeshResource& mesh)
 		return intersectionPoints;
 	}
 
+	void magic(float max_velocity, float delta_time) {
+		// Define two faces with their vertices
+		Face faceX1;
+		faceX1.vertices = {
+			V3(1, 0, 0),
+			V3(1, 0, 1),
+			V3(1, 1, 0),
+			V3(1, 1, 1)
+		};
+
+		Face faceX0;
+		faceX0.vertices = {
+			V3(0, 0, 0),
+			V3(0, 0, 1),
+			V3(0, 1, 0),
+			V3(0, 1, 1)
+		};
+
+		Face faceY1;
+		faceY1.vertices = {
+			V3(0, 1, 0),
+			V3(0, 1, 1),
+			V3(1, 1, 0),
+			V3(1, 1, 1)
+		};
+
+		Face faceY0;
+		faceY0.vertices = {
+			V3(0, 0, 0),
+			V3(0, 0, 1),
+			V3(1, 0, 0),
+			V3(1, 0, 1)
+		};
+
+		Face faceZ1;
+		faceZ1.vertices = {
+			V3(0, 0, 1),
+			V3(0, 1, 1),
+			V3(1, 0, 1),
+			V3(1, 1, 1)
+		};
+
+		Face faceZ0;
+		faceZ0.vertices = {
+			V3(0, 0, 0),
+			V3(0, 1, 0),
+			V3(1, 0, 0),
+			V3(1, 1, 0)
+		};
+
+		std::vector<Face>
+		cube1 = 
+			{
+				faceX0,
+				faceX1,
+				faceY0,
+				faceY1,
+				faceZ0,
+				faceZ1,	
+			};
+
+		std::vector<Face>
+		cube2 =
+			{
+				faceX0,
+				faceX1,
+				faceY0,
+				faceY1,
+				faceZ0,
+				faceZ1,
+				
+			};
+
+		CollisionInfo info = sat(cube1, cube2);
+
+		// game loop
+		{
+			// magic(max_velocity, delta_time);
+			// do main calc in here
+
+		}
+	}
+
+
 	// Function to calculate the projection of an object onto a given axis
 	static float ProjectOntoAxis(const std::vector<Face> &faces, const V3 &axis)
 	{
@@ -332,19 +416,15 @@ inline static V3 find_AABB_intersection(Ray& ray, MeshResource& mesh)
 			}
 		}
 
-		assert(i_best.vertices.size() != 0);
-		assert(j_best.vertices.size() != 0);
-
-		if (i_best.vertices.size() == 1)
-			return i_best.vertices[0];
-		if (j_best.vertices.size() == 1)
-			return j_best.vertices[0];
-
-		if (i_best.vertices.size() == 2)
-			return findAverage(i_best.vertices);
-		if (j_best.vertices.size() == 2)
-			return findAverage(j_best.vertices);
-
+		assert(i_best.vertices.size() == 0);
+		assert(j_best.vertices.size() == 0);
+		
+		if (i_best.vertices.size() == 1) return i_best.vertices[0];
+		if (j_best.vertices.size() == 1) return j_best.vertices[0];
+		
+		if (i_best.vertices.size() == 2) return findAverage(i_best.vertices);
+		if (j_best.vertices.size() == 2) return findAverage(j_best.vertices);
+		
 		if (i_best.vertices.size() == 2 && j_best.vertices.size() == 2)
 		{
 			Ray line1(
@@ -385,7 +465,7 @@ inline static V3 find_AABB_intersection(Ray& ray, MeshResource& mesh)
 
 		for (const Face &i : i_vertices)
 		{
-			for (const Face &j : j_vertices)
+			for (; i < j_vertices.size(); j++)
 			{
 
 				V3 axis = Cross(i.normal, j.normal);
@@ -412,25 +492,14 @@ inline static V3 find_AABB_intersection(Ray& ray, MeshResource& mesh)
 					collisionInfo.norm1 = i.normal;
 					collisionInfo.norm2 = j.normal;
 				}
-
-				//for each (const V3& obj in collisionInfo.polytope)
-				//{
-				//	Print(obj);
-				//	break;
-				//}
-				//if (collisionInfo.polytope.size())
-				//{
-				//	Print(V3(findAverage(collisionInfo.polytope)));
-				//}
-				//else
-				//{
-				//	printf("N/A");
-				//	Print(V3(collisionInfo.norm1));
-				//	Print(V3(collisionInfo.norm2));
-				//	std::cout << collisionInfo.depth << "\n\n";
-				//}
 			}
 		}
+
+		// search the rest of the vertices so that only new faces are shown
+		i_copy.erase(i_copy.begin() + i);
+		j_copy.erase(j_copy.begin() + j);
+		if (collisionInfo.isColliding)
+			return sat(i_vertices, j_vertices);
 
 		return collisionInfo; // Collision detected
 	}
@@ -609,403 +678,118 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		return false;
 	}
 
-	void shotRay()
+	void ExampleApp::shot_ray(const bool& isPressed,
+	float64& mouseDirX, float64& mouseDirY,
+	Camera& cam,
+	unsigned width, unsigned height,
+	Ray& ray,
+	V3 rayOrigin,
+	V3& resultingHit,
+	std::shared_ptr<MeshResource> mesh,
+	const M4& transform)
 	{
+		if (isPressed)
+			{
+				glfwGetCursorPos(this->window->GetHandle(), &mouseDirX, &mouseDirY);
+				// shot a ray
 
-		// if (isPressed)
-		// {
-		// 	glfwGetCursorPos(this->window->GetHandle(), &mouseDirX, &mouseDirY);
-		// 	// shot a ray
+				V4 normalizedDeviceCoordinates(mouseDirX / width * 2 - 1, 1 - mouseDirY / height * 2, 1, 1);
+				V4 mousePickingWorldSpace = Inverse(cam.pv()) * normalizedDeviceCoordinates;
+				ray = Ray(rayOrigin, (mousePickingWorldSpace - rayOrigin).toV3());
 
-		// 	V4 normalizedDeviceCoordinates(mouseDirX / width * 2 - 1, 1 - mouseDirY / height * 2, 1, 1);
-		// 	V4 mousePickingWorldSpace = Inverse(cam.pv()) * normalizedDeviceCoordinates;
-		// 	ray = Ray(rayOrigin, (mousePickingWorldSpace - rayOrigin).toV3());
-
-		// 	resultingHit = find_AABB_intersection(ray, *fireHydrantMesh);
-		// 	if (!isnan(resultingHit.x) || !isinf(resultingHit.y))
-		// 	if (!isnan(NAN/*resultingHit.data*/))
-		// 	{
-		// 		printf("%f, %f, %f\n", resultingHit.x, resultingHit.y, resultingHit.z);
-		// 		Debug::DrawLine(V4(resultingHit - V3(0, 3, 0), 1), V4(resultingHit - V3(0, 0, 0), 1), V4(1, 0, 0, 1));
-		// 		//Debug::DrawSquare(V4(resultingHit, 1));
-		// 	}
-		// 	resultingHit = ray_intersection(ray, fireHydrantWorldSpaceTransform, fireHydrantMesh->positions, fireHydrantMesh->indicesAmount, &(fireHydrantMesh)->normals);
-		// }
-		// cube->actor->transform = Translate(V4(resultingHit, 1));
-	}
-
-	static void bulk_update(size_t frames, size_t &dt)
-	{
-		// update movement
-		// if (collision)
-		//  mtv back
-		// 	perform physics change
-		//	return
-	}
-
-	std::pair<std::vector<Face>, std::vector<Face>> magic()
-	{
-
-		// 1. An std::pair<std::vector<Face>, std::vector<Face> collisionPair; initalized to hold the faces of a cube
-		// 2. Translate cubes in 3D space to starting position at -3.5F and 3.5F
-		// 3.
-
-		// Define two faces with their vertices
-		Face faceX1;
-		faceX1.vertices = {
-			V3(1, 0, 0),
-			V3(1, 0, 1),
-			V3(1, 1, 0),
-			V3(1, 1, 1)};
-
-		Face faceX0;
-		faceX0.vertices = {
-			V3(0, 0, 0),
-			V3(0, 0, 1),
-			V3(0, 1, 0),
-			V3(0, 1, 1)};
-
-		Face faceY1;
-		faceY1.vertices = {
-			V3(0, 1, 0),
-			V3(0, 1, 1),
-			V3(1, 1, 0),
-			V3(1, 1, 1)};
-
-		Face faceY0;
-		faceY0.vertices = {
-			V3(0, 0, 0),
-			V3(0, 0, 1),
-			V3(1, 0, 0),
-			V3(1, 0, 1)};
-
-		Face faceZ1;
-		faceZ1.vertices = {
-			V3(0, 0, 1),
-			V3(0, 1, 1),
-			V3(1, 0, 1),
-			V3(1, 1, 1)};
-
-		Face faceZ0;
-		faceZ0.vertices = {
-			V3(0, 0, 0),
-			V3(0, 1, 0),
-			V3(1, 0, 0),
-			V3(1, 1, 0)};
-
-		std::vector<Face>
-			cube1 =
+				resultingHit = find_AABB_intersection(ray, *mesh);
+				if (!isnan(resultingHit.x) || !isinf(resultingHit.y))
+				if (!isnan(NAN/*resultingHit.data*/))
 				{
-					faceX0,
-					faceX1,
-					faceY0,
-					faceY1,
-					faceZ0,
-					faceZ1,
-				};
+					printf("%f, %f, %f\n", resultingHit.x, resultingHit.y, resultingHit.z);
+					Debug::DrawLine(V4(resultingHit - V3(0, 3, 0), 1), V4(resultingHit - V3(0, 0, 0), 1), V4(1, 0, 0, 1));
+					//Debug::DrawSquare(V4(resultingHit, 1));
+				}
+				resultingHit = ray_intersection(ray, transform, mesh->positions, mesh->indicesAmount, &(mesh)->normals);
+			}
+			//cube->actor->transform = Translate(V4(resultingHit, 1));
 
-		std::vector<Face>
-			cube2 =
+	}
+
+	void CollisionResponse(std::vector<std::shared_ptr<GraphicNode>> all_loaded, std::vector<AABB> aabbs)
+	{
+		
+			for (size_t i = 0; i < all_loaded.size(); i++)
+			{
+				std::pair<V3, V3> t = findAABB(*all_loaded[i]->getMesh(), all_loaded[i]->actor->transform);
+
+				//Print(all_loaded[i]->actor->transform);
+				// check intersections to optimize what to compare later
+				AABB the = { t.first, t.second};
+				aabbs[i] = the;
+			}
+
+			std::vector<std::pair<size_t, size_t>> in = aabbPlaneSweep(aabbs);	
+			for (std::pair<size_t, size_t>& a : in)
+			{
+				//std::cout << "(" << a.first << ", " << a.second << ")" << std::endl;
+				std::shared_ptr<GraphicNode> ith = all_loaded[a.first];
+				std::shared_ptr<GraphicNode> jth = all_loaded[a.second];
+
+				std::vector<V3>& i_vertices = ith->getMesh()->positions;
+				std::vector<V3>& i_normals = ith->getMesh()->normals;
+
+				apply_worldspace(i_vertices, ith->actor->transform);
+				apply_worldspace(i_normals, ith->actor->transform);
+
+				std::vector<Face> i_faces;
 				{
-					faceX0,
-					faceX1,
-					faceY0,
-					faceY1,
-					faceZ0,
-					faceZ1,
+					Face currFace;
+					std::vector<Vertex>& i_verts = ith->getMesh()->vertices;
+					for (size_t i = 0; i < i_verts.size(); i++)
+					{
+						if (currFace.normal == i_verts[i].normal)
+						{
+							currFace.vertices.push_back(i_verts[i].pos);
+						}
+						else if (currFace.vertices.empty())
+						{
+							currFace.vertices.push_back(i_verts[i].pos);
+							currFace.normal = i_verts[i].normal;
+						}
+						else
+						{
+							i_faces.push_back(currFace);
+							currFace = Face();
+						}
+					}
+				}
+				V3 j_cm = findAverage(i_vertices);
 
-				};
+				std::vector<V3>& j_vertices = jth->getMesh()->positions;
+				std::vector<V3>& j_normals = jth->getMesh()->normals;
 
-		// MeshResource mesh1;
-		// MeshResource mesh2;
+				apply_worldspace(j_vertices, jth->actor->transform);
+				apply_worldspace(j_normals, jth->actor->transform);
 
-		// mesh1.Cube();
-		// mesh2.Cube();
+				std::vector<Face> j_faces;
+				{
+					Face currFace;
+					std::vector<Vertex>& j_verts = ith->getMesh()->vertices;
 
-		// apply_worldspace(mesh1.positions, Translate(V4(-1.5F, 0, 0)));
-		// apply_worldspace(mesh1.positions, Translate(V4( 1.5F, 0, 0)));
-
-		// AABB aabb1;
-		// AABB aabb2;
-
-		// Actor actor1;
-		// Actor actor2;
-
-		// actor1.isDynamic = true;
-		// actor2.isDynamic = true;
-
-		// actor1.linearVelocity = V3( 0.01F, 0, 0);
-		// actor2.linearVelocity = V3(-0.01F, 0, 0);
-
-		// const float MAX_VELOCITY = 10000.0F;
-		// float dt;
-
-		// bool running = true;
-
-		// while(!running)
-		// {
-		// 	std::tie(aabb1.min, aabb1.max) = findAABB(mesh1, actor1.transform);
-		// 	std::tie(aabb1.min, aabb1.max) = findAABB(mesh2, actor2.transform);
-		// }
-		return {cube1, cube2};
-	}
-
-	void magic2()
-	{
-			// Example values for the objects and collision
-			float e = 0.8f; // Coefficient of restitution (elasticity of collision)
-
-			float ma = 1.0f; // Mass of body A
-			float mb = 1e38f; // Mass of body B
-
-			// Inertia tensors for A and B (in 4x4 matrix form, simplified here as identity matrices)
-			M4 Ia = Translate(V4(0, 0, 0));
-			M4 Ib = Translate(V4(0, 0, 0));
-
-			// Position of the collision point relative to the centers of mass of A and B
-			V4 ra = V4(2/3, 0.5f, 0, 0);  // Example: collision point on A at (1, 0, 0)
-			V4 rb = V4(-1/2 + 1/3, -0.5f, 0, 0); // Example: collision point on B at (-1, 0, 0)
-
-			// Collision normal (unit vector, assumed to be along the x-axis)
-			V4 n = V4(0, 1, 0, 0);
-
-			// Initial velocities of the centers of mass (before collision)
-			V4 vai = V4(0, -9.806, 0, 0); // Body A is moving at 5 units/sec along the x-axis
-			V4 vbi = V4(0, 0, 0, 0); // Body B is moving at -2 units/sec along the x-axis
-
-			// Initial angular velocities (before collision)
-			V4 wai = V4(0, 0, 0, 0); // Body A rotating around z-axis
-			V4 wbi = V4(0, 0, 0, 0); // Body B rotating around y-axis
-
-			// Variables to store the final velocities after the collision
-			V4 vaf, vbf;   // Final linear velocities
-			V4 waf, wbf;   // Final angular velocities
-
-			// Call the collision response function to compute final velocities
-			CollisionResponse(e, ma, mb, Ia, Ib, ra, rb, n, vai, vbi, wai, wbi, vaf, vbf, waf, wbf);
-
-			// Output the results
-			std::cout << "Final linear velocity of A: " << vaf.x << ", " << vaf.y << ", " << vaf.z << std::endl;
-			std::cout << "Final linear velocity of B: " << vbf.x << ", " << vbf.y << ", " << vbf.z << std::endl;
-			std::cout << "Final angular velocity of A: " << waf.x << ", " << waf.y << ", " << waf.z << std::endl;
-			std::cout << "Final angular velocity of B: " << wbf.x << ", " << wbf.y << ", " << wbf.z << std::endl;
-	}
-
-	// for (const V3& point : points) {
-	// 	std::cout << "Intersection Point: (" << point.x << ", " << point.y << ", " << point.z << ")" << std::endl;
-	// }
-
-	//------------------------------------------------------------------------------
-	/**
-	 */
-	struct CollisionData
-	{
-		float penetration;
-		V3 normal;
-		V3 pointOnPlane;
-	};
-
-	struct SphereCollisionShape
-	{
-		// void SphereCollisionShape::GetCollisionAxes(
-		//	const std::vector<Face>* otherObject,
-		//	std::vector < V3 >& out_axes) const
-		//{
-		//	// There are infinite possible axes on a sphere so we MUST
-		//	// handle it seperately . Luckily we can just get the closest point
-		//	// on the opposite object to our centre and use that .
-
-		//	V3 dir = (otherObject - otherObject() -> GetPosition()).Normalise();
-
-		//	V3 p1 = otherObject() -> GetPosition();
-		//	V3 p2 = otherObject -> GetCollisionShape() -> GetClosestPoint(p1);
-
-		//	out_axes.push_back((p1 - p2).Normalize());
-		//}
-
-		// V3 SphereCollisionShape::GetClosestPoint(
-		//	const V3& point) const
-		//{
-		//	V3 diff = (point - Parent() -> GetPosition()).Normalise();
-		//	return Parent() -> GetPosition() + diff * m_Radius;
-		// }
-
-		// void SphereCollisionShape::GetMinMaxVertexOnAxis(
-		//	const V3& axis,
-		//	V3& out_min,
-		//	V3& out_max) const
-		//{
-		//	out_min = Parent() -> GetPosition() - axis * m_Radius;
-		//	out_max = Parent() -> GetPosition() + axis * m_Radius;
-		// }
-	};
-
-	struct SphereCollisionDAT
-	{
-		bool AreColliding(CollisionData *out_coldata)
-		{
-			return false;
-			//	if (!shapeA || !shapeB)
-			//		return false;
-
-			//	areColliding = false;
-			//	possibleColAxes.clear();
-
-			//	// <----- DEFAULT AXES ------->
-
-			//	// GetCollisionAxes takes in the / other / object as a parameter here
-
-			//	std::vector < V3 > axes1, axes2;
-
-			//	cshapeA->GetCollisionAxes(pnodeB, axes1);
-			//	for (const V3& axis : axes1)
-			//		AddPossibleCollisionAxis(axis);
-
-			//	cshapeB->GetCollisionAxes(pnodeA, axes2);
-			//	for (const V3& axis : axes2)
-			//		AddPossibleCollisionAxis(axis);
-
-			//	// <----- EDGE - EDGE CASES ----->
-
-			//	// Handles the case where two edges meet and the final collision
-			//	// direction is mid way between two default collision axes
-			//	// provided above . ( This is only needed when dealing with 3D
-			//	// collision shapes )
-
-			//	// As mentioned in the tutorial , this should be the edge vector 's
-			//	// not normals we test against , however for a cuboid example this
-			//	// is the same as testing the normals as each normal / will / match
-			//	// a given edge elsewhere on the object .
-
-			//	// For more complicated geometry , this will have to be changed to
-			//	// actual edge vectors instead of normals .
-
-			//	for (const V3& norm1 : axes1)
-			//	{
-			//		for (const V3& norm2 : axes2)
-			//		{
-
-			//			AddPossibleCollisionAxis(
-			//				Cross(norm1, norm2).Normalize());
-			//		}
-			//	}
-
-			//	// Seperating axis theorem says that if a single axis can be found
-			//	// where the two objects are not colliding , then they cannot be
-			//	// colliding . So we have to check each possible axis until we
-			//	// either return false , or return the best axis (one with the
-			//	// least penetration ) found .
-
-			//	CollisionData cur_colData;
-
-			//	bestColData.penetration = -FLT_MAX;
-			//	for (const V3& axis : possibleColAxes)
-			//	{
-			//		// If the collision axis does NOT intersect then return
-			//		// immediately as we know that atleast in one direction / axis
-			//		// the two objects do not intersect
-
-			//		if (!CheckCollisionAxis(axis, cur_colData))
-			//			return false;
-
-			//		if (cur_colData.penetration >= bestColData.penetration)
-			//		{
-			//			bestColData = cur_colData;
-			//		}
-			//	}
-
-			//	if (out_coldata) *out_coldata = bestColData;
-
-			//	areColliding = true;
-			//	return true;
-		}
-
-		inline bool CheckCollisionAxis(//std::vector<Face>& shapeA, std::vector<Face>& shapeB,
-									   const V3 &axis, CollisionData &out_coldata)
-		{
-			// Overlap Test
-			// Points go:
-			// + - - - - - - - - - - - - -+
-			// + - - - - -| - - - - -+ 2 |
-			// | 1 | | |
-			// | + - - - - -| - - - - - - -+
-			// + - - - - - - - - - - -+
-			// A ------C- - -B ----- D
-			//
-			// IF A < C AND B > C ( Overlap in order object 1 -> object 2)
-			// IF C < A AND D > A ( Overlap in order object 2 -> object 1)
-
-			V3 min1, min2, max1, max2;
-
-			// Get the min /max vertices along the axis from shape1 and shape2
-			// shapeA->GetMinMaxVertexOnAxis(axis, min1, max1);
-			// shapeB->GetMinMaxVertexOnAxis(axis, min2, max2);
-
-			float A = Dot(axis, min1);
-			float B = Dot(axis, max1);
-			float C = Dot(axis, min2);
-			float D = Dot(axis, max2);
-
-			// Overlap Test ( Order : Object 1 -> Object 2)
-			if (A <= C && B >= C)
-			{
-				out_coldata.normal = axis;
-				out_coldata.penetration = C - B;
-				// Smallest overlap distance is between B->C
-				// Compute closest point on edge of the object
-				out_coldata.pointOnPlane =
-					max1 + out_coldata.normal * out_coldata.penetration;
-
-				return true;
-			}
-
-			// Overlap Test ( Order : Object 2 -> Object 1)
-			if (C <= A && D >= A)
-			{
-				out_coldata.normal = axis * -1.f;
-				// Invert axis here so we can do all our resolution phase as
-				// Object 1 -> Object 2
-				out_coldata.penetration = A - D;
-				// Smallest overlap distance is between D->A
-				// Compute closest point on edge of the object
-				out_coldata.pointOnPlane =
-					min1 + out_coldata.normal * out_coldata.penetration;
-
-				return true;
-			}
-			return false;
-		}
-	};
-
-	static void ConvertToFaces(std::shared_ptr<GraphicNode> &ith, std::vector<Face> &i_faces)
-	{
-		Face currFace;
-		//Plane plane = Plane();
-
-		std::vector<Vertex> &verts = ith->getMesh()->vertices;
-		for (size_t i = 0; i < verts.size(); i++)
-		{
-			if (currFace.vertices.empty())
-			{
-				currFace.vertices.push_back(verts[i].pos);
-				currFace.normal = verts[i].normal;
-			}
-			if (currFace.normal == verts[i].normal) // never triggers first
-			{
-				currFace.vertices.push_back(verts[i].pos);
-			}
-			else if (currFace.vertices.empty()) //
-			{
-				currFace.vertices.push_back(verts[i].pos);
-				currFace.normal = verts[i].normal;
-			}
-			else
-			{
-				i_faces.push_back(currFace);
-				currFace = Face();
-			}
-		}
-	}
+					for (size_t j = 0; j < j_verts.size(); j++)
+					{
+						if (currFace.normal == j_verts[j].normal)
+						{
+							currFace.vertices.push_back(j_verts[j].pos);
+						}
+						else if (currFace.vertices.empty())
+						{
+							currFace.vertices.push_back(j_verts[j].pos);
+							currFace.normal = j_verts[j].normal;
+						}
+						else
+						{
+							j_faces.push_back(currFace);
+							currFace = Face();
+						}
+					}
+				}
 
 	static void PointIsOnLine(const V3& PointIsOnLine, const V3& line, const float margin = 0.0001f)
 	{
@@ -1091,126 +875,61 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		 //const V4 v2 = u2/* - impulse * (1 / m2) */;
 
 
-		auto headOnCoef = 0.00005; // i_cm.xy - j_cm.xy
+					const V4 v1 = e1 * (((m1-m2)/(m1+m2))*u1+((2*m2*u2) * (1 / (m1+m2))));
+					const V4 v2 = e2 * (((m2-m1)/(m1+m2))*u2+((2*m1*u1) * (1 / (m1+m2))));
+					
+					V4 axis1 = Cross(r1, v1);
+					V4 axis2 = Cross(r2, v2);
+					w1 = Length(axis1) / (m1 * Length(r1)) * e1;
+					w2 = Length(axis2) / (m2 * Length(r2)) * e2;
 
-		const V4 v1 = headOnCoef * (i_cm - j_cm);// * (((m1 - m2) / (m1 + m2)) * u1 + ((2 * m2 * u2) * (1 / (m1 + m2))));
-		const V4 v2 = headOnCoef * (j_cm - i_cm);// * (((m2 - m1) / (m1 + m2)) * u2 + ((2 * m1 * u1) * (1 / (m1 + m2))));
+					//std::cin.get();
+					o1 += w1;
+					o2 += w2;
 
-		// info.polytope should be the center of the colliding point/line/face
-		// fix point-to-point collision first.
-		// fix point-to-line same way.
-		// fix-line-to-line easy.
-		// fix-face-to-face very difficult.
+					if (ith->actor->isDynamic)
+					{
+						rot1 = Rotation(axis1, o1);
+						o1 = o1 * .95f;
+						
+						const V4 res = reflect(v1, info.norm1);
+						const V3 kl = { res.x, res.y, res.z };
+						//ith->actor->apply_force(kl * 0.001f, dt);
 
+						u1 = reflect(v1, info.norm1);
+					}
+					if (jth->actor->isDynamic)
+					{
+						rot2 = Rotation(axis2, o2);
+						o2 = o2 * .95f;
+						const V4 res = reflect(v2 * -1.f, info.norm2);
+						const V3 kl = { res.x, res.y, res.z };
+						std::cout << o2 << std::endl;
+						//jth->actor->apply_force(kl * 0.001f, dt);
+						u2 = reflect(v2 * -1.f, info.norm2);
+					}
+				}
+			}
 
-		 //r1 = j_cm - i_cm;
-		 //r1.x += 1;
-		r1 = (info.polytope.size() ? findAverage(info.polytope) : V4()) - i_cm;
-		r2 = (info.polytope.size() ? findAverage(info.polytope) : V4()) - j_cm;
-		
-
-		V4 axis1 = Cross(r1, info.norm1);
-		V4 axis2 = Cross(r2, info.norm2);
-		//w1 = Length(axis1) / (m1 * Length(r1)) * e1;
-		//w2 = Length(axis2) / (m2 * Length(r2)) * e2;
-		
-		V4 wa = axis1 * w1;
-		V4 wb = axis2 * w2;
-		
-		V4 u1In = u1;
-		V4 u2In = u2;
-		M4 i1 = getCubeInertiaTensor(m1, 2); // should include current rotation (I think)
-		M4 i2 = getCubeInertiaTensor(m2, 2);
-
-		CollisionResponse(0.5f,
-			m1, m2,
-			i1, i2,
-			r1, r2,
-			Normalize(info.norm2), // there are occations where both normals point in positive Y direction
-			v1, v2,
-			axis1 * w1, axis2 * w2,
-			u1In, u2In,
-			wa, wb);
-		if (ith->actor->isDynamic)
-			u1 = u1In;
-		if (jth->actor->isDynamic)
-			u2 = u2In;
-		rot1 = ith->actor->isDynamic ? Rotation(axis1, Length(wa) * 0.0005) : rot1;
-		rot2 = jth->actor->isDynamic ? Rotation(axis2, Length(wb) * 0.0005) : rot2;
-		
-		//std::copy(i_vertices.begin(), i_vertices.end(), ith->getMesh()->positions);
-		ith->getMesh()->positions = i_vertices;
-		//std::copy(i_faces.begin(), i_faces.end(), ith->getMesh()->faces);
-		ith->getMesh()->faces = i_faces;
-
-		//std::copy(j_vertices.begin(), j_vertices.end(), jth->getMesh()->positions);
-		jth->getMesh()->positions = j_vertices;
-		//std::copy(j_faces.begin(), j_faces.end(), jth->getMesh()->faces);
-		jth->getMesh()->faces = j_faces;
-		return;
-
-		if (axis1.Length2())
-			// the result that I want
-			rot1 = Rotation(axis1, o1);
-
-
-		//const V4 res = reflect(v1, info.norm1);
-		//const V3 kl = { res.x, res.y, res.z };
-		//u1 = v1 * Dot(v1, info.norm1) * (Length(v1)) * ith->actor->isDynamic;
-		//ith->actor->apply_force(V3(0.0003, m1 * 9.806e-3f * 0.02f * (info.depth == 0 ? Length2(j_cm - i_cm) : info.depth), 0), 0.1);
-		//ith->actor->apply_force((findAverage(info.polytope) - i_cm) * 0.01f, 0.01f);
-
-		if (axis2.Length2())
-			rot2 = Rotation(axis2, o2);
-
-		//const V4 res2 = reflect(v2, info.norm2);
-		//const V3 kl2 = { res2.x, res2.y, res2.z };
-		//u2 = v2 * Dot(v2, info.norm2) * Length(v1) * jth->actor->isDynamic;
-		//jth->actor->apply_force((i_cm - j_cm) * 0.01f, 0.01f);
+			for (const auto node : all_loaded)
+			{
+				const float& m = node->actor->mass;
+				if (node->actor->isDynamic)
+				{
+					//node->actor->apply_force(m * GRAVITY * 0.0001f, dt);
+				}
+			}
 	}
 
-    void ultraSoundMachine(unsigned seed = static_cast<unsigned>(time(nullptr)))
-    {
-       std::cout << "Seed: " << seed << std::endl;
-       std::mt19937 generator(seed);
-       std::uniform_int_distribution<int> distribution(0, 999);
+	//------------------------------------------------------------------------------
+	/**
+	 */
 
-       auto start = std::chrono::high_resolution_clock::now();
-       auto random1 = V3(static_cast<float>(distribution(generator)), static_cast<float>(distribution(generator)), static_cast<float>(distribution(generator)));
-       auto random2 = V3(static_cast<float>(distribution(generator)), static_cast<float>(distribution(generator)), static_cast<float>(distribution(generator)));
-       auto random3 = V3(static_cast<float>(distribution(generator)), static_cast<float>(distribution(generator)), static_cast<float>(distribution(generator)));
-       std::vector<V3> triangleFace = { random1, random2, random3 };
-
-       auto randomPoint = V3(static_cast<float>(distribution(generator)), static_cast<float>(distribution(generator)), static_cast<float>(distribution(generator)));
-       for (int z = 0; z < 1000; ++z)
-       {
-           std::cout << "Z: " << z << std::endl;
-           for (int y = 0; y < 1000; ++y)
-           {
-               for (int x = 0; x < 1000; ++x)
-               {
-
-                   V3 point(x, y, z);
-                   if (IsPointInFace(point, triangleFace))
-                   {
-                       std::cout << "Point (" << round(x) << ", " << round(y) << ", " << round(z) << ") is on the face" << std::endl;
-                   }
-                   /*if (IsPointOnPoint(point, randomPoint))
-                   {
-                       std::cout << "Point (" << round(x) << ", " << round(y) << ", " << round(z) << ") is on the point" << std::endl;
-                   }*/
-               }
-           }
-       }
-
-       auto stop = std::chrono::high_resolution_clock::now();
-    }
-    
 	void
 	ExampleApp::Run()
 	{
-		// auto [ShapeA, ShapeB] = magic();
-		//  reflect hit with normal and and scale the vector with the other factors
+		magic(1000, 16);
+		//exit(0);
 		glEnable(GL_DEPTH_TEST);
 		glDepthFunc(GL_LEQUAL);
 		time_t seed = time(nullptr);

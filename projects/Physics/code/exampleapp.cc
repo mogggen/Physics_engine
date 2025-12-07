@@ -1050,7 +1050,7 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 		else
 			std::cout << "after index" << frameIndex << std::endl;
 
-		if (Dot(info.norm1, info.norm2) > 0) std::cout << "" << std::endl;
+		//if (!info.isColliding) return;
 
 		//info.polytope = V3(0.5f, -10.5f, 0.f);
 

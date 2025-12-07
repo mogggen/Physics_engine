@@ -1789,9 +1789,7 @@ struct Face {
 inline void apply_world_space(std::vector<Face>& faces, const M4& transform) {
 	for (Face& ff : faces) {
         apply_world_space(ff.vertices, transform);
-		std::vector<V3>& normal = std::vector<V3>({ ff.normal });
-		apply_world_space(normal, transform);
-		ff.normal = normal[0];
+		ff.normal = Normalize(Cross(ff.vertices[1] - ff.vertices[0], ff.vertices[2] - ff.vertices[0]));
 	}
 }
 

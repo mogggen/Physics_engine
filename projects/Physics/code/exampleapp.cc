@@ -480,6 +480,8 @@ This function calculates the velocities after a 3D collision vaf, vbf, waf and w
 	bool
 	ExampleApp::Open()
 	{
+		// CollisionDetectionTests();
+		// return false;
 		App::Open();
 		this->window = new Display::Window;
 

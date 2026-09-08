@@ -200,7 +200,7 @@ inline float Length2(V2 vector) {
 /// <returns></returns>
 inline V2 Normalize(V2 vector) {
 	float length = Length(vector);
-	for (size_t i = 0; i < 3; i++)
+	for (size_t i = 0; i < 2; i++)
 		vector[i] /= length;
 	return vector;
 }
@@ -348,12 +348,6 @@ inline void V3::operator/=(float right) {
 
 inline float V3::Dot(V3 right) {
 	return x * right.x + y * right.y + z * right.z;
-}
-
-inline void V3::Cross(V3 right) {
-	x = y * right.z - z * right.y;
-	y = z * right.x - x * right.z;
-	z = x * right.y - y * right.x;
 }
 
 //	utilitiy methods
@@ -1462,7 +1456,7 @@ inline M4 Scalar(V4 v) {
 inline M4 projection(float fov, float aspect, float n, float f) {
 	M4 temp;
 	// solution
-	float d = tanf(2 * M_PI - fov * (M_PI / 180) / 2);
+	float d = 1.0f / tanf((fov * (M_PI / 180.0f)) / 2.0f);
 
 	temp[0][0] = d / aspect;
 	temp[1][1] = d;
